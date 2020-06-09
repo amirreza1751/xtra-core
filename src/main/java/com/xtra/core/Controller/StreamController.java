@@ -17,23 +17,27 @@ public class StreamController {
     @RequestMapping(
             value = "/auth"
     )
-    public @ResponseBody Object authenticateUser (/*0 @RequestParam("user_unique_id") String user_unique_id */ @RequestParam Map<String,String> allRequestParams) throws IOException {
+    public @ResponseBody
+    Object authenticateUser(/*0 @RequestParam("user_unique_id") String user_unique_id */ @RequestParam Map<String, String> allRequestParams) throws IOException {
         HttpHeaders responseHeaders = new HttpHeaders();
         File file = ResourceUtils.getFile("/home/amirak/xtreamcodes/iptv_xtream_codes/streams/" + allRequestParams.get("stream_unique_id") + "_." + allRequestParams.get("extension"));
+
         String playlist = new String(Files.readAllBytes(file.toPath()));
 
 
         Pattern pattern = Pattern.compile("(.*)\\.ts");
         Matcher match = pattern.matcher(playlist);
 
-        System.out.println("Found value: " + match.group(0) );
-
+        while (match.find()) {
+            playlist = playlist.replace(match.group(0), "/home/amirak/xtreamcodes/iptv_xtream_codes/streams/" + match.group(0));
+        }
+        System.out.println(playlist);
         return ResponseEntity.ok()
                 .headers(responseHeaders).contentType(MediaType.valueOf("application/x-mpegurl"))
                 .headers(responseHeaders).contentLength(Long.parseLong(String.valueOf(playlist.length())))
                 .headers(responseHeaders).cacheControl(CacheControl.noCache())
                 .headers(responseHeaders).cacheControl(CacheControl.noStore())
-                .header("Content-Disposition", "inline; filename=" + "\"" +file.getName() + "\"")
+                .header("Content-Disposition", "inline; filename=" + "\"" + file.getName() + "\"")
                 .body(playlist);
     }
 
