@@ -1,32 +1,39 @@
 package com.xtra.core.controller;
 
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.*;
+import org.springframework.util.ResourceUtils;
+import org.springframework.web.bind.annotation.*;
 
-import javax.annotation.Resource;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @RestController
 public class StreamController {
-    @GetMapping("/auth")
-    ResponseEntity<String> authenticateUser(){
-        return new ResponseEntity<>(HttpStatus.FORBIDDEN);
-    }
 
-    @GetMapping("/live/{streamId}")
-    ResponseEntity<Resource> getPlaylist(@PathVariable String streamId){
-       /* InputStreamResource resource = new InputStreamResource(new FileInputStream(file));
+    @RequestMapping(
+            value = "/auth"
+    )
+    public @ResponseBody
+    ResponseEntity<String> authenticateUser(@RequestParam String user_id, @RequestParam String stream_id, @RequestParam String extension) throws IOException {
+        HttpHeaders responseHeaders = new HttpHeaders();
+        String userHome = System.getProperty("user.home");
+        File file = ResourceUtils.getFile(userHome + "/streams/" + stream_id + "_." + extension);
+        String playlist = new String(Files.readAllBytes(file.toPath()));
+        Pattern pattern = Pattern.compile("(.*)\\.ts");
+        Matcher match = pattern.matcher(playlist);
+
+        System.out.println("Found value: " + match.group(0));
 
         return ResponseEntity.ok()
-                .headers(headers)
-                .contentLength(file.length())
-                .contentType()
-                .body(resource);*/
-        return null;
+                .headers(responseHeaders).contentType(MediaType.valueOf("application/x-mpegurl"))
+                .headers(responseHeaders).contentLength(Long.parseLong(String.valueOf(playlist.length())))
+                .headers(responseHeaders).cacheControl(CacheControl.noCache())
+                .headers(responseHeaders).cacheControl(CacheControl.noStore())
+                .header("Content-Disposition", "inline; filename=" + "\"" + file.getName() + "\"")
+                .body(playlist);
     }
-
-
 
 }
