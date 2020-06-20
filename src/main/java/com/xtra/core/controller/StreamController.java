@@ -94,6 +94,14 @@ public class StreamController {
                 content += inputLine + "\n";
             }
             in.close();
+            Pattern pattern = Pattern.compile("(.*)\\.ts");
+            Matcher match = pattern.matcher(content);
+
+            while (match.find()) {
+                String link[] = match.group(0).split("/");
+                String segmentName = link[link.length - 1];
+                content = content.replace(match.group(0), String.format("http://localhost:8080/vod/%s/%s/%s", user_id, vod_id, segmentName));
+            }
         /** Preparing Playlist for VOD Content **/
 
 
