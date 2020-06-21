@@ -120,4 +120,10 @@ public class StreamController {
                 .body(content.toString());
     }
 
+    @GetMapping("vod/auth")
+    public ResponseEntity<String> vodAuth()
+    {
+        return new ResponseEntity<String>("Hello World", HttpStatus.OK);
+    }
+
 }
