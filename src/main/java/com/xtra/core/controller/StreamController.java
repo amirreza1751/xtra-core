@@ -3,10 +3,7 @@ package com.xtra.core.controller;
 import com.xtra.core.model.Line;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
-import org.springframework.http.CacheControl;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.util.ResourceUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -123,7 +120,7 @@ public class StreamController {
     @GetMapping("vod/auth")
     public ResponseEntity<String> vodAuth()
     {
-        return new ResponseEntity<String>("Hello World", HttpStatus.OK);
+        return new ResponseEntity<>("Hello World", HttpStatus.OK);
     }
 
 }
