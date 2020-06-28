@@ -7,14 +7,53 @@ import java.io.IOException;
 
 @Service
 public class StreamService {
-    public String StartStream(Stream stream){
-        String[] args = new String[] {"/bin/ffmpeg", "-i", "test"};
+    public long StartStream(Stream stream){
+        String[] args = new String[] {
+                "ffmpeg",
+                "-re",
+                "-i",
+                "http://goiptv.co:8080/live:cross2hosting/cIfILzx9ji/3994",
+                "-vcodec",
+                "copy",
+                "-loop",
+                "-1",
+                "-c:a",
+                "aac",
+                "-b:a",
+                "160k",
+                "-ar",
+                "44100",
+                "-strict",
+                "-2",
+                "-f",
+                "segment",
+                "-segment_format",
+                "mpegts",
+                "-segment_time",
+                "10",
+                "-segment_list_size",
+                "6",
+                "-segment_format_options",
+                "mpegts_flags=+initial_discontinuity:mpegts_copyts=1",
+                "-segment_list_type",
+                "m3u8",
+                "-hls_flags",
+                "delete_segments",
+                "-segment_list",
+                "/home/amirak/xtreamcodes/iptv_xtream_codes/streams/57852_.m3u8",
+                "/home/amirak/xtreamcodes/iptv_xtream_codes/streams/57852_%d.ts"
+        };
+//        String args = "ffmpeg -re -i http://goiptv.co:8080/live:cross2hosting/cIfILzx9ji/3994 -vcodec copy -loop -1 -c:a aac -b:a
+//        160k -ar 44100 -strict -2 -f segment -segment_format mpegts -segment_time 10 -segment_list_size 6 -segment_format_options
+//        mpegts_flags=+initial_discontinuity:mpegts_copyts=1 -segment_list_type m3u8 -hls_flags delete_segments -segment_list
+//        /home/amirak/xtreamcodes/iptv_xtream_codes/streams/57852_.m3u8 /home/amirak/xtreamcodes/iptv_xtream_codes/streams/57852_%d.ts ";
         Process proc;
         try {
             proc = new ProcessBuilder(args).start();
         } catch (IOException e) {
-            return "failed";
+            System.out.println(e.getMessage());
+            return -1;
         }
-        return "done";
+        return proc.pid();
     }
 }

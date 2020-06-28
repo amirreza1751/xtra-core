@@ -19,7 +19,7 @@ public class StreamOpController {
     }
 
     @PostMapping("/start")
-    public String startStream(@RequestBody Stream stream){
+    public long startStream(@RequestBody Stream stream){
         return streamService.StartStream(stream);
     }
 }
