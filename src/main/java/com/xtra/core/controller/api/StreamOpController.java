@@ -22,4 +22,7 @@ public class StreamOpController {
     public long startStream(@RequestBody Stream stream){
         return streamService.StartStream(stream);
     }
+
+    @PostMapping("/stop")
+    public String stopStream(@RequestBody Stream stream){return streamService.StopStream(stream);}
 }

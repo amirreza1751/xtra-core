@@ -67,9 +67,19 @@ public class StreamService {
         try {
             proc = new ProcessBuilder(args).start();
         } catch (IOException e) {
-            System.out.println(e.getMessage());
             return -1;
         }
         return proc.pid();
+    }
+
+    public String StopStream(Stream stream){
+        String[] args = new String[] {"kill", "PID"};
+        Process proc;
+        try {
+            proc = new ProcessBuilder(args).start();
+        } catch (IOException e) {
+            return "Failed.";
+        }
+        return "Process Killed.";
     }
 }
