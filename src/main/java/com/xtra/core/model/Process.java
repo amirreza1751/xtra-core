@@ -2,11 +2,23 @@ package com.xtra.core.model;
 
 import lombok.Data;
 
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
 
+@Entity
 @Data
 public class Process {
-    private long id;
-    private long pid;
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private Long id;
 
-    private Stream stream;
+    private Long pid;
+    private Long streamId;
+
+    public Process(Long pid, Long streamId) {
+        this.pid = pid;
+        this.streamId = streamId;
+    }
 }

@@ -6,7 +6,6 @@ import com.xtra.core.service.StreamService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import java.io.IOException;
 
 @RestController
 @RequestMapping("/streams")
@@ -23,6 +22,6 @@ public class StreamOpController {
         return streamService.StartStream(stream);
     }
 
-    @PostMapping("/stop")
-    public String stopStream(@RequestBody Stream stream){return streamService.StopStream(stream);}
+    @GetMapping("/stop/{streamId}")
+    public String stopStream(@PathVariable Long streamId){return streamService.StopStream(streamId);}
 }
