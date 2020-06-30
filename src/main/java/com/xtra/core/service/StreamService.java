@@ -76,13 +76,21 @@ public class StreamService {
         return result;
     }
 
-    public String StopStream(Long streamId) {
+    public boolean StopStream(Long streamId) {
         Optional<Process> process = processRepository.findByStreamId(streamId);
         if (process.isPresent()){
             processService.stopProcess(process.get().getPid());
         }else {
             throw new RuntimeException("Process Could not be found");
         }
-        return "Process Killed.";
+        return true;
+    }
+
+    public long RestartStream(Stream stream){
+        long pid = 0;
+        if (this.StopStream(stream.getId())){
+             pid = this.StartStream(stream);
+        }
+        return pid;
     }
 }
