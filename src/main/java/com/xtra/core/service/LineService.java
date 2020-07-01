@@ -1,6 +1,7 @@
 package com.xtra.core.service;
 
 import com.xtra.core.model.Line;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -11,10 +12,13 @@ import java.time.LocalDateTime;
 
 @Service
 public class LineService {
+    @Value("${main.apiPath}")
+    private String corePath;
+
     public ResponseEntity<String> authorizeLine(int streamId, int userId) {
         RestTemplate restTemplate = new RestTemplate();
         try {
-            Line line = restTemplate.getForObject("http://localhost:8082/api/lines/" + userId, Line.class);
+            Line line = restTemplate.getForObject(corePath + "/api/lines/" + userId, Line.class);
             if (line.getExpireDate().compareTo(LocalDateTime.now()) < 0) {
                 //Line Expired
                 return new ResponseEntity<>("Line is Expired", HttpStatus.FORBIDDEN);
