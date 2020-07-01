@@ -23,5 +23,10 @@ public class StreamOpController {
     }
 
     @GetMapping("/stop/{streamId}")
-    public String stopStream(@PathVariable Long streamId){return streamService.StopStream(streamId);}
+    public boolean stopStream(@PathVariable Long streamId){return streamService.StopStream(streamId);}
+
+    @PostMapping("/restart")
+    public long restartStream(@RequestBody Stream stream){
+        return streamService.RestartStream(stream);
+    }
 }
