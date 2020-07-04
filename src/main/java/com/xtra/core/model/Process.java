@@ -17,6 +17,8 @@ public class Process {
     private Long pid;
     private Long streamId;
 
+    public Process(){}
+
     public Process(Long pid, Long streamId) {
         this.pid = pid;
         this.streamId = streamId;
