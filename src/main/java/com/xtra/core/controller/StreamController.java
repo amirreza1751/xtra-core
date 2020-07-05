@@ -25,7 +25,11 @@ import java.util.regex.Pattern;
 @RestController
 public class StreamController {
     private final LineService lineService;
-    private String localServerPort = "80";
+
+    @Value("local.server.port")
+    private String localServerPort;
+    @Value("server.address")
+    private String serverAddress;
 
     @Autowired
     public StreamController(LineService lineService) {
@@ -51,7 +55,7 @@ public class StreamController {
 
             while (match.find()) {
                 String link = match.group(0);
-                playlist = playlist.replace(match.group(0), String.format("http://localhost:" + localServerPort + "/hls/%s/%s/%s", line_id, stream_id, link.split("_")[1]));
+                playlist = playlist.replace(match.group(0), String.format(serverAddress + ":" + localServerPort + "/hls/%s/%s/%s", line_id, stream_id, link.split("_")[1]));
             }
             response = ResponseEntity.ok()
                     .headers(responseHeaders).contentType(MediaType.valueOf("application/x-mpegurl"))
