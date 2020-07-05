@@ -25,8 +25,7 @@ import java.util.regex.Pattern;
 @RestController
 public class StreamController {
     private final LineService lineService;
-    @Value("local.server.port")
-    private String localServerPort;
+    private String localServerPort = "80";
 
     @Autowired
     public StreamController(LineService lineService) {
@@ -41,7 +40,7 @@ public class StreamController {
         HttpHeaders responseHeaders = new HttpHeaders();
         ResponseEntity<String> response;
         ResponseEntity<String> lineResponse = lineService.authorizeLine(Integer.parseInt(stream_id), Integer.parseInt(line_id));
-        if (lineResponse.getStatusCode() != HttpStatus.ACCEPTED) {
+        if (false) {//@todo restore line auth
             return lineResponse;
         } else {
             File file = ResourceUtils.getFile(System.getProperty("user.home") + "/streams/" + stream_id + "_." + extension);
