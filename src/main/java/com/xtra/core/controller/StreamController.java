@@ -26,9 +26,9 @@ import java.util.regex.Pattern;
 public class StreamController {
     private final LineService lineService;
 
-    @Value("${server.port}")
+    @Value("${nginx.port}")
     private String localServerPort;
-    @Value("${server.address}")
+    @Value("${nginx.address}")
     private String serverAddress;
 
     @Autowired
