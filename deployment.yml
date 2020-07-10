@@ -11,7 +11,7 @@ spec:
     spec:
       containers:
         - name: xtra-core
-          image: registry.gitlab.com/marcolenzo/actuator-sample
+          image: registry.gitlab.com/xtrapanel/xtra-core
           imagePullPolicy: Always
           ports:
             - containerPort: 8080
