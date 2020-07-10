@@ -1,4 +1,4 @@
-image: docker:latest
+image: java:11-jdk
 services:
   - docker:dind
 
@@ -6,10 +6,19 @@ variables:
   DOCKER_DRIVER: overlay
   SPRING_PROFILES_ACTIVE: gitlab-ci
 
+
 stages:
   - build
   - package
   - deploy
+
+before_script:
+  - export GRADLE_USER_HOME=`pwd`/.gradle
+
+cache:
+  paths:
+    - .gradle/wrapper
+    - .gradle/caches
 
 build:
   stage: build
