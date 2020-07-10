@@ -1,0 +1,19 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: xtra-core
+spec:
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: xtra-core
+    spec:
+      containers:
+        - name: xtra-core
+          image: registry.gitlab.com/marcolenzo/actuator-sample
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+      imagePullSecrets:
+        - name: registry.gitlab.com

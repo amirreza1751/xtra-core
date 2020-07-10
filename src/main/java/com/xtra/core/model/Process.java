@@ -2,25 +2,20 @@ package com.xtra.core.model;
 
 import lombok.Data;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
+import javax.persistence.*;
+import java.io.Serializable;
 
 @Entity
 @Data
 public class Process {
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private Long id;
-
-    private Long pid;
-    private Long streamId;
-
+    @EmbeddedId
+    private ProcessId processId;
     public Process(){}
 
-    public Process(Long pid, Long streamId) {
-        this.pid = pid;
-        this.streamId = streamId;
-    }
 }
+
+@Embeddable
+class ProcessId implements Serializable{
+    private Long pid, streamId;
+}
+
