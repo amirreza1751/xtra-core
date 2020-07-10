@@ -1,4 +1,4 @@
-image: java:11-jdk
+image: gradle:jdk11
 services:
   - docker:dind
 
