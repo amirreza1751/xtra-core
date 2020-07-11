@@ -6,5 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import com.xtra.core.model.Process;
 
 public interface ProcessRepository extends JpaRepository<Process, Long> {
-    Optional<Process> findByStreamId(Long streamId);
+    Optional<Process> findByProcessIdStreamId(Long streamId);
+
+    Optional<Process> findByProcessIdPid(Long pid);
 }

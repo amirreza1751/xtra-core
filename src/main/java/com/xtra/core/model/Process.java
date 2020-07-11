@@ -10,12 +10,13 @@ import java.io.Serializable;
 public class Process {
     @EmbeddedId
     private ProcessId processId;
-    public Process(){}
 
-}
+    public Process() {
+    }
 
-@Embeddable
-class ProcessId implements Serializable{
-    private Long pid, streamId;
+    public Process(Long streamId, Long pid) {
+        this.processId = new ProcessId(streamId, pid);
+    }
+
 }
 

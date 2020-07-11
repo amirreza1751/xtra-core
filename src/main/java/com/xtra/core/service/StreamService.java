@@ -77,9 +77,9 @@ public class StreamService {
     }
 
     public boolean StopStream(Long streamId) {
-        Optional<Process> process = processRepository.findByStreamId(streamId);
+        Optional<Process> process = processRepository.findByProcessIdStreamId(streamId);
         if (process.isPresent()){
-            processService.stopProcess(process.get().getPid());
+            processService.stopProcess(process.get().getProcessId().getPid());
         }else {
             throw new RuntimeException("Process Could not be found");
         }
