@@ -1,0 +1,38 @@
+version: '3'
+services:
+  database:
+    image: "mariadb/server"
+    environment:
+      - MARIADB_USER=core-user
+      - MARIADB_PASSWORD=qweasdzxc
+      - MARIADB_DATABASE=xtra-core
+      - MARIADB_ROOT_PASSWORD=root
+    volumes:
+      - ./database:/var/lib/mysql
+    ports:
+      - 3306:3306
+    networks:
+      - spring-network
+  spring:
+    build: .
+    environment:
+      - spring.datasource.url=jdbc:mariadb://database:3306/xtra-core
+      - spring.datasource.driver-class-name=org.mariadb.jdbc.Driver
+      - spring.datasource.username=core-user
+      - spring.datasource.password=qweasdzxc
+      - spring.jpa.hibernate.ddl-auto=update
+      - server.address=0.0.0.0
+      - server.port=8080
+      - nginx.address=localhost
+      - nginx.port=8081
+      - main.apiPath=http://localhost:8082
+    ports:
+      - "8080:8080"
+    depends_on:
+      - database
+    networks:
+      - spring-network
+networks:
+  spring-network:
+    driver: bridge
+

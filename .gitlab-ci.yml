@@ -1,6 +1,35 @@
 image: gradle:jdk11
 services:
   - docker:dind
+  mariadb:
+    image: "mariadb/server"
+    environment:
+      - MARIADB_USER=core-user
+      - MARIADB_PASSWORD=qweasdzxc
+      - MARIADB_DATABASE=xtra-core
+      - MARIADB_ROOT_PASSWORD=root
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./database:/var/lib/mysql
+  spring:
+    build: .
+    environment:
+      - spring_profiles_active=prod
+      - spring.datasource.url=jdbc:mariadb://mariadb:3306/xtra-core
+      - spring.datasource.driver-class-name=org.mariadb.jdbc.Driver
+      - spring.datasource.username=core-user
+      - spring.datasource.password=qweasdzxc
+      - spring.jpa.hibernate.ddl-auto=update
+      - server.address=0.0.0.0
+      - server.port=8080
+      - nginx.address=localhost
+      - nginx.port:8081
+      - main.apiPath=http://localhost:8082
+    ports:
+      - "8080:8080"
+    volumes:
+      - .:/core
 
 variables:
   DOCKER_DRIVER: overlay
