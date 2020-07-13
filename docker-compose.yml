@@ -1,18 +1,19 @@
 version: '3'
 services:
   database:
-    image: "mariadb/server"
+    image: "mariadb:10.3"
     environment:
-      - MARIADB_USER=core-user
-      - MARIADB_PASSWORD=qweasdzxc
-      - MARIADB_DATABASE=xtra-core
-      - MARIADB_ROOT_PASSWORD=root
+      - MYSQL_USER=core-user
+      - MYSQL_PASSWORD=qweasdzxc
+      - MYSQL_DATABASE=xtra-core
+      - MYSQL_ROOT_PASSWORD=root
     volumes:
-      - ./database:/var/lib/mysql
+      - ./db:/var/lib/mysql
     ports:
-      - 3306:3306
+      - "3306:3306"
     networks:
       - spring-network
+    restart: always
   spring:
     build: .
     environment:
@@ -32,6 +33,7 @@ services:
       - database
     networks:
       - spring-network
+    restart: on-failure
 networks:
   spring-network:
     driver: bridge
