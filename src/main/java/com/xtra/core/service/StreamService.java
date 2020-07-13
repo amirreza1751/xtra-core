@@ -71,25 +71,25 @@ public class StreamService {
         if (result == -1) {
             throw new RuntimeException("Could not create Process");
         } else {
-            processRepository.save(new Process(result, stream.getId()));
+            processRepository.save(new Process(stream.getId(), result));
         }
         return result;
     }
 
     public boolean StopStream(Long streamId) {
         Optional<Process> process = processRepository.findByProcessIdStreamId(streamId);
-        if (process.isPresent()){
+        if (process.isPresent()) {
             processService.stopProcess(process.get().getProcessId().getPid());
-        }else {
+        } else {
             throw new RuntimeException("Process Could not be found");
         }
         return true;
     }
 
-    public long RestartStream(Stream stream){
+    public long RestartStream(Stream stream) {
         long pid = 0;
-        if (this.StopStream(stream.getId())){
-             pid = this.StartStream(stream);
+        if (this.StopStream(stream.getId())) {
+            pid = this.StartStream(stream);
         }
         return pid;
     }

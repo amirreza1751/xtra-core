@@ -10,7 +10,6 @@ import java.io.Serializable;
 public class Process {
     @EmbeddedId
     private ProcessId processId;
-
     public Process() {
     }
 

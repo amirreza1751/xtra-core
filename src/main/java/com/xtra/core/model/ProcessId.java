@@ -10,6 +10,7 @@ import java.io.Serializable;
 public class ProcessId implements Serializable {
     private Long pid, streamId;
 
+    public ProcessId(){}
     public ProcessId(Long streamId, Long pid) {
         this.streamId = streamId;
         this.pid = pid;
