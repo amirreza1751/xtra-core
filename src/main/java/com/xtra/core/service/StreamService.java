@@ -4,7 +4,10 @@ import com.xtra.core.model.Process;
 import com.xtra.core.model.Stream;
 import com.xtra.core.repository.ProcessRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestTemplate;
 
 import java.io.File;
 import java.util.Optional;
@@ -14,16 +17,23 @@ public class StreamService {
     private final ProcessRepository processRepository;
     private final ProcessService processService;
 
+    @Value("${main.apiPath}")
+    private String mainApiPath;
+
     @Autowired
     public StreamService(ProcessRepository processRepository, ProcessService processService) {
         this.processRepository = processRepository;
         this.processService = processService;
     }
 
-    public long startStream(Stream stream) {
-        Optional<Process> process = processRepository.findByProcessIdStreamId(stream.getId());
+    public boolean startStream(Long streamId) {
+        Stream stream = getStream(streamId);
+        if (stream == null)
+            return false;
+
+        Optional<Process> process = processRepository.findByProcessIdStreamId(streamId);
         if (process.isPresent()) {
-            return -1;
+            return false;
         }
 
         File streamsDirectory = new File(
@@ -73,30 +83,37 @@ public class StreamService {
         };
         long result = processService.runProcess(args);
         if (result == -1) {
-            throw new RuntimeException("Could not create Process");
+            return false;
         } else {
             processRepository.save(new Process(stream.getId(), result));
         }
-        return result;
+        return true;
     }
 
     public boolean stopStream(Long streamId) {
         Optional<Process> process = processRepository.findByProcessIdStreamId(streamId);
         if (process.isPresent()) {
-            var pid =process.get().getProcessId().getPid();
+            var pid = process.get().getProcessId().getPid();
             processService.stopProcess(pid);
             processRepository.deleteByProcessIdStreamId(streamId);
         } else {
-            throw new RuntimeException("Process Could not be found");
+            return false;
         }
         return true;
     }
 
-    public long restartStream(Stream stream) {
-        long pid = 0;
-        if (this.stopStream(stream.getId())) {
-            pid = this.startStream(stream);
+    public boolean restartStream(Long streamId) {
+        this.stopStream(streamId);
+        this.startStream(streamId);
+        return true;
+    }
+
+    public Stream getStream(Long streamId) {
+        try {
+            return new RestTemplate().getForObject(mainApiPath + "/streams/" + streamId, Stream.class);
+        } catch (HttpClientErrorException e) {
+            //@todo log exception
+            return null;
         }
-        return pid;
     }
 }

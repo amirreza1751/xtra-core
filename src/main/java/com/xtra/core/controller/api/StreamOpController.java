@@ -1,7 +1,4 @@
 package com.xtra.core.controller.api;
-
-
-import com.xtra.core.model.Stream;
 import com.xtra.core.service.StreamService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -17,16 +14,16 @@ public class StreamOpController {
         this.streamService = streamService;
     }
 
-    @PostMapping("/start")
-    public long startStream(@RequestBody Stream stream){
-        return streamService.startStream(stream);
+    @GetMapping("/start/{streamId}")
+    public boolean startStream(@PathVariable Long streamId){
+        return streamService.startStream(streamId);
     }
 
     @GetMapping("/stop/{streamId}")
     public boolean stopStream(@PathVariable Long streamId){return streamService.stopStream(streamId);}
 
-    @PostMapping("/restart")
-    public long restartStream(@RequestBody Stream stream){
-        return streamService.restartStream(stream);
+    @GetMapping("/restart/{streamId}")
+    public boolean restartStream(@PathVariable Long streamId){
+        return streamService.restartStream(streamId);
     }
 }
