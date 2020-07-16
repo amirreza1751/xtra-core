@@ -19,6 +19,8 @@ public class LineService {
         RestTemplate restTemplate = new RestTemplate();
         try {
             Line line = restTemplate.getForObject(corePath + "/api/lines/" + userId, Line.class);
+            if(line==null)
+                return new ResponseEntity<>("Line not Found", HttpStatus.NOT_FOUND);
             if (line.getExpireDate().compareTo(LocalDateTime.now()) < 0) {
                 //Line Expired
                 return new ResponseEntity<>("Line is Expired", HttpStatus.FORBIDDEN);

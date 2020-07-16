@@ -19,7 +19,7 @@ public class ProcessService {
     public long stopProcess(Long pid) {
         Process proc;
         try {
-            proc = new ProcessBuilder("pkill", pid.toString()).start();
+            proc = new ProcessBuilder("kill", pid.toString()).start();
         } catch (IOException e) {
             return -1;
         }

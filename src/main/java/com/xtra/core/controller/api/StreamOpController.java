@@ -19,14 +19,14 @@ public class StreamOpController {
 
     @PostMapping("/start")
     public long startStream(@RequestBody Stream stream){
-        return streamService.StartStream(stream);
+        return streamService.startStream(stream);
     }
 
     @GetMapping("/stop/{streamId}")
-    public boolean stopStream(@PathVariable Long streamId){return streamService.StopStream(streamId);}
+    public boolean stopStream(@PathVariable Long streamId){return streamService.stopStream(streamId);}
 
     @PostMapping("/restart")
     public long restartStream(@RequestBody Stream stream){
-        return streamService.RestartStream(stream);
+        return streamService.restartStream(stream);
     }
 }

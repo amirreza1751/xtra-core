@@ -20,7 +20,11 @@ public class StreamService {
         this.processService = processService;
     }
 
-    public long StartStream(Stream stream) {
+    public long startStream(Stream stream) {
+        Optional<Process> process = processRepository.findByProcessIdStreamId(stream.getId());
+        if (process.isPresent()) {
+            return -1;
+        }
 
         File streamsDirectory = new File(
                 System.getProperty("user.home") + File.separator + "streams"
@@ -76,20 +80,22 @@ public class StreamService {
         return result;
     }
 
-    public boolean StopStream(Long streamId) {
+    public boolean stopStream(Long streamId) {
         Optional<Process> process = processRepository.findByProcessIdStreamId(streamId);
         if (process.isPresent()) {
-            processService.stopProcess(process.get().getProcessId().getPid());
+            var pid =process.get().getProcessId().getPid();
+            processService.stopProcess(pid);
+            processRepository.deleteByProcessIdStreamId(streamId);
         } else {
             throw new RuntimeException("Process Could not be found");
         }
         return true;
     }
 
-    public long RestartStream(Stream stream) {
+    public long restartStream(Stream stream) {
         long pid = 0;
-        if (this.StopStream(stream.getId())) {
-            pid = this.StartStream(stream);
+        if (this.stopStream(stream.getId())) {
+            pid = this.startStream(stream);
         }
         return pid;
     }
