@@ -13,12 +13,12 @@ import java.time.LocalDateTime;
 @Service
 public class LineService {
     @Value("${main.apiPath}")
-    private String corePath;
+    private String mainApiPath;
 
     public ResponseEntity<String> authorizeLine(int streamId, int userId) {
         RestTemplate restTemplate = new RestTemplate();
         try {
-            Line line = restTemplate.getForObject(corePath + "/api/lines/" + userId, Line.class);
+            Line line = restTemplate.getForObject(mainApiPath + "/api/lines/" + userId, Line.class);
             if(line==null)
                 return new ResponseEntity<>("Line not Found", HttpStatus.NOT_FOUND);
             if (line.getExpireDate().compareTo(LocalDateTime.now()) < 0) {
