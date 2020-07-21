@@ -35,7 +35,7 @@ public class StreamService {
 
         Optional<Process> process = processRepository.findByProcessIdStreamId(streamId);
         if (process.isPresent()) {
-            System.out.println("Process is not present");
+            System.out.println("Process is present");
             return false;
         }
 
