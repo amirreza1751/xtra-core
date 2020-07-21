@@ -81,11 +81,11 @@ public class StreamService {
                 streamsDirectory.getAbsolutePath() + "/" + stream.getId() + "_%d.ts",
                 streamsDirectory.getAbsolutePath() + "/" + stream.getId() + "_.m3u8"
         };
-        long result = processService.runProcess(args);
-        if (result == -1) {
+        Optional<java.lang.Process> result = processService.runProcess(args);
+        if (result.isEmpty()) {
             return false;
         } else {
-            processRepository.save(new Process(stream.getId(), result));
+            processRepository.save(new Process(stream.getId(), result.get().pid()));
         }
         return true;
     }
