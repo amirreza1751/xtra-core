@@ -13,6 +13,7 @@ public class ProcessService {
             proc = new ProcessBuilder(args).start();
         } catch (IOException e) {
             //@todo log
+            System.out.println(e.getMessage());
             return Optional.empty();
         }
         return Optional.of(proc);

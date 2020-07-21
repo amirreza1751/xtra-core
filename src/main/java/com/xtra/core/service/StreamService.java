@@ -28,11 +28,14 @@ public class StreamService {
 
     public boolean startStream(Long streamId) {
         Stream stream = getStream(streamId);
-        if (stream == null)
+        if (stream == null){
+            System.out.println("stream is null");
             return false;
+        }
 
         Optional<Process> process = processRepository.findByProcessIdStreamId(streamId);
         if (process.isPresent()) {
+            System.out.println("Process is not present");
             return false;
         }
 
@@ -113,6 +116,7 @@ public class StreamService {
             return new RestTemplate().getForObject(mainApiPath + "/streams/" + streamId, Stream.class);
         } catch (HttpClientErrorException e) {
             //@todo log exception
+            System.out.println(e.getMessage());
             return null;
         }
     }
