@@ -43,4 +43,32 @@ public class ProcessService {
         }
         return output;
     }
+
+    public String streamAnalysis(String sourceInput, String params, String type){
+        Process proc;
+        String output;
+        try {
+            proc = new ProcessBuilder(
+                    "ffprobe",
+                    "-select_streams",
+                    type +":0",
+                    "-show_streams",
+                    "-show_entries",
+                    "stream=" + params,
+                    "-of",
+                    "json",
+                    "-v",
+                    "quiet",
+                    "-i",
+                    sourceInput
+            ).start();
+            BufferedReader in = new BufferedReader(new InputStreamReader(proc.getInputStream()));
+            output = in.readLine();
+        } catch (IOException e) {
+            return null;
+        }
+        return output;
+    }
+
+
 }
