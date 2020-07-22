@@ -44,14 +44,12 @@ public class ProcessService {
         return output;
     }
 
-    public String streamAnalysis(String sourceInput, String params, String type){
+    public String streamAnalysis(String sourceInput, String params){
         Process proc;
         String output;
         try {
             proc = new ProcessBuilder(
                     "ffprobe",
-                    "-select_streams",
-                    type +":0",
                     "-show_streams",
                     "-show_entries",
                     "stream=" + params,
