@@ -12,10 +12,16 @@ public class Process {
     private ProcessId processId;
     public Process() {
     }
-
     public Process(Long streamId, Long pid) {
         this.processId = new ProcessId(streamId, pid);
     }
 
+    public Long getPid(){
+        return this.processId.getPid();
+    }
+
+    public Long getStreamId(){
+        return this.processId.getStreamId();
+    }
 }
 
