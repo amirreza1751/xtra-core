@@ -23,6 +23,7 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.mariadb.jdbc:mariadb-java-client'
 	implementation 'commons-io:commons-io:2.7'
+	compile group: 'net.bramp.ffmpeg', name: 'ffmpeg', version: '0.6.2'
 	implementation 'io.projectreactor:reactor-core'
 	compileOnly 'org.projectlombok:lombok'
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'

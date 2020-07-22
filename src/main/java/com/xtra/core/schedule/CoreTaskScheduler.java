@@ -1,5 +1,6 @@
 package com.xtra.core.schedule;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xtra.core.model.StreamInfo;
 import com.xtra.core.repository.ProcessRepository;
@@ -31,6 +32,7 @@ public class CoreTaskScheduler {
             String streamUrl = "";
             String videoAnalysis = processService.streamAnalysis(streamUrl, "codec_name,width,height,r_frame_rate,bit_rate", "v");
             String audioAnalysis = processService.streamAnalysis(streamUrl, "codec_name", "a");
+            
             streamInfoList.add(new StreamInfo(process.getStreamId(), uptime, "", "", "", "", "", "", ""));
         }
         //call api here;

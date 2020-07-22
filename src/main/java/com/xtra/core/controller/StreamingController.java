@@ -1,5 +1,6 @@
 package com.xtra.core.controller;
 
+import com.xtra.core.model.StreamInfo;
 import com.xtra.core.service.LineService;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -7,23 +8,19 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.util.ResourceUtils;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @RestController
-public class StreamController {
+public class StreamingController {
     private final LineService lineService;
 
     @Value("${nginx.port}")
@@ -32,7 +29,7 @@ public class StreamController {
     private String serverAddress;
 
     @Autowired
-    public StreamController(LineService lineService) {
+    public StreamingController(LineService lineService) {
         this.lineService = lineService;
     }
 
@@ -76,6 +73,29 @@ public class StreamController {
         return ResponseEntity.ok()
                 .headers(responseHeaders).contentType(MediaType.valueOf("video/mp2t"))
                 .body(IOUtils.toByteArray(FileUtils.openInputStream(new File(System.getProperty("user.home") + "/streams/" + stream_id + "_" + segment + "." + extension))));
+    }
+
+    @PostMapping("update")
+    public void updateProgress(@RequestParam Long stream_id, InputStream dataStream){
+        Scanner s = new Scanner(dataStream).useDelimiter("\\s");
+        StreamInfo streamInfo = new StreamInfo();
+        while (s.hasNext()){
+            var property = s.nextLine();
+            var splited = property.split("=");
+            switch (splited[0]){
+                case "fps":
+                    streamInfo.setFrameRate(splited[1]);
+                    //save
+                    break;
+                case "bitrate":
+                    streamInfo.setBitrate(splited[1]);
+                    break;
+                case "speed":
+                    streamInfo.setSpeed(splited[1]);
+                    break;
+
+            }
+        }
     }
 
     @GetMapping("vod")
