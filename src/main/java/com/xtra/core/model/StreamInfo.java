@@ -19,6 +19,8 @@ public class StreamInfo {
     private String speed;
     private String frameRate;
 
+    public StreamInfo(){}
+
     public StreamInfo(Long streamId, String uptime, String currentInput, String bitrate, String resolution, String videoCodec, String audioCodec, String speed, String frameRate) {
         this.streamId = streamId;
         this.uptime = uptime;

@@ -1,5 +1,7 @@
 package com.xtra.core.schedule;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xtra.core.model.Process;
 import com.xtra.core.model.StreamInfo;
 import com.xtra.core.repository.ProcessRepository;
@@ -27,10 +29,11 @@ public class CoreTaskScheduler {
         List<StreamInfo> streamInfoList = new ArrayList<>();
         for (Process process : processRepository.findAll()) {
             var uptime = processService.getProcessEtime(process.getPid());
-            String streamUrl = "";
-            String videoAnalysis = processService.streamAnalysis(streamUrl, "codec_name,width,height,r_frame_rate,bit_rate", "v");
-            String audioAnalysis = processService.streamAnalysis(streamUrl, "codec_name", "a");
-            streamInfoList.add(new StreamInfo(process.getStreamId(), uptime, "", "", "", "", "", "", ""));
+            String videoAnalysis = processService.streamAnalysis("http://5.9.110.37:8081/live/1/24/m3u8", "codec_name,width,height,r_frame_rate,bit_rate");
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode actualObj = mapper.readTree(videoAnalysis);
+            actualObj = actualObj.get("streams");
+            streamInfoList.add(new StreamInfo(process.getStreamId(), uptime, "", "", actualObj.get(0).get("width").toString() + "x" + actualObj.get(0).get("height").toString(), actualObj.get(0).get("codec_name").toString(), actualObj.get(1).get("codec_name").toString(), "", actualObj.get(0).get("r_frame_rate").toString()));
         }
         //call api here;
     }

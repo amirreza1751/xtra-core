@@ -44,14 +44,12 @@ public class ProcessService {
         return output;
     }
 
-    public String streamAnalysis(String sourceInput, String params, String type){
+    public String streamAnalysis(String sourceInput, String params){
         Process proc;
-        String output;
+        String output = "";
         try {
             proc = new ProcessBuilder(
                     "ffprobe",
-                    "-select_streams",
-                    type +":0",
                     "-show_streams",
                     "-show_entries",
                     "stream=" + params,
@@ -62,12 +60,17 @@ public class ProcessService {
                     "-i",
                     sourceInput
             ).start();
-            BufferedReader in = new BufferedReader(new InputStreamReader(proc.getInputStream()));
-            output = in.readLine();
-        } catch (IOException e) {
+            proc.waitFor();
+                BufferedReader in = new BufferedReader(new InputStreamReader(proc.getInputStream()));
+                String line = "";
+                while ((line=in.readLine())!=null){
+                    output += line + "\n";
+                }
+
+        } catch (IOException | InterruptedException e) {
             return null;
         }
-        return output;
+        return output + proc.exitValue();
     }
 
 
