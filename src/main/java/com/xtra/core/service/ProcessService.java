@@ -69,7 +69,7 @@ public class ProcessService {
          catch (IOException | InterruptedException e) {
             return null;
         }
-        return output + proc.exitValue();
+        return output;
     }
 
 
