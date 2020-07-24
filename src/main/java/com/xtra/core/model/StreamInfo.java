@@ -19,11 +19,11 @@ public class StreamInfo {
     private String speed;
     private String frameRate;
 
-    public StreamInfo(Long streamId){
+    public StreamInfo() {
+    }
+
+    public StreamInfo(Long streamId) {
         this.streamId = streamId;
     }
 
-    public StreamInfo(){
-
-    }
 }

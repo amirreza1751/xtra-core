@@ -81,8 +81,7 @@ public class StreamingController {
     @PostMapping("update")
     public void updateProgress(@RequestParam Long stream_id, InputStream dataStream) {
         Scanner s = new Scanner(dataStream).useDelimiter("\\s");
-        StreamInfo streamInfo = new StreamInfo();
-        streamInfo.setStreamId(stream_id);
+        StreamInfo streamInfo = new StreamInfo(stream_id);
         while (s.hasNext()) {
             var property = s.nextLine();
             var splited = property.split("=");

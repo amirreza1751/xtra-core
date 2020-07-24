@@ -96,8 +96,7 @@ public class StreamService {
             return false;
         } else {
             processRepository.save(new Process(stream.getId(), result.get().pid()));
-            StreamInfo info = new StreamInfo();
-            info.setStreamId(streamId);
+            StreamInfo info = new StreamInfo(streamId);
             info.setCurrentInput(currentInput);
             streamInfoRepository.save(info);
         }

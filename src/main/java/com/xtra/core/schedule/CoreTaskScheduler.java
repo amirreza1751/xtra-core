@@ -53,8 +53,7 @@ public class CoreTaskScheduler {
 
     public StreamInfo updateStreamFFProbeData(Process process, StreamInfo info) {
         String streamUrl = System.getProperty("user.home") + File.separator + "streams" + File.separator + process.getStreamId() + "_.m3u8";
-        String videoAnalysis = processService.analyzeStream(streamUrl, "codec_name,width,height", "v");
-        String audioAnalysis = processService.analyzeStream(streamUrl, "codec_name,bit_rate", "a");
+        String videoAnalysis = processService.analyzeStream(streamUrl, "codec_name,width,height,bit_rate");
         ObjectMapper objectMapper = new ObjectMapper();
         try {
             var root = objectMapper.readTree(videoAnalysis);
@@ -62,17 +61,15 @@ public class CoreTaskScheduler {
             info.setVideoCodec(video.get("codec_name").toPrettyString());
             info.setResolution(video.get("width") + "x" + video.get("height"));
 
-            root = objectMapper.readTree(audioAnalysis);
             var audio = root.get("streams").elements().next();
+            info.setAudioCodec(audio.get("codec_name").toPrettyString());
             System.out.println(audio.toPrettyString());
-            info.setBitrate(audio.get("bit_rate").toPrettyString());
+            //info.setBitrate(audio.get("bit_rate").toPrettyString());
         } catch (JsonProcessingException e) {
             e.printStackTrace();
         }
-
         return info;
     }
-
 
     @Scheduled(fixedDelay = 5000)
     public void sendStreamInfo() {
