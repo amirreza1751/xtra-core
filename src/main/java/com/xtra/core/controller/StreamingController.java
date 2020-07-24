@@ -1,6 +1,7 @@
 package com.xtra.core.controller;
 
 import com.xtra.core.model.StreamInfo;
+import com.xtra.core.repository.StreamInfoRepository;
 import com.xtra.core.service.LineService;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -13,7 +14,6 @@ import org.springframework.web.bind.annotation.*;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.Scanner;
 import java.util.regex.Matcher;
@@ -22,6 +22,7 @@ import java.util.regex.Pattern;
 @RestController
 public class StreamingController {
     private final LineService lineService;
+    private final StreamInfoRepository streamInfoRepository;
 
     @Value("${nginx.port}")
     private String localServerPort;
@@ -29,8 +30,9 @@ public class StreamingController {
     private String serverAddress;
 
     @Autowired
-    public StreamingController(LineService lineService) {
+    public StreamingController(LineService lineService, StreamInfoRepository streamInfoRepository) {
         this.lineService = lineService;
+        this.streamInfoRepository = streamInfoRepository;
     }
 
     @GetMapping("/streams")
@@ -75,17 +77,19 @@ public class StreamingController {
                 .body(IOUtils.toByteArray(FileUtils.openInputStream(new File(System.getProperty("user.home") + "/streams/" + stream_id + "_" + segment + "." + extension))));
     }
 
+    //@todo allow only from localhost
     @PostMapping("update")
-    public void updateProgress(@RequestParam Long stream_id, InputStream dataStream){
+    public void updateProgress(@RequestParam Long stream_id, InputStream dataStream) {
         Scanner s = new Scanner(dataStream).useDelimiter("\\s");
         StreamInfo streamInfo = new StreamInfo();
-        while (s.hasNext()){
+        streamInfo.setStreamId(stream_id);
+        while (s.hasNext()) {
             var property = s.nextLine();
             var splited = property.split("=");
-            switch (splited[0]){
+            switch (splited[0]) {
                 case "fps":
                     streamInfo.setFrameRate(splited[1]);
-                    //save
+                    streamInfoRepository.save(streamInfo);
                     break;
                 case "bitrate":
                     streamInfo.setBitrate(splited[1]);

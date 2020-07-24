@@ -2,7 +2,9 @@ package com.xtra.core.service;
 
 import com.xtra.core.model.Process;
 import com.xtra.core.model.Stream;
+import com.xtra.core.model.StreamInfo;
 import com.xtra.core.repository.ProcessRepository;
+import com.xtra.core.repository.StreamInfoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -16,26 +18,28 @@ import java.util.Optional;
 public class StreamService {
     private final ProcessRepository processRepository;
     private final ProcessService processService;
+    private final StreamInfoRepository streamInfoRepository;
 
     @Value("${main.apiPath}")
     private String mainApiPath;
 
     @Autowired
-    public StreamService(ProcessRepository processRepository, ProcessService processService) {
+    public StreamService(ProcessRepository processRepository, ProcessService processService, StreamInfoRepository streamInfoRepository) {
         this.processRepository = processRepository;
         this.processService = processService;
+        this.streamInfoRepository = streamInfoRepository;
     }
 
     public boolean startStream(Long streamId) {
         Stream stream = getStream(streamId);
-        if (stream == null){
-            System.out.println("stream is null");
+        if (stream == null) {
+            System.out.println("Stream is null");
             return false;
         }
 
         Optional<Process> process = processRepository.findByProcessIdStreamId(streamId);
         if (process.isPresent()) {
-            System.out.println("Process is present");
+            System.out.println("Stream is Already started");
             return false;
         }
 
@@ -49,11 +53,12 @@ public class StreamService {
             }
         }
 
+        String currentInput = stream.getStreamInputs().get(0).getUrl();
         String[] args = new String[]{
                 "ffmpeg",
                 "-re",
                 "-i",
-                stream.getCurrentInput().getUrl(),
+                currentInput,
                 "-vcodec",
                 "copy",
                 "-loop",
@@ -78,6 +83,8 @@ public class StreamService {
                 "mpegts_flags=+initial_discontinuity:mpegts_copyts=1",
                 "-segment_list_type",
                 "m3u8",
+                "-progress",
+                "",
                 "-hls_flags",
                 "delete_segments",
                 "-segment_list",
@@ -89,6 +96,10 @@ public class StreamService {
             return false;
         } else {
             processRepository.save(new Process(stream.getId(), result.get().pid()));
+            StreamInfo info = new StreamInfo();
+            info.setStreamId(streamId);
+            info.setCurrentInput(currentInput);
+            streamInfoRepository.save(info);
         }
         return true;
     }

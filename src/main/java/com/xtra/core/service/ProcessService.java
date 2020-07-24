@@ -6,6 +6,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class ProcessService {
@@ -38,13 +39,14 @@ public class ProcessService {
             proc = new ProcessBuilder("ps", "-p", pid.toString(), "-o", "etime=").start();
             BufferedReader in = new BufferedReader(new InputStreamReader(proc.getInputStream()));
             output = in.readLine();
+            in.close();
         } catch (IOException e) {
             return null;
         }
         return output;
     }
 
-    public String streamAnalysis(String sourceInput, String params, String type){
+    public String analyzeStream(String sourceInput, String params, String type){
         Process proc;
         String output;
         try {
@@ -62,8 +64,9 @@ public class ProcessService {
                     "-i",
                     sourceInput
             ).start();
+
             BufferedReader in = new BufferedReader(new InputStreamReader(proc.getInputStream()));
-            output = in.readLine();
+            output = in.lines().map(Object::toString).collect(Collectors.joining(" "));
         } catch (IOException e) {
             return null;
         }
