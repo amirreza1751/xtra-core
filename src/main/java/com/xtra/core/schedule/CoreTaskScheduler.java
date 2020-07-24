@@ -3,12 +3,13 @@ package com.xtra.core.schedule;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xtra.core.model.Process;
+import com.xtra.core.model.ProgressInfo;
 import com.xtra.core.model.Stream;
 import com.xtra.core.model.StreamInfo;
 import com.xtra.core.repository.ProcessRepository;
+import com.xtra.core.repository.ProgressInfoRepository;
 import com.xtra.core.repository.StreamInfoRepository;
 import com.xtra.core.service.ProcessService;
-import com.xtra.core.service.StreamService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -17,33 +18,33 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.File;
-import java.util.List;
+import java.util.*;
 
 @Component
 public class CoreTaskScheduler {
     private final ProcessRepository processRepository;
     private final ProcessService processService;
     private final StreamInfoRepository streamInfoRepository;
-    private final StreamService streamService;
+    private final ProgressInfoRepository progressInfoRepository;
 
     @Value("${main.apiPath}")
     private String mainApiPath;
 
     @Autowired
-    public CoreTaskScheduler(ProcessRepository processRepository, ProcessService processService, StreamInfoRepository streamInfoRepository, StreamService streamService) {
+    public CoreTaskScheduler(ProcessRepository processRepository, ProcessService processService, StreamInfoRepository streamInfoRepository, ProgressInfoRepository progressInfoRepository) {
         this.processRepository = processRepository;
         this.processService = processService;
         this.streamInfoRepository = streamInfoRepository;
-        this.streamService = streamService;
+        this.progressInfoRepository = progressInfoRepository;
     }
 
-    @Scheduled(fixedDelay = 2000)
+    @Scheduled(fixedDelay = 1000)
     public void StreamChecker() {
         List<Process> processes = processRepository.findAll();
         processes.parallelStream().forEach((process -> {
             restartStreamIfStopped(process);
-
-            StreamInfo info = new StreamInfo(process.getStreamId());
+            Optional<StreamInfo> infoRecord = streamInfoRepository.findByStreamId(process.getStreamId());
+            StreamInfo info = infoRecord.orElseGet(() -> new StreamInfo(process.getStreamId()));
             info = updateStreamUptime(process, info);
             info = updateStreamFFProbeData(process, info);
             streamInfoRepository.save(info);
@@ -64,10 +65,6 @@ public class CoreTaskScheduler {
     public StreamInfo updateStreamFFProbeData(Process process, StreamInfo info) {
         String streamUrl = System.getProperty("user.home") + File.separator + "streams" + File.separator + process.getStreamId() + "_.m3u8";
         String videoAnalysis = processService.analyzeStream(streamUrl, "codec_name,width,height,bit_rate");
-        var uptime = processService.getProcessEtime(process.getStreamId());
-        info.setUptime(uptime);
-        String currentSource = streamService.getStream(process.getStreamId()).getCurrentInput().getUrl();
-        info.setCurrentInput(currentSource);
         ObjectMapper objectMapper = new ObjectMapper();
         try {
             var root = objectMapper.readTree(videoAnalysis);
@@ -77,20 +74,24 @@ public class CoreTaskScheduler {
 
             var audio = root.get("streams").get(1);
             info.setAudioCodec(audio.get("codec_name").toPrettyString());
-//            System.out.println(audio.toPrettyString());
-            //info.setBitrate(audio.get("bit_rate").toPrettyString());
         } catch (JsonProcessingException e) {
             e.printStackTrace();
         }
         return info;
     }
 
-    @Scheduled(fixedDelay = 5000)
-    public void sendStreamInfo() {
+    @Scheduled(fixedDelay = 2000)
+    public void sendStreamsInfo() {
         List<StreamInfo> streamInfoList = streamInfoRepository.findAll();
+        List<ProgressInfo> progressInfoList = progressInfoRepository.findAll();
+
+        Map<String, Object> infos = new HashMap<>();
+        infos.put("streamInfoList", streamInfoList);
+        infos.put("progressInfoList", progressInfoList);
+
         try {
-            new RestTemplate().postForObject(mainApiPath + "/streams/updateStreamInfo", streamInfoList, Stream.class);
-        }catch (RestClientException e){
+            new RestTemplate().postForObject(mainApiPath + "/streams/updateStreamInfo", infos, Stream.class);
+        } catch (RestClientException e) {
             System.out.println(e.getMessage());
         }
     }

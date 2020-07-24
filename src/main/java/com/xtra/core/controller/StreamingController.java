@@ -1,6 +1,8 @@
 package com.xtra.core.controller;
 
+import com.xtra.core.model.ProgressInfo;
 import com.xtra.core.model.StreamInfo;
+import com.xtra.core.repository.ProgressInfoRepository;
 import com.xtra.core.repository.StreamInfoRepository;
 import com.xtra.core.service.LineService;
 import org.apache.commons.io.FileUtils;
@@ -23,7 +25,7 @@ import java.util.regex.Pattern;
 @RestController
 public class StreamingController {
     private final LineService lineService;
-    private final StreamInfoRepository streamInfoRepository;
+    private final ProgressInfoRepository progressInfoRepository;
 
     @Value("${nginx.port}")
     private String localServerPort;
@@ -31,9 +33,9 @@ public class StreamingController {
     private String serverAddress;
 
     @Autowired
-    public StreamingController(LineService lineService, StreamInfoRepository streamInfoRepository) {
+    public StreamingController(LineService lineService, ProgressInfoRepository progressInfoRepository) {
         this.lineService = lineService;
-        this.streamInfoRepository = streamInfoRepository;
+        this.progressInfoRepository = progressInfoRepository;
     }
 
     @GetMapping("/streams")
@@ -82,21 +84,20 @@ public class StreamingController {
     @PostMapping("update")
     public void updateProgress(@RequestParam Long stream_id, InputStream dataStream) {
         Scanner s = new Scanner(dataStream).useDelimiter("\\s");
-//        StreamInfo streamInfo = new StreamInfo(stream_id);
-        StreamInfo streamInfo = streamInfoRepository.findByStreamId(stream_id);
-        while (s.hasNext()) {
+        ProgressInfo progressInfo = new ProgressInfo(stream_id);
+        while (s.hasNextLine()) {
             var property = s.nextLine();
             var splited = property.split("=");
             switch (splited[0]) {
                 case "fps":
-                    streamInfo.setFrameRate(splited[1]);
-                    streamInfoRepository.save(streamInfo);
+                    progressInfo.setFrameRate(splited[1]);
+                    progressInfoRepository.save(progressInfo);
                     break;
                 case "bitrate":
-                    streamInfo.setBitrate(splited[1]);
+                    progressInfo.setBitrate(splited[1]);
                     break;
                 case "speed":
-                    streamInfo.setSpeed(splited[1]);
+                    progressInfo.setSpeed(splited[1]);
                     break;
 
             }

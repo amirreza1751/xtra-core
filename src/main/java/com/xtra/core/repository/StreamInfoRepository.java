@@ -6,5 +6,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
 
 public interface StreamInfoRepository extends JpaRepository<StreamInfo, Long> {
-    StreamInfo findByStreamId(Long streamId);
+    Optional<StreamInfo> findByStreamId(Long streamId);
 }

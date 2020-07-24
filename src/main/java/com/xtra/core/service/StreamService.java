@@ -14,6 +14,7 @@ import org.springframework.web.client.RestTemplate;
 
 import java.io.File;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class StreamService {
@@ -59,12 +60,15 @@ public class StreamService {
         }
 
         String currentInput = stream.getStreamInputs().get(0).getUrl();
+
         String[] args = new String[]{
                 "ffmpeg",
                 "-re",
                 "-i",
                 currentInput,
                 "-vcodec",
+                "copy",
+                "-acodec",
                 "copy",
                 "-loop",
                 "-1",
@@ -76,6 +80,8 @@ public class StreamService {
                 "44100",
                 "-strict",
                 "-2",
+                "-fflags",
+                "+genpts",
                 "-f",
                 "hls",
                 "-segment_format",
@@ -89,7 +95,7 @@ public class StreamService {
                 "-segment_list_type",
                 "m3u8",
                 "-progress",
-                "http://" + serverAddress + ":" + serverPort + "/streams/update?stream_id=" + streamId,
+                "http://" + serverAddress + ":" + serverPort + "/update?stream_id=" + streamId,
                 "-hls_flags",
                 "delete_segments",
                 "-segment_list",
@@ -97,13 +103,15 @@ public class StreamService {
                 streamsDirectory.getAbsolutePath() + "/" + stream.getId() + "_.m3u8"
         };
         Optional<java.lang.Process> result = processService.runProcess(args);
-        if (result.isEmpty()) {
+
+        if (result.isEmpty() || !result.get().isAlive()) {
             return false;
         } else {
             processRepository.save(new Process(stream.getId(), result.get().pid()));
-            StreamInfo info = new StreamInfo(streamId);
-            info.setCurrentInput(currentInput);
-            streamInfoRepository.save(info);
+            Optional<StreamInfo> streamInfoRecord = streamInfoRepository.findByStreamId(streamId);
+            StreamInfo streamInfo = streamInfoRecord.orElseGet(() -> new StreamInfo(streamId));
+            streamInfo.setCurrentInput(currentInput);
+            streamInfoRepository.save(streamInfo);
         }
         return true;
     }

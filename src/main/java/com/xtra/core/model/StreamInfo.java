@@ -12,12 +12,9 @@ public class StreamInfo {
     private Long streamId;
     private String uptime;
     private String currentInput;
-    private String bitrate;
     private String resolution;
     private String videoCodec;
     private String audioCodec;
-    private String speed;
-    private String frameRate;
 
     public StreamInfo() {
     }

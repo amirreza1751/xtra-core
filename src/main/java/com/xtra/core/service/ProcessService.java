@@ -1,10 +1,13 @@
 package com.xtra.core.service;
 
+import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.springframework.stereotype.Service;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -33,20 +36,14 @@ public class ProcessService {
     }
 
     public String getProcessEtime(Long pid) {
-        Process proc;
-        String output;
-        try {
-            proc = new ProcessBuilder("ps", "-p", pid.toString(), "-o", "etime=").start();
-            BufferedReader in = new BufferedReader(new InputStreamReader(proc.getInputStream()));
-            output = in.readLine();
-            in.close();
-        } catch (IOException e) {
+        Optional<ProcessHandle> processHandle = ProcessHandle.of(pid);
+        if (processHandle.isEmpty() || processHandle.get().info().startInstant().isEmpty())
             return null;
-        }
-        return output;
+        Duration duration = Duration.between(processHandle.get().info().startInstant().get(), Instant.now());
+        return DurationFormatUtils.formatDuration(duration.toMillis(), "H:mm:ss", true);
     }
 
-    public String analyzeStream(String sourceInput, String params){
+    public String analyzeStream(String sourceInput, String params) {
         Process proc;
         String output = "";
         try {
@@ -65,8 +62,7 @@ public class ProcessService {
             BufferedReader in = new BufferedReader(new InputStreamReader(proc.getInputStream()));
             output = in.lines().map(Object::toString).collect(Collectors.joining(" "));
             proc.waitFor();
-        }
-         catch (IOException | InterruptedException e) {
+        } catch (IOException | InterruptedException e) {
             return null;
         }
         return output;

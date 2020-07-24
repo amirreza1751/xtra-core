@@ -1,6 +1,5 @@
 package com.xtra.core.model;
 
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import lombok.Data;
@@ -18,6 +17,7 @@ public class Stream {
     private boolean directSource = false;
     private boolean genTimestamps = false;
     private boolean rtmpOutput = false;
+    private String userAgent;
 
     private TranscodeProfile transcodeProfile;
     private String customFFMPEG;
