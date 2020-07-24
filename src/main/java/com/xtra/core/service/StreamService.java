@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.File;
@@ -124,7 +125,7 @@ public class StreamService {
     public Stream getStream(Long streamId) {
         try {
             return new RestTemplate().getForObject(mainApiPath + "/streams/" + streamId, Stream.class);
-        } catch (HttpClientErrorException e) {
+        } catch (RestClientException e) {
             //@todo log exception
             System.out.println(e.getMessage());
             return null;

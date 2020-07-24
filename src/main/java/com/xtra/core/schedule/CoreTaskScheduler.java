@@ -3,13 +3,17 @@ package com.xtra.core.schedule;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xtra.core.model.Process;
+import com.xtra.core.model.Stream;
 import com.xtra.core.model.StreamInfo;
 import com.xtra.core.repository.ProcessRepository;
 import com.xtra.core.repository.StreamInfoRepository;
 import com.xtra.core.service.ProcessService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestTemplate;
 
 import java.io.File;
 import java.util.List;
@@ -19,6 +23,9 @@ public class CoreTaskScheduler {
     private final ProcessRepository processRepository;
     private final ProcessService processService;
     private final StreamInfoRepository streamInfoRepository;
+
+    @Value("${main.apiPath}")
+    private String mainApiPath;
 
     @Autowired
     public CoreTaskScheduler(ProcessRepository processRepository, ProcessService processService, StreamInfoRepository streamInfoRepository) {
@@ -74,7 +81,11 @@ public class CoreTaskScheduler {
     @Scheduled(fixedDelay = 5000)
     public void sendStreamInfo() {
         List<StreamInfo> streamInfoList = streamInfoRepository.findAll();
-        //call api here;
+        try {
+            new RestTemplate().postForObject(mainApiPath + "/streams/updateStreamInfo", streamInfoList, Stream.class);
+        }catch (RestClientException e){
+            System.out.println(e.getMessage());
+        }
     }
 
 }
