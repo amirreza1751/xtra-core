@@ -23,6 +23,10 @@ public class StreamService {
 
     @Value("${main.apiPath}")
     private String mainApiPath;
+    @Value("${server.address}")
+    private String serverAddress;
+    @Value("${server.port}")
+    private String serverPort;
 
     @Autowired
     public StreamService(ProcessRepository processRepository, ProcessService processService, StreamInfoRepository streamInfoRepository) {
@@ -85,7 +89,7 @@ public class StreamService {
                 "-segment_list_type",
                 "m3u8",
                 "-progress",
-                "",
+                "http://" + serverAddress + ":" + serverPort + "/streams/update?stream_id=" + streamId,
                 "-hls_flags",
                 "delete_segments",
                 "-segment_list",

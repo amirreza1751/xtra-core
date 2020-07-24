@@ -15,6 +15,7 @@ import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.file.Files;
+import java.util.Optional;
 import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -81,7 +82,8 @@ public class StreamingController {
     @PostMapping("update")
     public void updateProgress(@RequestParam Long stream_id, InputStream dataStream) {
         Scanner s = new Scanner(dataStream).useDelimiter("\\s");
-        StreamInfo streamInfo = new StreamInfo(stream_id);
+//        StreamInfo streamInfo = new StreamInfo(stream_id);
+        StreamInfo streamInfo = streamInfoRepository.findByStreamId(stream_id);
         while (s.hasNext()) {
             var property = s.nextLine();
             var splited = property.split("=");
