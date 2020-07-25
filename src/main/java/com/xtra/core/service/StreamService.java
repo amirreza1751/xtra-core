@@ -1,26 +1,27 @@
 package com.xtra.core.service;
 
 import com.xtra.core.model.Process;
+import com.xtra.core.model.ProgressInfo;
 import com.xtra.core.model.Stream;
 import com.xtra.core.model.StreamInfo;
 import com.xtra.core.repository.ProcessRepository;
+import com.xtra.core.repository.ProgressInfoRepository;
 import com.xtra.core.repository.StreamInfoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.File;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 
 @Service
 public class StreamService {
     private final ProcessRepository processRepository;
     private final ProcessService processService;
     private final StreamInfoRepository streamInfoRepository;
+    private final ProgressInfoRepository progressInfoRepository;
 
     @Value("${main.apiPath}")
     private String mainApiPath;
@@ -30,10 +31,11 @@ public class StreamService {
     private String serverPort;
 
     @Autowired
-    public StreamService(ProcessRepository processRepository, ProcessService processService, StreamInfoRepository streamInfoRepository) {
+    public StreamService(ProcessRepository processRepository, ProcessService processService, StreamInfoRepository streamInfoRepository, ProgressInfoRepository progressInfoRepository) {
         this.processRepository = processRepository;
         this.processService = processService;
         this.streamInfoRepository = streamInfoRepository;
+        this.progressInfoRepository = progressInfoRepository;
     }
 
     public boolean startStream(Long streamId) {
@@ -122,6 +124,16 @@ public class StreamService {
             var pid = process.get().getProcessId().getPid();
             processService.stopProcess(pid);
             processRepository.deleteByProcessIdStreamId(streamId);
+
+            Optional<ProgressInfo> progressInfo = progressInfoRepository.findByStreamId(streamId);
+            if (progressInfo.isPresent()){
+                progressInfoRepository.deleteById(streamId);
+            }
+            Optional<StreamInfo> streamInfo = streamInfoRepository.findByStreamId(streamId);
+            if (streamInfo.isPresent()){
+                streamInfoRepository.deleteById(streamId);
+            }
+
         } else {
             return false;
         }
