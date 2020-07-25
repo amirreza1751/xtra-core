@@ -9,7 +9,7 @@ import javax.persistence.Id;
 @Data
 public class ProgressInfo {
     @Id
-    private Long stream_id;
+    private Long streamId;
     private String speed;
     private String frameRate;
     private String bitrate;
@@ -18,7 +18,7 @@ public class ProgressInfo {
 
     }
 
-    public ProgressInfo(Long stream_id) {
-        this.stream_id = stream_id;
+    public ProgressInfo(Long streamId) {
+        this.streamId = streamId;
     }
 }
