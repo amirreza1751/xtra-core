@@ -111,7 +111,8 @@ public class StreamingController {
         HttpHeaders responseHeaders = new HttpHeaders();
         if (lineResponse.getStatusCode() != HttpStatus.ACCEPTED)
             return lineResponse;
-        else {
+        else
+            {
             URL url = new URL("http://vod.test/hls/" + stream_id + ".json/master.m3u8");
             HttpURLConnection con = (HttpURLConnection) url.openConnection();
             con.setRequestMethod("GET");
@@ -141,7 +142,7 @@ public class StreamingController {
 
     }
 
-    @GetMapping("vod/json_handler/{file_name}")
+    @GetMapping("vod/json_handler/hls/{file_name}")
     public ResponseEntity<String> jsonHandler(@PathVariable String file_name) throws IOException {
         HttpHeaders responseHeaders = new HttpHeaders();
         ResponseEntity<String> response;
