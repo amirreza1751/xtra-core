@@ -104,15 +104,15 @@ public class StreamingController {
         }
     }
 
-    @GetMapping("vod")
+    @GetMapping("vod/{line_id}/{stream_id}")
     public @ResponseBody
-    ResponseEntity<String> getVodPlaylist(@RequestParam String line_id, @RequestParam String stream_id) throws IOException {
+    ResponseEntity<String> getVodPlaylist(@PathVariable String line_id, @PathVariable String stream_id) throws IOException {
         ResponseEntity<String> lineResponse = lineService.authorizeLine(Integer.parseInt(stream_id), Integer.parseInt(line_id));
         HttpHeaders responseHeaders = new HttpHeaders();
         if (lineResponse.getStatusCode() != HttpStatus.ACCEPTED)
             return lineResponse;
         else {
-            URL url = new URL("http://vod.test/hls/" + stream_id + "/index.m3u8");
+            URL url = new URL("http://vod.test/hls/" + stream_id + ".json/master.m3u8");
             HttpURLConnection con = (HttpURLConnection) url.openConnection();
             con.setRequestMethod("GET");
             con.setConnectTimeout(5000);
