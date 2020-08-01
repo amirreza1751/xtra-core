@@ -141,6 +141,30 @@ public class StreamingController {
 
     }
 
+    @GetMapping("vod/json_handler/{file_name}")
+    public ResponseEntity<String> jsonHandler(@PathVariable String file_name) throws IOException {
+        HttpHeaders responseHeaders = new HttpHeaders();
+        ResponseEntity<String> response;
+        File file = new File("");
+        String json_file = "";
+        try {
+             file = ResourceUtils.getFile(System.getProperty("user.home") + "/vod/" + file_name);
+             json_file = new String(Files.readAllBytes(file.toPath()));
+        }
+        catch (Exception e){
+            System.out.println(e.getMessage());
+        }
+
+        response = ResponseEntity.ok()
+                .headers(responseHeaders).contentType(MediaType.APPLICATION_JSON)
+                .headers(responseHeaders).contentLength(Long.parseLong(String.valueOf(json_file.length())))
+                .headers(responseHeaders).cacheControl(CacheControl.noCache())
+                .headers(responseHeaders).cacheControl(CacheControl.noStore())
+                .header("Content-Disposition", "inline; filename=" + "\"" + file.getName() + "\"")
+                .body(json_file);
+        return  response;
+    }
+
     @GetMapping("vod/auth")
     public ResponseEntity<String> vodAuth(@RequestParam String line_id, @RequestParam String stream_id) {
         ResponseEntity<String> lineResponse = lineService.authorizeLine(Integer.parseInt(stream_id), Integer.parseInt(line_id));
