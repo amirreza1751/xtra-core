@@ -1,9 +1,7 @@
 package com.xtra.core.controller;
 
 import com.xtra.core.model.ProgressInfo;
-import com.xtra.core.model.StreamInfo;
 import com.xtra.core.repository.ProgressInfoRepository;
-import com.xtra.core.repository.StreamInfoRepository;
 import com.xtra.core.service.LineService;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -17,7 +15,6 @@ import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.file.Files;
-import java.util.Optional;
 import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -113,7 +110,7 @@ public class StreamingController {
             return lineResponse;
         else
             {
-            URL url = new URL("http://vod.test/hls/" + stream_id + ".json/master.m3u8");
+            URL url = new URL("http://"+serverAddress + localServerPort+"/hls/" + stream_id + ".json/master.m3u8");
             HttpURLConnection con = (HttpURLConnection) url.openConnection();
             con.setRequestMethod("GET");
             con.setConnectTimeout(5000);
@@ -175,5 +172,4 @@ public class StreamingController {
             return new ResponseEntity<>("Play", HttpStatus.OK);
         }
     }
-
 }
