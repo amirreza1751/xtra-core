@@ -15,7 +15,7 @@ public class Line extends User {
     private boolean isReStreamer = false;
     private boolean isTrial;
     private boolean isBlocked = false;
-    private boolean isAdminBlocked = false;
+    private boolean isBanned = false;
     private boolean isIspLocked = false;
     private boolean isStalker;
     private String notes;

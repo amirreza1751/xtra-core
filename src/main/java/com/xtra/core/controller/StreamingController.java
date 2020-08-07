@@ -1,8 +1,12 @@
 package com.xtra.core.controller;
 
+import com.xtra.core.model.LineActivity;
+import com.xtra.core.model.LineStatus;
 import com.xtra.core.model.ProgressInfo;
+import com.xtra.core.repository.LineActivityRepository;
 import com.xtra.core.repository.ProgressInfoRepository;
 import com.xtra.core.service.LineService;
+import com.xtra.core.service.StreamService;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,10 +15,12 @@ import org.springframework.http.*;
 import org.springframework.util.ResourceUtils;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.file.Files;
+import java.time.LocalDateTime;
 import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -22,7 +28,9 @@ import java.util.regex.Pattern;
 @RestController
 public class StreamingController {
     private final LineService lineService;
+    private final StreamService streamService;
     private final ProgressInfoRepository progressInfoRepository;
+    private final LineActivityRepository lineActivityRepository;
 
     @Value("${nginx.port}")
     private String localServerPort;
@@ -30,23 +38,51 @@ public class StreamingController {
     private String serverAddress;
 
     @Autowired
-    public StreamingController(LineService lineService, ProgressInfoRepository progressInfoRepository) {
+    public StreamingController(LineService lineService, ProgressInfoRepository progressInfoRepository, LineActivityRepository lineActivityRepository, StreamService streamService) {
         this.lineService = lineService;
         this.progressInfoRepository = progressInfoRepository;
+        this.lineActivityRepository = lineActivityRepository;
+        this.streamService = streamService;
     }
 
     @GetMapping("/streams")
     public @ResponseBody
-    ResponseEntity<String> GetPlaylist(@RequestParam String line_id, @RequestParam String stream_id
-            , @RequestParam String extension) throws IOException {
+    ResponseEntity<String> GetPlaylist(@RequestParam("line_token") String lineToken, @RequestParam("stream_token") String streamToken
+            , @RequestParam String extension , HttpServletRequest request) throws IOException {
         //@todo decrypt stream_id and user_id
         HttpHeaders responseHeaders = new HttpHeaders();
         ResponseEntity<String> response;
-        ResponseEntity<String> lineResponse = lineService.authorizeLine(Integer.parseInt(stream_id), Integer.parseInt(line_id));
-        if (false) {//@todo restore line auth
-            return lineResponse;
+        LineStatus status = lineService.authorizeLine(lineToken, streamToken);
+        if (status != LineStatus.OK) {
+            if (status == LineStatus.NOT_FOUND)
+                response = new ResponseEntity<>("Line Not found", HttpStatus.NOT_FOUND);
+            else if (status == LineStatus.BANNED)
+                response =  new ResponseEntity<>("Line is Banned", HttpStatus.FORBIDDEN);
+            else if (status == LineStatus.BLOCKED)
+                response =  new ResponseEntity<>("Line is Blocked", HttpStatus.FORBIDDEN);
+            else if (status == LineStatus.EXPIRED)
+                response =  new ResponseEntity<>("Line is Expired, Please Extend Your Line", HttpStatus.FORBIDDEN);
+            else if (status == LineStatus.MAX_CONNECTION_REACHED)
+                response =  new ResponseEntity<>("You Have Used All of your connection capacity", HttpStatus.FORBIDDEN);
+            else if (status == LineStatus.NO_ACCESS_TO_STREAM)
+                response =  new ResponseEntity<>("Cannot Access Stream", HttpStatus.FORBIDDEN);
+            else
+                response =  new ResponseEntity<>("Unknown Error", HttpStatus.FORBIDDEN);
         } else {
-            File file = ResourceUtils.getFile(System.getProperty("user.home") + "/streams/" + stream_id + "_." + extension);
+            Long lineId = lineService.getLineId(lineToken);
+            Long streamId = streamService.getStreamId(lineToken);
+            if (lineId == null) {
+                return new ResponseEntity<>("Unknown Error", HttpStatus.FORBIDDEN);
+            }
+
+            LineActivity activity = new LineActivity();
+            activity.setLineId(lineId);
+            activity.setStreamId(streamId);
+            activity.setStartDate(LocalDateTime.now());
+            activity.setUserIp(request.getRemoteAddr());
+            lineActivityRepository.save(activity);
+
+            File file = ResourceUtils.getFile(System.getProperty("user.home") + "/streams/" + streamId + "_." + extension);
             String playlist = new String(Files.readAllBytes(file.toPath()));
 
             Pattern pattern = Pattern.compile("(.*)\\.ts");
@@ -54,7 +90,7 @@ public class StreamingController {
 
             while (match.find()) {
                 String link = match.group(0);
-                playlist = playlist.replace(match.group(0), String.format(serverAddress + ":" + localServerPort + "/hls/%s/%s/%s", line_id, stream_id, link.split("_")[1]));
+                playlist = playlist.replace(match.group(0), String.format(serverAddress + ":" + localServerPort + "/hls/%s/%s/%s", lineToken, streamToken, link.split("_")[1]));
             }
             response = ResponseEntity.ok()
                     .headers(responseHeaders).contentType(MediaType.valueOf("application/x-mpegurl"))
@@ -108,9 +144,8 @@ public class StreamingController {
         HttpHeaders responseHeaders = new HttpHeaders();
         if (lineResponse.getStatusCode() != HttpStatus.ACCEPTED)
             return lineResponse;
-        else
-            {
-            URL url = new URL("http://"+serverAddress + localServerPort+"/hls/" + stream_id + ".json/master.m3u8");
+        else {
+            URL url = new URL("http://" + serverAddress + localServerPort + "/hls/" + stream_id + ".json/master.m3u8");
             HttpURLConnection con = (HttpURLConnection) url.openConnection();
             con.setRequestMethod("GET");
             con.setConnectTimeout(5000);
@@ -146,10 +181,9 @@ public class StreamingController {
         File file = new File("");
         String json_file = "";
         try {
-             file = ResourceUtils.getFile(System.getProperty("user.home") + "/vod/" + file_name);
-             json_file = new String(Files.readAllBytes(file.toPath()));
-        }
-        catch (Exception e){
+            file = ResourceUtils.getFile(System.getProperty("user.home") + "/vod/" + file_name);
+            json_file = new String(Files.readAllBytes(file.toPath()));
+        } catch (Exception e) {
             System.out.println(e.getMessage());
         }
 
@@ -160,7 +194,7 @@ public class StreamingController {
                 .headers(responseHeaders).cacheControl(CacheControl.noStore())
                 .header("Content-Disposition", "inline; filename=" + "\"" + file.getName() + "\"")
                 .body(json_file);
-        return  response;
+        return response;
     }
 
     @GetMapping("vod/auth")

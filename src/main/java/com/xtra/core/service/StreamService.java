@@ -155,4 +155,13 @@ public class StreamService {
             return null;
         }
     }
+
+    public Long getStreamId(String streamToken){
+        try {
+            return new RestTemplate().getForObject(mainApiPath + "/streams/get_id" + streamToken, Long.class);
+        } catch (RestClientException e) {
+            //@todo log exception
+            return null;
+        }
+    }
 }
