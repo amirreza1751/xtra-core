@@ -5,12 +5,14 @@ import org.apache.commons.io.FilenameUtils;
 import org.springframework.stereotype.Service;
 
 import java.io.BufferedReader;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.Collectors;
+import org.mozilla.universalchardet.UniversalDetector;
 
 @Service
 public class VodService {
@@ -47,17 +49,19 @@ public class VodService {
          return output_video;
      }
 
-     public String add_subtitle(String video_path, List<Subtitle> subtitles){
+     public String add_subtitle(String video_path, List<Subtitle> subtitles) throws FileNotFoundException {
+        UniversalDetector detector = new UniversalDetector(null);
         StringBuilder sub_info = new StringBuilder();
         StringBuilder map_option = new StringBuilder();
         StringBuilder sub_label = new StringBuilder();
-        for (int i=0; i<subtitles.size(); i++){
-            sub_info.append(" -i").append(subtitles.get(i).getLocation()).append(" ");
+        String encoding = "";
+        for (int i=0; i < subtitles.size(); i++){
+            sub_info.append("-sub_charenc \"").append(encoding).append("\"").append(" -i ").append(subtitles.get(i).getLocation()).append(" ");
         }
-         for (int i=0; i<=subtitles.size(); i++){
+         for (int i=0; i <= subtitles.size(); i++){
              map_option.append(" -map ").append(i).append(" ");
          }
-         for (int i=0; i<subtitles.size(); i++){
+         for (int i=0; i < subtitles.size(); i++){
              sub_label.append(" -metadata:s:s:").append(i).append(" language=").append(subtitles.get(i).getLanguage()).append(" ");
          }
 
