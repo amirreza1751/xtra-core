@@ -47,21 +47,18 @@ public class VodService {
     }
 
     public String add_subtitle(String video_path, List<Subtitle> subtitles) throws IOException {
-
         StringBuilder sub_info = new StringBuilder();
         StringBuilder map_option = new StringBuilder();
         StringBuilder sub_label = new StringBuilder();
         String encoding = "";
         for (int i=0; i < subtitles.size(); i++){
-
-            sub_info.append("-sub_charenc \"").append(encoding).append("\"").append(" -i ").append(subtitles.get(i).getLocation()).append(" ");
+            encoding = this.get_file_encoding(subtitles.get(i));
+            if (encoding.equals("unknown")) continue;
+            sub_info.append(" -sub_charenc \"").append(encoding).append("\"").append(" -i ").append(subtitles.get(i).getLocation()).append(" ");
+            map_option.append(" -map ").append(i).append(" ");
+            sub_label.append(" -metadata:s:s:").append(i).append(" language=").append(subtitles.get(i).getLanguage()).append(" ");
         }
-         for (int i=0; i <= subtitles.size(); i++){
-             map_option.append(" -map ").append(i).append(" ");
-         }
-         for (int i=0; i < subtitles.size(); i++){
-             sub_label.append(" -metadata:s:s:").append(i).append(" language=").append(subtitles.get(i).getLanguage()).append(" ");
-         }
+        map_option.append(" -map ").append(subtitles.size()).append(" "); // last map option needs to be added manually
 
          Path path = Paths.get(video_path);
          String file_directory = path.getParent().toString();
