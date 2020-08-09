@@ -54,7 +54,7 @@ public class StreamingController {
     @GetMapping("/streams")
     public @ResponseBody
     ResponseEntity<String> GetPlaylist(@RequestParam("line_token") String lineToken, @RequestParam("stream_token") String streamToken
-            , @RequestParam String extension, HttpServletRequest request) throws IOException {
+            , @RequestParam String extension,@RequestHeader("user_agent") String userAgent, HttpServletRequest request) throws IOException {
         //@todo decrypt stream_id and user_id
         HttpHeaders responseHeaders = new HttpHeaders();
         ResponseEntity<String> response;
@@ -76,17 +76,24 @@ public class StreamingController {
                 response = new ResponseEntity<>("Unknown Error", HttpStatus.FORBIDDEN);
         } else {
             Long lineId = lineService.getLineId(lineToken);
-            Long streamId = streamService.getStreamId(lineToken);
+            Long streamId = streamService.getStreamId(streamToken);
             if (lineId == null) {
                 return new ResponseEntity<>("Unknown Error", HttpStatus.FORBIDDEN);
             }
 
-            LineActivity activity = new LineActivity();
-            activity.setLineId(lineId);
-            activity.setStreamId(streamId);
+            LineActivity activity;
+            var existingActivity = lineActivityRepository.findByLineIdAndUserIp(lineId, request.getRemoteAddr());
+            if (existingActivity.isPresent() && !existingActivity.get().isHlsEnded()) {
+                activity = existingActivity.get();
+            } else {
+                activity = new LineActivity();
+                activity.setLineId(lineId);
+                activity.setStreamId(streamId);
+            }
             activity.setStartDate(LocalDateTime.now());
             activity.setUserIp(request.getRemoteAddr());
             activity.setLastRead(LocalDateTime.now());
+            activity.setUserAgent(userAgent);
             lineActivityRepository.save(activity);
 
             File file = ResourceUtils.getFile(System.getProperty("user.home") + "/streams/" + streamId + "_." + extension);
@@ -112,15 +119,15 @@ public class StreamingController {
 
     @GetMapping("segment")
     public @ResponseBody
-    ResponseEntity<byte[]> getSegment(@RequestParam("line_id") String lineToken, @RequestParam("stream_id") String streamToken
-            , @RequestParam String extension, @RequestParam String segment, HttpServletRequest request) throws IOException {
+    ResponseEntity<byte[]> getSegment(@RequestParam("line_token") String lineToken, @RequestParam("stream_token") String streamToken
+            , @RequestParam String extension, @RequestParam String segment, @RequestHeader("user_agent") String userAgent, HttpServletRequest request) throws IOException {
         LineStatus status = lineService.authorizeLineForStream(lineToken, streamToken);
         Long streamId = streamService.getStreamId(streamToken);
         Long lineId = lineService.getLineId(lineToken);
         if (status == LineStatus.OK) {
             Optional<LineActivity> existingActivity = lineActivityRepository.findByLineIdAndUserIp(lineId, request.getRemoteAddr());
             LineActivity activity;
-            if (existingActivity.isPresent()) {
+            if (existingActivity.isPresent() && !existingActivity.get().isHlsEnded()) {
                 activity = existingActivity.get();
                 activity.setStreamId(streamId);
             } else {
@@ -129,7 +136,10 @@ public class StreamingController {
                 activity.setStreamId(streamId);
                 activity.setUserIp(request.getRemoteAddr());
             }
+            activity.setUserAgent(userAgent);
             activity.setLastRead(LocalDateTime.now());
+            lineActivityRepository.save(activity);
+
             HttpHeaders responseHeaders = new HttpHeaders();
             return ResponseEntity.ok()
                     .headers(responseHeaders).contentType(MediaType.valueOf("video/mp2t"))

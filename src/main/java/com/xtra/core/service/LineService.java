@@ -14,8 +14,9 @@ public class LineService {
     public LineStatus authorizeLineForStream(String lineToken, String streamToken) {
         RestTemplate restTemplate = new RestTemplate();
         try {
-            return restTemplate.getForObject(mainApiPath + "/api/lines/stream_auth/" + lineToken + "/" + streamToken, LineStatus.class);
+            return restTemplate.getForObject(mainApiPath + "/lines/stream_auth/" + lineToken + "/" + streamToken, LineStatus.class);
         } catch (HttpClientErrorException exception) {
+            System.out.println(exception.getMessage());
             return LineStatus.ERROR;
         }
     }
@@ -23,8 +24,9 @@ public class LineService {
     public Long getLineId(String lineToken){
         RestTemplate restTemplate = new RestTemplate();
         try {
-            return restTemplate.getForObject(mainApiPath + "/api/lines/get_id/" + lineToken, Long.class);
+            return restTemplate.getForObject(mainApiPath + "/lines/get_id/" + lineToken, Long.class);
         } catch (HttpClientErrorException exception) {
+            System.out.println(exception.getMessage());
             return null;
         }
     }
@@ -32,8 +34,9 @@ public class LineService {
     public LineStatus authorizeLineForVod(String lineToken, String streamToken) {
         RestTemplate restTemplate = new RestTemplate();
         try {
-            return restTemplate.getForObject(mainApiPath + "/api/lines/vod_auth/" + lineToken + "/" + streamToken, LineStatus.class);
+            return restTemplate.getForObject(mainApiPath + "/lines/vod_auth/" + lineToken + "/" + streamToken, LineStatus.class);
         } catch (HttpClientErrorException exception) {
+            System.out.println(exception.getMessage());
             return LineStatus.ERROR;
         }
     }

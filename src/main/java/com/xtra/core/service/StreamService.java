@@ -158,9 +158,10 @@ public class StreamService {
 
     public Long getStreamId(String streamToken){
         try {
-            return new RestTemplate().getForObject(mainApiPath + "/streams/get_id" + streamToken, Long.class);
+            return new RestTemplate().getForObject(mainApiPath + "/streams/get_id/" + streamToken, Long.class);
         } catch (RestClientException e) {
             //@todo log exception
+            System.out.println(e.getMessage());
             return null;
         }
     }

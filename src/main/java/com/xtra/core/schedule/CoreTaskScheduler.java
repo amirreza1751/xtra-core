@@ -85,6 +85,8 @@ public class CoreTaskScheduler {
         List<StreamInfo> streamInfoList = streamInfoRepository.findAll();
         List<ProgressInfo> progressInfoList = progressInfoRepository.findAll();
 
+        if (streamInfoList.isEmpty() && progressInfoList.isEmpty())
+            return;
         Map<String, Object> infos = new HashMap<>();
         infos.put("streamInfoList", streamInfoList);
         infos.put("progressInfoList", progressInfoList);
@@ -94,6 +96,10 @@ public class CoreTaskScheduler {
         } catch (RestClientException e) {
             System.out.println(e.getMessage());
         }
+    }
+
+    public void sendStreamActivity() {
+
     }
 
 }
