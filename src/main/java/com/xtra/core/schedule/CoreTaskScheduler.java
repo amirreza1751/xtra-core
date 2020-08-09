@@ -80,7 +80,7 @@ public class CoreTaskScheduler {
         return info;
     }
 
-//    @Scheduled(fixedDelay = 2000)
+    @Scheduled(fixedDelay = 2000)
     public void sendStreamsInfo() {
         List<StreamInfo> streamInfoList = streamInfoRepository.findAll();
         List<ProgressInfo> progressInfoList = progressInfoRepository.findAll();

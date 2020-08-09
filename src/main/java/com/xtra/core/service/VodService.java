@@ -126,24 +126,4 @@ public class VodService {
 
     }
 
-    public List<Subtitle> remove_unfit_subtitles(List<Subtitle> subtitles) throws IOException {
-//        List<Integer> unfit_indexes = new ArrayList<>();
-//        for (int i=0; i<subtitles.size(); i++){
-//            if (this.get_file_encoding(subtitles.get(i)).equals("unknown")) unfit_indexes.add(i);
-//        }
-//        for (int i=0; i<unfit_indexes.size(); i++){
-//            subtitles.remove(i);
-//        }
-//        return subtitles;
-//        for (Iterator<Subtitle> iterator = subtitles.iterator(); iterator.hasNext();){
-//            Subtitle subtitle = iterator.next();
-//            if (this.get_file_encoding(subtitle).equals("unknown")){
-//                iterator.remove();
-//                System.out.println(subtitle.getLanguage() + " removed.");
-//            }
-//
-//        }
-        subtitles.removeIf(subtitle -> subtitle.getLanguage().equals("unknown"));
-        return subtitles;
-    }
 }
