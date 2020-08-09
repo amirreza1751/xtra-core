@@ -146,12 +146,23 @@ public class VodService {
                 output_video,
                 "-y"
         ));
+
+        ArrayList<String> audio_info = new ArrayList<>();
+        ArrayList<String> map_option = new ArrayList<>();
+        for (int i = 0; i < audios.size(); i++){
+            audio_info.addAll(Arrays.asList("-i", audios.get(i).getLocation()));
+            map_option.addAll(Arrays.asList("-map", Integer.toString(i)));
+        }
+        map_option.addAll(Arrays.asList("-map", Integer.toString(audios.size())));
+        args.addAll(args.indexOf("-c"), audio_info);
+        args.addAll(args.indexOf("mov_text"), map_option);
+
         Process proc;
         try {
             proc = new ProcessBuilder(args).start();
             proc.waitFor();
         } catch (IOException | InterruptedException e) {
-            return "Add subtitles failed.";
+            return "Add audios failed.";
         }
         return output_video;
     }
