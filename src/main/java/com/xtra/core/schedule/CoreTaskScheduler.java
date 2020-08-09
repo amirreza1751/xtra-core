@@ -2,10 +2,9 @@ package com.xtra.core.schedule;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.xtra.core.model.*;
 import com.xtra.core.model.Process;
-import com.xtra.core.model.ProgressInfo;
-import com.xtra.core.model.Stream;
-import com.xtra.core.model.StreamInfo;
+import com.xtra.core.repository.LineActivityRepository;
 import com.xtra.core.repository.ProcessRepository;
 import com.xtra.core.repository.ProgressInfoRepository;
 import com.xtra.core.repository.StreamInfoRepository;
@@ -17,7 +16,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
+import javax.transaction.Transactional;
 import java.io.File;
+import java.time.LocalDateTime;
 import java.util.*;
 
 @Component
@@ -26,16 +27,20 @@ public class CoreTaskScheduler {
     private final ProcessService processService;
     private final StreamInfoRepository streamInfoRepository;
     private final ProgressInfoRepository progressInfoRepository;
+    private final LineActivityRepository lineActivityRepository;
 
     @Value("${main.apiPath}")
     private String mainApiPath;
 
     @Autowired
-    public CoreTaskScheduler(ProcessRepository processRepository, ProcessService processService, StreamInfoRepository streamInfoRepository, ProgressInfoRepository progressInfoRepository) {
+    public CoreTaskScheduler(ProcessRepository processRepository, ProcessService processService,
+                             StreamInfoRepository streamInfoRepository, ProgressInfoRepository progressInfoRepository,
+                             LineActivityRepository lineActivityRepository) {
         this.processRepository = processRepository;
         this.processService = processService;
         this.streamInfoRepository = streamInfoRepository;
         this.progressInfoRepository = progressInfoRepository;
+        this.lineActivityRepository = lineActivityRepository;
     }
 
     @Scheduled(fixedDelay = 1000)
@@ -98,8 +103,25 @@ public class CoreTaskScheduler {
         }
     }
 
-    public void sendStreamActivity() {
+    @Scheduled(fixedDelay = 10000)
+    @Transactional
+    public void ifPlayStopped() {
+        List<LineActivity> lineActivities = lineActivityRepository.findAllByLastReadIsLessThanEqual(LocalDateTime.now().minusMinutes(1));
+        for (LineActivity activity : lineActivities) {
+            lineActivityRepository.deleteById(activity.getId());
+        }
+    }
 
+    @Scheduled(fixedDelay = 5000)
+    public void sendStreamActivity() {
+        List<LineActivity> lineActivities = lineActivityRepository.findAll();
+        if (lineActivities.isEmpty())
+            return;
+        try {
+            new RestTemplate().postForObject(mainApiPath + "/lines/updateLineActivities", lineActivities, Stream.class);
+        } catch (RestClientException e) {
+            System.out.println(e.getMessage());
+        }
     }
 
 }
