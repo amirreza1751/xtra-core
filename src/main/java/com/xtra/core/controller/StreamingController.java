@@ -26,6 +26,7 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.time.LocalDateTime;
+import java.util.Optional;
 import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -85,6 +86,7 @@ public class StreamingController {
             activity.setStreamId(streamId);
             activity.setStartDate(LocalDateTime.now());
             activity.setUserIp(request.getRemoteAddr());
+            activity.setLastRead(LocalDateTime.now());
             lineActivityRepository.save(activity);
 
             File file = ResourceUtils.getFile(System.getProperty("user.home") + "/streams/" + streamId + "_." + extension);
@@ -111,10 +113,23 @@ public class StreamingController {
     @GetMapping("segment")
     public @ResponseBody
     ResponseEntity<byte[]> getSegment(@RequestParam("line_id") String lineToken, @RequestParam("stream_id") String streamToken
-            , @RequestParam String extension, @RequestParam String segment) throws IOException {
+            , @RequestParam String extension, @RequestParam String segment, HttpServletRequest request) throws IOException {
         LineStatus status = lineService.authorizeLineForStream(lineToken, streamToken);
         Long streamId = streamService.getStreamId(streamToken);
+        Long lineId = lineService.getLineId(lineToken);
         if (status == LineStatus.OK) {
+            Optional<LineActivity> existingActivity = lineActivityRepository.findByLineIdAndUserIp(lineId, request.getRemoteAddr());
+            LineActivity activity;
+            if (existingActivity.isPresent()) {
+                activity = existingActivity.get();
+                activity.setStreamId(streamId);
+            } else {
+                activity = new LineActivity();
+                activity.setLineId(lineId);
+                activity.setStreamId(streamId);
+                activity.setUserIp(request.getRemoteAddr());
+            }
+            activity.setLastRead(LocalDateTime.now());
             HttpHeaders responseHeaders = new HttpHeaders();
             return ResponseEntity.ok()
                     .headers(responseHeaders).contentType(MediaType.valueOf("video/mp2t"))

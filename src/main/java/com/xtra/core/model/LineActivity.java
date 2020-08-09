@@ -19,6 +19,8 @@ public class LineActivity {
 
     private LocalDateTime startDate;
     private LocalDateTime endDate;
+    private LocalDateTime lastRead;
+
     private boolean hlsEnded;
     private String userIp;
     private String userAgent;

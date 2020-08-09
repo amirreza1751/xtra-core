@@ -6,5 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
 
 public interface LineActivityRepository extends JpaRepository<LineActivity, Long> {
-    Optional<LineActivity> getByLineId(Long lineId);
+    Optional<LineActivity> findByLineId(Long lineId);
+
+    Optional<LineActivity> findByLineIdAndUserIp(Long lineId, String userIp);
 }
