@@ -48,26 +48,26 @@ public class StreamingController {
     @GetMapping("/streams")
     public @ResponseBody
     ResponseEntity<String> GetPlaylist(@RequestParam("line_token") String lineToken, @RequestParam("stream_token") String streamToken
-            , @RequestParam String extension , HttpServletRequest request) throws IOException {
+            , @RequestParam String extension, HttpServletRequest request) throws IOException {
         //@todo decrypt stream_id and user_id
         HttpHeaders responseHeaders = new HttpHeaders();
         ResponseEntity<String> response;
-        LineStatus status = lineService.authorizeLine(lineToken, streamToken);
+        LineStatus status = lineService.authorizeLineForStream(lineToken, streamToken);
         if (status != LineStatus.OK) {
             if (status == LineStatus.NOT_FOUND)
                 response = new ResponseEntity<>("Line Not found", HttpStatus.NOT_FOUND);
             else if (status == LineStatus.BANNED)
-                response =  new ResponseEntity<>("Line is Banned", HttpStatus.FORBIDDEN);
+                response = new ResponseEntity<>("Line is Banned", HttpStatus.FORBIDDEN);
             else if (status == LineStatus.BLOCKED)
-                response =  new ResponseEntity<>("Line is Blocked", HttpStatus.FORBIDDEN);
+                response = new ResponseEntity<>("Line is Blocked", HttpStatus.FORBIDDEN);
             else if (status == LineStatus.EXPIRED)
-                response =  new ResponseEntity<>("Line is Expired, Please Extend Your Line", HttpStatus.FORBIDDEN);
+                response = new ResponseEntity<>("Line is Expired, Please Extend Your Line", HttpStatus.FORBIDDEN);
             else if (status == LineStatus.MAX_CONNECTION_REACHED)
-                response =  new ResponseEntity<>("You Have Used All of your connection capacity", HttpStatus.FORBIDDEN);
+                response = new ResponseEntity<>("You Have Used All of your connection capacity", HttpStatus.FORBIDDEN);
             else if (status == LineStatus.NO_ACCESS_TO_STREAM)
-                response =  new ResponseEntity<>("Cannot Access Stream", HttpStatus.FORBIDDEN);
+                response = new ResponseEntity<>("Cannot Access Stream", HttpStatus.FORBIDDEN);
             else
-                response =  new ResponseEntity<>("Unknown Error", HttpStatus.FORBIDDEN);
+                response = new ResponseEntity<>("Unknown Error", HttpStatus.FORBIDDEN);
         } else {
             Long lineId = lineService.getLineId(lineToken);
             Long streamId = streamService.getStreamId(lineToken);
@@ -105,12 +105,20 @@ public class StreamingController {
 
     @GetMapping("segment")
     public @ResponseBody
-    ResponseEntity<byte[]> PlaySegment(@RequestParam String line_id, @RequestParam String stream_id
+    ResponseEntity<byte[]> getSegment(@RequestParam("line_id") String lineToken, @RequestParam("stream_id") String streamToken
             , @RequestParam String extension, @RequestParam String segment) throws IOException {
-        HttpHeaders responseHeaders = new HttpHeaders();
-        return ResponseEntity.ok()
-                .headers(responseHeaders).contentType(MediaType.valueOf("video/mp2t"))
-                .body(IOUtils.toByteArray(FileUtils.openInputStream(new File(System.getProperty("user.home") + "/streams/" + stream_id + "_" + segment + "." + extension))));
+        LineStatus status = lineService.authorizeLineForStream(lineToken, streamToken);
+        Long streamId = streamService.getStreamId(streamToken);
+        if (status == LineStatus.OK) {
+            HttpHeaders responseHeaders = new HttpHeaders();
+            return ResponseEntity.ok()
+                    .headers(responseHeaders).contentType(MediaType.valueOf("video/mp2t"))
+                    .body(IOUtils.toByteArray(FileUtils.openInputStream(new File(System.getProperty("user.home") + "/streams/" + streamId + "_" + segment + "." + extension))));
+        } else {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
+        }
+
+
     }
 
     //@todo allow only from localhost
@@ -137,15 +145,16 @@ public class StreamingController {
         }
     }
 
-    @GetMapping("vod/{line_id}/{stream_id}")
+    @GetMapping("vod/{line_token}/{stream_token}")
     public @ResponseBody
-    ResponseEntity<String> getVodPlaylist(@PathVariable String line_id, @PathVariable String stream_id) throws IOException {
-        ResponseEntity<String> lineResponse = lineService.authorizeLine(Integer.parseInt(stream_id), Integer.parseInt(line_id));
+    ResponseEntity<String> getVodPlaylist(@PathVariable("line_token") String lineToken, @PathVariable("stream_token") String streamToken) throws IOException {
+        LineStatus lineStatus = lineService.authorizeLineForVod(lineToken, streamToken);
         HttpHeaders responseHeaders = new HttpHeaders();
-        if (lineResponse.getStatusCode() != HttpStatus.ACCEPTED)
-            return lineResponse;
+        if (lineStatus != LineStatus.OK)
+            return new ResponseEntity<>("forbidden", HttpStatus.FORBIDDEN);
         else {
-            URL url = new URL("http://" + serverAddress + localServerPort + "/hls/" + stream_id + ".json/master.m3u8");
+            Long streamId = streamService.getStreamId(streamToken);
+            URL url = new URL("http://" + serverAddress + localServerPort + "/hls/" + streamId + ".json/master.m3u8");
             HttpURLConnection con = (HttpURLConnection) url.openConnection();
             con.setRequestMethod("GET");
             con.setConnectTimeout(5000);
@@ -198,10 +207,10 @@ public class StreamingController {
     }
 
     @GetMapping("vod/auth")
-    public ResponseEntity<String> vodAuth(@RequestParam String line_id, @RequestParam String stream_id) {
-        ResponseEntity<String> lineResponse = lineService.authorizeLine(Integer.parseInt(stream_id), Integer.parseInt(line_id));
-        if (lineResponse.getStatusCode() != HttpStatus.ACCEPTED)
-            return lineResponse;
+    public ResponseEntity<String> vodAuth(@RequestParam String lineToken, @RequestParam String streamToken) {
+        LineStatus lineStatus = lineService.authorizeLineForVod(lineToken, streamToken);
+        if (lineStatus != LineStatus.OK)
+            return new ResponseEntity<>("forbidden", HttpStatus.FORBIDDEN);
         else {
             return new ResponseEntity<>("Play", HttpStatus.OK);
         }

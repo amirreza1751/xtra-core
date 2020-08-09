@@ -2,6 +2,7 @@ package com.xtra.core.service;
 
 import com.xtra.core.model.LineStatus;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
@@ -11,10 +12,10 @@ public class LineService {
     @Value("${main.apiPath}")
     private String mainApiPath;
 
-    public LineStatus authorizeLine(String lineToken, String streamToken) {
+    public LineStatus authorizeLineForStream(String lineToken, String streamToken) {
         RestTemplate restTemplate = new RestTemplate();
         try {
-            return restTemplate.getForObject(mainApiPath + "/api/lines/authorize/" + lineToken + "/" + streamToken, LineStatus.class);
+            return restTemplate.getForObject(mainApiPath + "/api/lines/stream_auth/" + lineToken + "/" + streamToken, LineStatus.class);
         } catch (HttpClientErrorException exception) {
             return LineStatus.ERROR;
         }
@@ -26,6 +27,15 @@ public class LineService {
             return restTemplate.getForObject(mainApiPath + "/api/lines/get_id/" + lineToken, Long.class);
         } catch (HttpClientErrorException exception) {
             return null;
+        }
+    }
+
+    public LineStatus authorizeLineForVod(String lineToken, String streamToken) {
+        RestTemplate restTemplate = new RestTemplate();
+        try {
+            return restTemplate.getForObject(mainApiPath + "/api/lines/vod_auth/" + lineToken + "/" + streamToken, LineStatus.class);
+        } catch (HttpClientErrorException exception) {
+            return LineStatus.ERROR;
         }
     }
 }
