@@ -54,7 +54,7 @@ public class StreamingController {
     @GetMapping("/streams")
     public @ResponseBody
     ResponseEntity<String> GetPlaylist(@RequestParam("line_token") String lineToken, @RequestParam("stream_token") String streamToken
-            , @RequestParam String extension,@RequestHeader("user_agent") String userAgent, HttpServletRequest request) throws IOException {
+            , @RequestParam String extension,@RequestHeader(value = "HTTP_USER_AGENT",defaultValue = "") String userAgent, HttpServletRequest request) throws IOException {
         //@todo decrypt stream_id and user_id
         HttpHeaders responseHeaders = new HttpHeaders();
         ResponseEntity<String> response;
@@ -120,7 +120,7 @@ public class StreamingController {
     @GetMapping("segment")
     public @ResponseBody
     ResponseEntity<byte[]> getSegment(@RequestParam("line_token") String lineToken, @RequestParam("stream_token") String streamToken
-            , @RequestParam String extension, @RequestParam String segment, @RequestHeader("user_agent") String userAgent, HttpServletRequest request) throws IOException {
+            , @RequestParam String extension, @RequestParam String segment, @RequestHeader(value = "HTTP_USER_AGENT",defaultValue = "") String userAgent, HttpServletRequest request) throws IOException {
         LineStatus status = lineService.authorizeLineForStream(lineToken, streamToken);
         Long streamId = streamService.getStreamId(streamToken);
         Long lineId = lineService.getLineId(lineToken);
