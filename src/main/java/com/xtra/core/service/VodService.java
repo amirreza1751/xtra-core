@@ -1,5 +1,6 @@
 package com.xtra.core.service;
 
+import com.xtra.core.model.Audio;
 import com.xtra.core.model.Subtitle;
 import org.apache.commons.io.FilenameUtils;
 import org.springframework.stereotype.Service;
@@ -55,7 +56,6 @@ public class VodService {
         String file_name_without_extension = FilenameUtils.removeExtension(String.valueOf(path.getFileName()));
         String output_video = file_directory + "/" + file_name_without_extension + "_sub.mp4";
 
-        String encoding = "";
         subtitles.removeIf(subtitle -> {
             try {
                 return this.get_file_encoding(subtitle).equals("unknown");
@@ -81,9 +81,10 @@ public class VodService {
         ArrayList<String> map_option = new ArrayList<>();
         ArrayList<String> sub_label = new ArrayList<>();
 //        System.out.println("final subs = " + subtitles.toString());
-        for (int i=0; i < subtitles.size(); i++){
+        String encoding;
+        for (int i = 0; i < subtitles.size(); i++){
             encoding = this.get_file_encoding(subtitles.get(i));
-            System.out.println("i = " + i);
+//            System.out.println("i = " + i);
             sub_info.addAll(Arrays.asList("-sub_charenc", "\""+encoding+"\"", "-i", subtitles.get(i).getLocation()));
             map_option.addAll(Arrays.asList("-map", Integer.toString(i)));
             sub_label.addAll(Arrays.asList("-metadata:s:s:"+ i, "language="+subtitles.get(i).getLanguage()));
@@ -124,6 +125,35 @@ public class VodService {
             return "unknown";
         }
 
+    }
+
+    public String add_audio(String video_path, List<Audio> audios){
+        Path path = Paths.get(video_path);
+        String file_directory = path.getParent().toString();
+        String file_name_without_extension = FilenameUtils.removeExtension(String.valueOf(path.getFileName()));
+        String output_video = file_directory + "/" + file_name_without_extension + "_audio_added.mp4";
+        ArrayList<String> args = new ArrayList<>(Arrays.asList(
+                "ffmpeg",
+                "-i",
+                video_path,
+                //input audios
+                "-c",
+                "copy",
+                "-c:s",
+                "mov_text",
+                // map option
+                "mov_text",
+                output_video,
+                "-y"
+        ));
+        Process proc;
+        try {
+            proc = new ProcessBuilder(args).start();
+            proc.waitFor();
+        } catch (IOException | InterruptedException e) {
+            return "Add subtitles failed.";
+        }
+        return output_video;
     }
 
 }
