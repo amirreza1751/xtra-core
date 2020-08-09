@@ -7,6 +7,9 @@ import org.springframework.stereotype.Service;
 import java.io.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.mozilla.universalchardet.UniversalDetector;
@@ -24,7 +27,7 @@ public class VodService {
          Path path = Paths.get(video_path);
          String file_directory = path.getParent().toString();
          String file_name_without_extension = FilenameUtils.removeExtension(String.valueOf(path.getFileName()));
-         String output_video = file_directory + file_name_without_extension + "_encoded.mp4";
+         String output_video = file_directory + "/" + file_name_without_extension + "_encoded.mp4";
          String[] args = new String[]{
                  "ffmpeg",
                  "-i",
@@ -47,32 +50,49 @@ public class VodService {
     }
 
     public String add_subtitle(String video_path, List<Subtitle> subtitles) throws IOException {
-        StringBuilder sub_info = new StringBuilder();
-        StringBuilder map_option = new StringBuilder();
-        StringBuilder sub_label = new StringBuilder();
+        Path path = Paths.get(video_path);
+        String file_directory = path.getParent().toString();
+        String file_name_without_extension = FilenameUtils.removeExtension(String.valueOf(path.getFileName()));
+        String output_video = file_directory + "/" + file_name_without_extension + "_sub.mp4";
+
         String encoding = "";
+        subtitles.removeIf(subtitle -> {
+            try {
+                return this.get_file_encoding(subtitle).equals("unknown");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return false;
+        });
+        ArrayList<String> args = new ArrayList<>(Arrays.asList(
+                "ffmpeg",
+                "-i",
+                video_path,
+                "-c:v",
+                "copy",
+                "-c:a",
+                "copy",
+                "-c:s",
+                "mov_text",
+                output_video,
+                "-y"
+                ));
+        ArrayList<String> sub_info = new ArrayList<>();
+        ArrayList<String> map_option = new ArrayList<>();
+        ArrayList<String> sub_label = new ArrayList<>();
+//        System.out.println("final subs = " + subtitles.toString());
         for (int i=0; i < subtitles.size(); i++){
             encoding = this.get_file_encoding(subtitles.get(i));
-            if (encoding.equals("unknown")) continue;
-            sub_info.append(" -sub_charenc \"").append(encoding).append("\"").append(" -i ").append(subtitles.get(i).getLocation()).append(" ");
-            map_option.append(" -map ").append(i).append(" ");
-            sub_label.append(" -metadata:s:s:").append(i).append(" language=").append(subtitles.get(i).getLanguage()).append(" ");
-        }
-        map_option.append(" -map ").append(subtitles.size()).append(" "); // last map option needs to be added manually
+            System.out.println("i = " + i);
+            sub_info.addAll(Arrays.asList("-sub_charenc", "\""+encoding+"\"", "-i", subtitles.get(i).getLocation()));
+            map_option.addAll(Arrays.asList("-map", Integer.toString(i)));
+            sub_label.addAll(Arrays.asList("-metadata:s:s:"+ i, "language="+subtitles.get(i).getLanguage()));
 
-         Path path = Paths.get(video_path);
-         String file_directory = path.getParent().toString();
-         String file_name_without_extension = FilenameUtils.removeExtension(String.valueOf(path.getFileName()));
-         String output_video = file_directory + file_name_without_extension + "_sub.mp4";
-         String[] args = new String[]{
-                 "ffmpeg",
-                 "-i",
-                 video_path,
-                 sub_info.toString(),
-                 map_option.toString(),
-                 sub_label.toString(),
-                 output_video,
-         };
+        }
+        map_option.addAll(Arrays.asList("-map", Integer.toString(subtitles.size())));
+        args.addAll(args.indexOf("-c:v"), sub_info);
+        args.addAll(args.indexOf("-c:v"), map_option);
+        args.addAll(args.indexOf(output_video), sub_label);
          Process proc;
          try {
              proc = new ProcessBuilder(args).start();
@@ -104,5 +124,26 @@ public class VodService {
             return "unknown";
         }
 
+    }
+
+    public List<Subtitle> remove_unfit_subtitles(List<Subtitle> subtitles) throws IOException {
+//        List<Integer> unfit_indexes = new ArrayList<>();
+//        for (int i=0; i<subtitles.size(); i++){
+//            if (this.get_file_encoding(subtitles.get(i)).equals("unknown")) unfit_indexes.add(i);
+//        }
+//        for (int i=0; i<unfit_indexes.size(); i++){
+//            subtitles.remove(i);
+//        }
+//        return subtitles;
+//        for (Iterator<Subtitle> iterator = subtitles.iterator(); iterator.hasNext();){
+//            Subtitle subtitle = iterator.next();
+//            if (this.get_file_encoding(subtitle).equals("unknown")){
+//                iterator.remove();
+//                System.out.println(subtitle.getLanguage() + " removed.");
+//            }
+//
+//        }
+        subtitles.removeIf(subtitle -> subtitle.getLanguage().equals("unknown"));
+        return subtitles;
     }
 }

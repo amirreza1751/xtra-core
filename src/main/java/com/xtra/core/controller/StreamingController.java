@@ -1,8 +1,11 @@
 package com.xtra.core.controller;
 
 import com.xtra.core.model.ProgressInfo;
+import com.xtra.core.model.Subtitle;
 import com.xtra.core.repository.ProgressInfoRepository;
 import com.xtra.core.service.LineService;
+import com.xtra.core.service.ProcessService;
+import com.xtra.core.service.VodService;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +18,8 @@ import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -171,5 +176,33 @@ public class StreamingController {
         else {
             return new ResponseEntity<>("Play", HttpStatus.OK);
         }
+    }
+
+    @GetMapping("vod/encode")
+    public String encode(){
+        ProcessService p = new ProcessService();
+        VodService v = new VodService(p);
+        String result = v.encode("/home/amirak/web/subtitletest/DallasTrim.mkv");
+        System.out.println(result);
+        return result;
+    }
+
+    @GetMapping("vod/add_sub")
+    public String add_sub() throws IOException {
+        ProcessService p = new ProcessService();
+        VodService v = new VodService(p);
+        List<Subtitle> subs = new ArrayList<>();
+        Subtitle sub1 = new Subtitle();
+        sub1.setId(1l); sub1.setLanguage("eng"); sub1.setLocation("/home/amirak/web/subtitletest/eng.srt");
+        Subtitle sub2 = new Subtitle();
+        sub2.setId(2l); sub2.setLanguage("dan"); sub2.setLocation("/home/amirak/web/subtitletest/danish.srt");
+        Subtitle sub3 = new Subtitle();
+        sub3.setId(3l); sub3.setLanguage("fr"); sub3.setLocation("/home/amirak/web/subtitletest/fr.srt");
+        subs.add(sub1);
+        subs.add(sub2);
+        subs.add(sub3);
+        String result = v.add_subtitle("/home/amirak/web/subtitletest/DallasTrim_encoded.mp4", subs);
+        System.out.println(result);
+        return result;
     }
 }
