@@ -12,7 +12,9 @@ public interface LineActivityRepository extends JpaRepository<LineActivity, Long
 
     Optional<LineActivity> findByLineIdAndUserIp(Long lineId, String userIp);
 
-    List<LineActivity> findAllByLastReadIsLessThanEqual(LocalDateTime endDateBefore);
+    List<LineActivity> findAllByLastReadIsLessThanEqual(LocalDateTime lastReadBefore);
+
+    List<LineActivity> findAllByHlsEndedAndEndDateBefore(boolean hlsEnded, LocalDateTime endDateBefore);
 
     List<LineActivity> findAllByHlsEnded(boolean hlsEnded);
 }

@@ -105,7 +105,6 @@ public class StreamService {
                 streamsDirectory.getAbsolutePath() + "/" + stream.getId() + "_.m3u8"
         };
         Optional<java.lang.Process> result = processService.runProcess(args);
-
         if (result.isEmpty() || !result.get().isAlive()) {
             return false;
         } else {

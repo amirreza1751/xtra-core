@@ -129,7 +129,10 @@ public class StreamingController {
         if (status == LineStatus.OK) {
             Optional<LineActivity> existingActivity = lineActivityRepository.findByLineIdAndUserIp(lineId, request.getRemoteAddr());
             LineActivity activity;
-            if (existingActivity.isPresent() && !existingActivity.get().isHlsEnded()) {
+            if (existingActivity.isPresent()) {
+                if (existingActivity.get().isHlsEnded()) {
+                    return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
+                }
                 activity = existingActivity.get();
                 activity.setStreamId(streamId);
             } else {

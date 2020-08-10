@@ -78,7 +78,7 @@ public class CoreTaskScheduler {
             info.setResolution(video.get("width") + "x" + video.get("height"));
 
             var audio = root.get("streams").get(1);
-            info.setAudioCodec(audio.get("codec_name").toPrettyString());
+            //info.setAudioCodec(audio.get("codec_name").toPrettyString());
         } catch (JsonProcessingException e) {
             e.printStackTrace();
         }
@@ -105,10 +105,28 @@ public class CoreTaskScheduler {
 
     @Scheduled(fixedDelay = 10000)
     @Transactional
-    public void ifPlayStopped() {
+    public void removeOldConnections() {
         List<LineActivity> lineActivities = lineActivityRepository.findAllByLastReadIsLessThanEqual(LocalDateTime.now().minusMinutes(1));
         for (LineActivity activity : lineActivities) {
             lineActivityRepository.deleteById(activity.getId());
+        }
+        try {
+            new RestTemplate().postForObject(mainApiPath + "/lines/deleteLineActivities", lineActivities, String.class);
+        } catch (RestClientException e) {
+            System.out.println(e.getMessage());
+        }
+    }
+
+    @Scheduled(fixedDelay = 5000)
+    public void removeHlsEndedConnections() {
+        List<LineActivity> lineActivities = lineActivityRepository.findAllByHlsEndedAndEndDateBefore(true, LocalDateTime.now().minusMinutes(1));
+        for (LineActivity activity : lineActivities) {
+            lineActivityRepository.deleteById(activity.getId());
+        }
+        try {
+            new RestTemplate().postForObject(mainApiPath + "/lines/deleteLineActivities", lineActivities, String.class);
+        } catch (RestClientException e) {
+            System.out.println(e.getMessage());
         }
     }
 
@@ -118,7 +136,7 @@ public class CoreTaskScheduler {
         if (lineActivities.isEmpty())
             return;
         try {
-            new RestTemplate().postForObject(mainApiPath + "/lines/updateLineActivities", lineActivities, Stream.class);
+            new RestTemplate().postForObject(mainApiPath + "/lines/updateLineActivities", lineActivities, String.class);
         } catch (RestClientException e) {
             System.out.println(e.getMessage());
         }
