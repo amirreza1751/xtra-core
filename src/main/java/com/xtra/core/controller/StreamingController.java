@@ -1,9 +1,8 @@
 package com.xtra.core.controller;
 
-import com.xtra.core.model.LineActivity;
-import com.xtra.core.model.LineStatus;
-import com.xtra.core.model.ProgressInfo;
-import com.xtra.core.model.Subtitle;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import com.xtra.core.model.*;
 import com.xtra.core.repository.LineActivityRepository;
 import com.xtra.core.repository.ProgressInfoRepository;
 import com.xtra.core.service.LineService;
@@ -17,6 +16,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.util.ResourceUtils;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestTemplate;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.*;
@@ -30,6 +30,7 @@ import java.util.Optional;
 import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.json.*;
 
 @RestController
 public class StreamingController {
@@ -216,25 +217,26 @@ public class StreamingController {
     }
 
     @GetMapping("vod/json_handler/hls/{file_name}")
-    public ResponseEntity<String> jsonHandler(@PathVariable String file_name) throws IOException {
+    public ResponseEntity<String> jsonHandler(@PathVariable String file_name) {
         HttpHeaders responseHeaders = new HttpHeaders();
         ResponseEntity<String> response;
-        File file = new File("");
-        String json_file = "";
-        try {
-            file = ResourceUtils.getFile(System.getProperty("user.home") + "/vod/" + file_name);
-            json_file = new String(Files.readAllBytes(file.toPath()));
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
-        }
+        VodService vodService = new VodService();
+        String vod_location = vodService.getVodLocation(file_name.replace(".json", ""));
+        String jsonString = new JSONObject()
+                .put("sequences", new JSONArray()
+                        .put(new JSONObject()
+                                .put("clips", new JSONArray()
+                                        .put(new JSONObject()
+                                                .put("type","source")
+                                                .put("path", vod_location)))))
+                .toString();
+        System.out.println(jsonString);
 
         response = ResponseEntity.ok()
                 .headers(responseHeaders).contentType(MediaType.APPLICATION_JSON)
-                .headers(responseHeaders).contentLength(Long.parseLong(String.valueOf(json_file.length())))
                 .headers(responseHeaders).cacheControl(CacheControl.noCache())
                 .headers(responseHeaders).cacheControl(CacheControl.noStore())
-                .header("Content-Disposition", "inline; filename=" + "\"" + file.getName() + "\"")
-                .body(json_file);
+                .body(jsonString);
         return response;
     }
 
