@@ -1,13 +1,13 @@
 package com.xtra.core.controller;
-import com.xtra.core.repository.LineActivityRepository;
-import com.xtra.core.repository.ProgressInfoRepository;
-import com.xtra.core.service.LineService;
-import com.xtra.core.service.StreamService;
+
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 
 @RestController
@@ -18,18 +18,14 @@ public class FileSystemController {
     public FileSystemController() {}
 
     @GetMapping("list")
-    public void list(@RequestParam String path){
-        //Creating a File object for directory
+    public List<com.xtra.core.model.File> list(@RequestParam String path){
         File directoryPath = new File(path);
-        //List of all files and directories
         File[] filesList = directoryPath.listFiles();
-        System.out.println("List of files and directories in the specified directory:");
+        ArrayList<com.xtra.core.model.File> result = new ArrayList<>();
         for(File file : filesList) {
-            System.out.println("File name: "+file.getName());
-            System.out.println("File path: "+file.getAbsolutePath());
-            System.out.println("Size :"+file.getTotalSpace());
-            System.out.println(" ");
+            result.add(new com.xtra.core.model.File(file.getName(), file.getAbsolutePath(), (file.isDirectory())? file.getTotalSpace(): file.length(), file.isDirectory()));
         }
+        return result;
     }
 
 
