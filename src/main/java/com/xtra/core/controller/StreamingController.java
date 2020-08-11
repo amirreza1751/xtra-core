@@ -3,12 +3,11 @@ package com.xtra.core.controller;
 import com.xtra.core.model.LineActivity;
 import com.xtra.core.model.LineStatus;
 import com.xtra.core.model.ProgressInfo;
-import com.xtra.core.model.Subtitle;
 import com.xtra.core.repository.LineActivityRepository;
 import com.xtra.core.repository.ProgressInfoRepository;
+import com.xtra.core.service.LineActivityService;
 import com.xtra.core.service.LineService;
-import com.xtra.core.service.ProcessService;
-import com.xtra.core.service.VodService;
+import com.xtra.core.service.ProgressInfoService;
 import com.xtra.core.service.StreamService;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -23,10 +22,7 @@ import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.List;
 import java.time.LocalDateTime;
-import java.util.Optional;
 import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -35,8 +31,8 @@ import java.util.regex.Pattern;
 public class StreamingController {
     private final LineService lineService;
     private final StreamService streamService;
-    private final ProgressInfoRepository progressInfoRepository;
-    private final LineActivityRepository lineActivityRepository;
+    private final ProgressInfoService progressInfoService;
+    private final LineActivityService lineActivityService;
 
     @Value("${nginx.port}")
     private String localServerPort;
@@ -44,10 +40,10 @@ public class StreamingController {
     private String serverAddress;
 
     @Autowired
-    public StreamingController(LineService lineService, ProgressInfoRepository progressInfoRepository, LineActivityRepository lineActivityRepository, StreamService streamService) {
+    public StreamingController(LineService lineService, ProgressInfoService progressInfoService, LineActivityService lineActivityService, StreamService streamService) {
         this.lineService = lineService;
-        this.progressInfoRepository = progressInfoRepository;
-        this.lineActivityRepository = lineActivityRepository;
+        this.progressInfoService = progressInfoService;
+        this.lineActivityService = lineActivityService;
         this.streamService = streamService;
     }
 
@@ -81,22 +77,11 @@ public class StreamingController {
                 return new ResponseEntity<>("Unknown Error", HttpStatus.FORBIDDEN);
             }
 
-            LineActivity activity;
-            var existingActivity = lineActivityRepository.findByLineIdAndUserIp(lineId, request.getRemoteAddr());
-            if (existingActivity.isPresent()) {
-                activity = existingActivity.get();
-                if (activity.isHlsEnded())
-                    return new ResponseEntity<>("Forbidden", HttpStatus.FORBIDDEN);
-            } else {
-                activity = new LineActivity();
-                activity.setLineId(lineId);
-                activity.setStreamId(streamId);
-                activity.setStartDate(LocalDateTime.now());
+            var result = lineActivityService.updateLineActivity(lineId, streamId, request.getRemoteAddr(), userAgent);
+
+            if (!result) {
+                return new ResponseEntity<>("Forbidden", HttpStatus.FORBIDDEN);
             }
-            activity.setUserIp(request.getRemoteAddr());
-            activity.setLastRead(LocalDateTime.now());
-            activity.setUserAgent(userAgent);
-            lineActivityRepository.save(activity);
 
             File file = ResourceUtils.getFile(System.getProperty("user.home") + "/streams/" + streamId + "_." + extension);
             String playlist = new String(Files.readAllBytes(file.toPath()));
@@ -127,24 +112,10 @@ public class StreamingController {
         Long streamId = streamService.getStreamId(streamToken);
         Long lineId = lineService.getLineId(lineToken);
         if (status == LineStatus.OK) {
-            Optional<LineActivity> existingActivity = lineActivityRepository.findByLineIdAndUserIp(lineId, request.getRemoteAddr());
-            LineActivity activity;
-            if (existingActivity.isPresent()) {
-                if (existingActivity.get().isHlsEnded()) {
-                    return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
-                }
-                activity = existingActivity.get();
-                activity.setStreamId(streamId);
-            } else {
-                activity = new LineActivity();
-                activity.setLineId(lineId);
-                activity.setStreamId(streamId);
-                activity.setUserIp(request.getRemoteAddr());
+            var result = lineActivityService.updateLineActivity(lineId, streamId, request.getRemoteAddr(), userAgent);
+            if (!result) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
             }
-            activity.setUserAgent(userAgent);
-            activity.setLastRead(LocalDateTime.now());
-            lineActivityRepository.save(activity);
-
             HttpHeaders responseHeaders = new HttpHeaders();
             return ResponseEntity.ok()
                     .headers(responseHeaders).contentType(MediaType.valueOf("video/mp2t"))
@@ -158,26 +129,8 @@ public class StreamingController {
 
     //@todo allow only from localhost
     @PostMapping("update")
-    public void updateProgress(@RequestParam Long stream_id, InputStream dataStream) {
-        Scanner s = new Scanner(dataStream).useDelimiter("\\s");
-        ProgressInfo progressInfo = new ProgressInfo(stream_id);
-        while (s.hasNextLine()) {
-            var property = s.nextLine();
-            var splited = property.split("=");
-            switch (splited[0]) {
-                case "fps":
-                    progressInfo.setFrameRate(splited[1]);
-                    progressInfoRepository.save(progressInfo);
-                    break;
-                case "bitrate":
-                    progressInfo.setBitrate(splited[1]);
-                    break;
-                case "speed":
-                    progressInfo.setSpeed(splited[1]);
-                    break;
-
-            }
-        }
+    public void updateProgress(@RequestParam("stream_id") Long streamId, InputStream dataStream) {
+        progressInfoService.updateProgressInfo(streamId, dataStream);
     }
 
     @GetMapping("vod/{line_token}/{stream_token}")
