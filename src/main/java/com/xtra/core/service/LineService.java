@@ -1,5 +1,6 @@
 package com.xtra.core.service;
 
+import com.xtra.core.model.LineActivity;
 import com.xtra.core.model.LineStatus;
 import com.xtra.core.repository.LineActivityRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,6 +10,7 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 public class LineService {
@@ -51,15 +53,15 @@ public class LineService {
         }
     }
 
-    public boolean killConnection(Long lineId) {
-        var activityById = lineActivityRepository.findByLineId(lineId);
-        if (activityById.isPresent()) {
-            var activity = activityById.get();
-            activity.setHlsEnded(true);
-            activity.setEndDate(LocalDateTime.now());
-            lineActivityRepository.save(activity);
+    public boolean killAllConnections(Long lineId) {
+        List<LineActivity> lineActivities = lineActivityRepository.findAllByLineId(lineId);
+        if (!lineActivities.isEmpty()) {
+            lineActivities.forEach((activity)->{
+                activity.setHlsEnded(true);
+                activity.setEndDate(LocalDateTime.now());
+                lineActivityRepository.save(activity);
+            });
             return true;
-        }
-        else return false;
+        } else return false;
     }
 }

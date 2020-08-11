@@ -107,6 +107,8 @@ public class CoreTaskScheduler {
     @Transactional
     public void removeOldConnections() {
         List<LineActivity> lineActivities = lineActivityRepository.findAllByLastReadIsLessThanEqual(LocalDateTime.now().minusMinutes(1));
+        if(lineActivities.isEmpty())
+            return;
         for (LineActivity activity : lineActivities) {
             lineActivityRepository.deleteById(activity.getId());
         }
@@ -120,6 +122,8 @@ public class CoreTaskScheduler {
     @Scheduled(fixedDelay = 5000)
     public void removeHlsEndedConnections() {
         List<LineActivity> lineActivities = lineActivityRepository.findAllByHlsEndedAndEndDateBefore(true, LocalDateTime.now().minusMinutes(1));
+        if (lineActivities.isEmpty())
+            return;
         for (LineActivity activity : lineActivities) {
             lineActivityRepository.deleteById(activity.getId());
         }

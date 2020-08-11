@@ -10,6 +10,8 @@ import java.util.Optional;
 public interface LineActivityRepository extends JpaRepository<LineActivity, Long> {
     Optional<LineActivity> findByLineId(Long lineId);
 
+    List<LineActivity> findAllByLineId(Long lineId);
+
     Optional<LineActivity> findByLineIdAndUserIp(Long lineId, String userIp);
 
     List<LineActivity> findAllByLastReadIsLessThanEqual(LocalDateTime lastReadBefore);

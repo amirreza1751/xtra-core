@@ -19,9 +19,9 @@ public class LineController {
         this.lineService = lineService;
     }
 
-    @GetMapping("/kill_connection/{line_id}")
+    @GetMapping("/kill_connections/{line_id}")
     public ResponseEntity<String> killConnection(@PathVariable("line_id") Long lineId) {
-        if (lineService.killConnection(lineId)) {
+        if (lineService.killAllConnections(lineId)) {
             return ResponseEntity.ok("connection killed");
         } else {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Connection Not Found");
