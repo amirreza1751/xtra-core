@@ -20,12 +20,15 @@ public class FileSystemController {
     @GetMapping("list")
     public List<com.xtra.core.model.File> list(@RequestParam String path){
         File directoryPath = new File(path);
+        if (!directoryPath.exists()) {return new ArrayList<com.xtra.core.model.File>();}
         File[] filesList = directoryPath.listFiles();
         ArrayList<com.xtra.core.model.File> result = new ArrayList<>();
-        for(File file : filesList) {
-            result.add(new com.xtra.core.model.File(file.getName(), file.getAbsolutePath(), (file.isDirectory())? file.getTotalSpace(): file.length(), file.isDirectory()));
-        }
-        return result;
+        for (File file : filesList) {
+                result.add(new com.xtra.core.model.File(file.getName(), file.getAbsolutePath(), (file.isDirectory()) ? file.getTotalSpace() : file.length(), file.isDirectory()));
+            }
+
+            return result;
+
     }
 
 
