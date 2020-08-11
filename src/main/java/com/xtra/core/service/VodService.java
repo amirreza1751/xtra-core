@@ -2,27 +2,26 @@ package com.xtra.core.service;
 
 import com.xtra.core.model.Audio;
 import com.xtra.core.model.Subtitle;
+import com.xtra.core.model.Vod;
 import org.apache.commons.io.FilenameUtils;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
-import java.util.stream.Collectors;
+import java.util.*;
+
 import org.mozilla.universalchardet.UniversalDetector;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestTemplate;
 
 @Service
 public class VodService {
 
-    private final ProcessService processService;
+    @Value("${main.apiPath}")
+    private String mainApiPath;
 
-    public VodService(ProcessService processService) {
-        this.processService = processService;
-    }
 
     public String encode(String video_path){
          Path path = Paths.get(video_path);
@@ -50,7 +49,7 @@ public class VodService {
          return output_video;
     }
 
-    public String add_subtitle(String video_path, List<Subtitle> subtitles) throws IOException {
+    public String addSubtitle(String video_path, List<Subtitle> subtitles) throws IOException {
         Path path = Paths.get(video_path);
         String file_directory = path.getParent().toString();
         String file_name_without_extension = FilenameUtils.removeExtension(String.valueOf(path.getFileName()));
@@ -58,7 +57,7 @@ public class VodService {
 
         subtitles.removeIf(subtitle -> {
             try {
-                return this.get_file_encoding(subtitle).equals("unknown");
+                return this.getFileEncoding(subtitle).equals("unknown");
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -83,7 +82,7 @@ public class VodService {
 //        System.out.println("final subs = " + subtitles.toString());
         String encoding;
         for (int i = 0; i < subtitles.size(); i++){
-            encoding = this.get_file_encoding(subtitles.get(i));
+            encoding = this.getFileEncoding(subtitles.get(i));
 //            System.out.println("i = " + i);
             sub_info.addAll(Arrays.asList("-sub_charenc", "\""+encoding+"\"", "-i", subtitles.get(i).getLocation()));
             map_option.addAll(Arrays.asList("-map", Integer.toString(i)));
@@ -104,7 +103,7 @@ public class VodService {
          return output_video;
     }
 
-    public String get_file_encoding(Subtitle subtitle) throws IOException {
+    public String getFileEncoding(Subtitle subtitle) throws IOException {
         UniversalDetector detector = new UniversalDetector(null);
         FileInputStream fis;
         byte[] buf = new byte[4096];
@@ -127,7 +126,7 @@ public class VodService {
 
     }
 
-    public String add_audio(String video_path, List<Audio> audios){
+    public String addAudio(String video_path, List<Audio> audios){
         Path path = Paths.get(video_path);
         String file_directory = path.getParent().toString();
         String file_name_without_extension = FilenameUtils.removeExtension(String.valueOf(path.getFileName()));
@@ -165,6 +164,16 @@ public class VodService {
             return "Add audios failed.";
         }
         return output_video;
+    }
+
+    public String getVodLocation(String streamId) {
+        RestTemplate restTemplate = new RestTemplate();
+        try {
+            return Objects.requireNonNull(restTemplate.getForObject(mainApiPath + "/vod/" + streamId, Vod.class)).getLocation();
+        } catch (HttpClientErrorException exception) {
+            System.out.println(exception.getMessage());
+            return "";
+        }
     }
 
 }

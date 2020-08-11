@@ -23,6 +23,7 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.mariadb.jdbc:mariadb-java-client'
 	implementation 'commons-io:commons-io:2.7'
+	implementation 'org.json:json:20200518'
 	implementation 'com.googlecode.juniversalchardet:juniversalchardet:1.0.3'
 	compile group: 'net.bramp.ffmpeg', name: 'ffmpeg', version: '0.6.2'
 	implementation 'io.projectreactor:reactor-core'
