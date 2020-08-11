@@ -1,36 +1,24 @@
 package com.xtra.core.controller;
 
-import com.xtra.core.model.LineActivity;
 import com.xtra.core.model.LineStatus;
-import com.xtra.core.model.ProgressInfo;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-import com.xtra.core.model.*;
-import com.xtra.core.repository.LineActivityRepository;
-import com.xtra.core.repository.ProgressInfoRepository;
-import com.xtra.core.service.LineActivityService;
-import com.xtra.core.service.LineService;
-import com.xtra.core.service.ProgressInfoService;
-import com.xtra.core.service.StreamService;
+import com.xtra.core.service.*;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.util.ResourceUtils;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.client.RestTemplate;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.file.Files;
-import java.time.LocalDateTime;
-import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import org.json.*;
 
 @RestController
 public class StreamingController {
