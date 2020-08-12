@@ -49,7 +49,7 @@ public class VodService {
          return output_video;
     }
 
-    public String addSubtitle(String video_path, List<Subtitle> subtitles) throws IOException {
+    public String addSubtitles(String video_path, List<Subtitle> subtitles) throws IOException {
         Path path = Paths.get(video_path);
         String file_directory = path.getParent().toString();
         String file_name_without_extension = FilenameUtils.removeExtension(String.valueOf(path.getFileName()));
@@ -126,7 +126,7 @@ public class VodService {
 
     }
 
-    public String addAudio(String video_path, List<Audio> audios){
+    public String addAudios(String video_path, List<Audio> audios){
         Path path = Paths.get(video_path);
         String file_directory = path.getParent().toString();
         String file_name_without_extension = FilenameUtils.removeExtension(String.valueOf(path.getFileName()));
