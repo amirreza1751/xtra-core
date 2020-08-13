@@ -23,7 +23,8 @@ public class VodService {
     private String mainApiPath;
 
 
-    public String encode(String video_path){
+    public String encode(Vod vod){
+         String video_path = vod.getLocation();
          Path path = Paths.get(video_path);
          String file_directory = path.getParent().toString();
          String file_name_without_extension = FilenameUtils.removeExtension(String.valueOf(path.getFileName()));
@@ -49,7 +50,9 @@ public class VodService {
          return output_video;
     }
 
-    public String addSubtitles(String video_path, List<Subtitle> subtitles) throws IOException {
+    public String setSubtitles(Vod vod) throws IOException {
+        String video_path = vod.getLocation();
+        List<Subtitle> subtitles = vod.getSubtitles();
         Path path = Paths.get(video_path);
         String file_directory = path.getParent().toString();
         String file_name_without_extension = FilenameUtils.removeExtension(String.valueOf(path.getFileName()));
@@ -126,7 +129,9 @@ public class VodService {
 
     }
 
-    public String addAudios(String video_path, List<Audio> audios){
+    public String setAudios(Vod vod){
+        String video_path = vod.getLocation();
+        List<Audio> audios = vod.getAudios();
         Path path = Paths.get(video_path);
         String file_directory = path.getParent().toString();
         String file_name_without_extension = FilenameUtils.removeExtension(String.valueOf(path.getFileName()));
