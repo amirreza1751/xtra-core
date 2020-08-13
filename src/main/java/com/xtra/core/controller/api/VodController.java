@@ -19,7 +19,7 @@ public class VodController {
     }
 
     @GetMapping("/encode")
-    public String encode(@RequestBody Vod vod){
+    public String encode(@RequestBody Vod vod) throws IOException {
         return vodService.encode(vod);
     }
 

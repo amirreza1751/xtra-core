@@ -23,7 +23,7 @@ public class VodService {
     private String mainApiPath;
 
 
-    public String encode(Vod vod){
+    public String encode(Vod vod) throws IOException {
          String video_path = vod.getLocation();
          Path path = Paths.get(video_path);
          String file_directory = path.getParent().toString();
@@ -46,8 +46,19 @@ public class VodService {
         } catch (IOException | InterruptedException e) {
             return "Encode failed.";
         }
+        // needs to be changed
+        // needs to be changed
+        // needs to be changed
+        vod.setLocation(output_video);
+        String with_sub = this.setSubtitles(vod);
+        vod.setLocation(with_sub);
+        output_video = this.setAudios(vod);
+        // needs to be changed
+        // needs to be changed
+        // needs to be changed
 
          return output_video;
+
     }
 
     public String setSubtitles(Vod vod) throws IOException {
