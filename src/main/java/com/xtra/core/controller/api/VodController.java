@@ -18,17 +18,17 @@ public class VodController {
         this.vodService = vodService;
     }
 
-    @GetMapping("/encode")
+    @PostMapping("/encode")
     public String encode(@RequestBody Vod vod) throws IOException {
         return vodService.encode(vod);
     }
 
-    @GetMapping("/set_audios")
+    @PostMapping("/set_audios")
     public String setAudios(@RequestBody Vod vod) {
         return vodService.setAudios(vod);
     }
 
-    @GetMapping("/add_subtitles")
+    @PostMapping("/add_subtitles")
     public String setSubtitles(@RequestBody Vod vod) throws IOException {
         return vodService.setSubtitles(vod);
     }
