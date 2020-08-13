@@ -1,13 +1,11 @@
 package com.xtra.core.controller.api;
 
-import com.xtra.core.model.Audio;
-import com.xtra.core.model.Subtitle;
+import com.xtra.core.model.Vod;
 import com.xtra.core.service.VodService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
-import java.util.List;
 
 
 @RestController
@@ -21,17 +19,17 @@ public class VodController {
     }
 
     @GetMapping("/encode")
-    public String encode(@RequestParam String video_path){
-        return vodService.encode(video_path);
+    public String encode(@RequestBody Vod vod) throws IOException {
+        return vodService.encode(vod);
     }
 
-    @GetMapping("/addAudios")
-    public String addAudios(@RequestParam String video_path, @RequestParam List<Audio> audios) {
-        return vodService.addAudios(video_path, audios);
+    @GetMapping("/set_audios")
+    public String setAudios(@RequestBody Vod vod) {
+        return vodService.setAudios(vod);
     }
 
-    @GetMapping("/addSubtitles")
-    public String addSubtitles(@RequestParam String video_path, @RequestParam List<Subtitle> subtitles) throws IOException {
-        return vodService.addSubtitles(video_path, subtitles);
+    @GetMapping("/add_subtitles")
+    public String setSubtitles(@RequestBody Vod vod) throws IOException {
+        return vodService.setSubtitles(vod);
     }
 }
