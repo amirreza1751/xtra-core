@@ -28,7 +28,7 @@ public class VodController {
         return vodService.setAudios(vod);
     }
 
-    @PostMapping("/add_subtitles")
+    @PostMapping("/set_subtitles")
     public String setSubtitles(@RequestBody Vod vod) throws IOException {
         return vodService.setSubtitles(vod);
     }
