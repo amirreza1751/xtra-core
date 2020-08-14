@@ -35,11 +35,13 @@ public class VodService {
                  "-i",
                  video_path,
                  "-vcodec",
-                 "libx264",
+                 "copy",
+//                 "libx264",
                  "-preset",
                  "ultrafast",
                  "-acodec",
-                 "aac",
+                 "copy",
+//                 "aac",
                  output_video,
          };
         Process proc;
