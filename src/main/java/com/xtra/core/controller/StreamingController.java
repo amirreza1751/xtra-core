@@ -158,7 +158,7 @@ public class StreamingController {
                     .headers(responseHeaders).contentLength(Long.parseLong(String.valueOf(content.length())))
                     .headers(responseHeaders).cacheControl(CacheControl.noCache())
                     .headers(responseHeaders).cacheControl(CacheControl.noStore())
-                    .header("Content-Disposition", "inline; filename=" + "\"" + "test.m3u8" + "\"")
+                    .header("Content-Disposition", "inline; filename=" + "\"" + streamToken + ".m3u8" + "\"")
                     .body(content.toString());
         }
 
