@@ -188,7 +188,8 @@ public class VodService {
         Vod vod;
         try {
             System.out.println(mainApiPath + "/movies/" + streamId);
-            vod = restTemplate.getForObject(mainApiPath + "/movies/" + streamId, Vod.class);
+//            vod = restTemplate.getForObject(mainApiPath + "/movies/" + streamId, Vod.class);
+            vod = restTemplate.getForObject("http://localhost:8082/api" + "/movies/" + streamId, Vod.class);
              return vod.getLocation();
         } catch (HttpClientErrorException exception) {
             System.out.println(exception.getMessage());
