@@ -184,8 +184,10 @@ public class VodService {
 
     public String getVodLocation(String streamId) {
         RestTemplate restTemplate = new RestTemplate();
+        Vod vod;
         try {
-            return Objects.requireNonNull(restTemplate.getForObject(mainApiPath + "/vod/" + streamId, Vod.class)).getLocation();
+             vod = restTemplate.getForObject(mainApiPath + "/movies/" + streamId, Vod.class);
+             return vod.getLocation();
         } catch (HttpClientErrorException exception) {
             System.out.println(exception.getMessage());
             return "";
