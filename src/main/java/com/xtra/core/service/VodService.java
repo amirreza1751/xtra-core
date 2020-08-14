@@ -36,6 +36,8 @@ public class VodService {
                  video_path,
                  "-vcodec",
                  "libx264",
+                 "-preset",
+                 "ultrafast",
                  "-acodec",
                  "aac",
                  output_video,
