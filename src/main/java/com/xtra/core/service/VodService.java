@@ -1,6 +1,7 @@
 package com.xtra.core.service;
 
 import com.xtra.core.model.Audio;
+import com.xtra.core.model.LineStatus;
 import com.xtra.core.model.Subtitle;
 import com.xtra.core.model.Vod;
 import org.apache.commons.io.FilenameUtils;
@@ -186,7 +187,8 @@ public class VodService {
         RestTemplate restTemplate = new RestTemplate();
         Vod vod;
         try {
-             vod = restTemplate.getForObject(mainApiPath + "/movies/" + streamId, Vod.class);
+            System.out.println(mainApiPath + "/movies/" + streamId);
+            vod = restTemplate.getForObject(mainApiPath + "/movies/" + streamId, Vod.class);
              return vod.getLocation();
         } catch (HttpClientErrorException exception) {
             System.out.println(exception.getMessage());
