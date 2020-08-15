@@ -135,7 +135,8 @@ public class StreamingController {
             return new ResponseEntity<>("forbidden", HttpStatus.FORBIDDEN);
         else {
 //            Long streamId = streamService.getStreamId(streamToken);
-            URL url = new URL("http://" + serverAddress + localServerPort + "/hls/" + Long.parseLong(streamToken) + ".json/master.m3u8");
+            System.out.println("http://" + serverAddress + localServerPort + "/hls/" + streamToken + ".json/master.m3u8");
+            URL url = new URL("http://" + serverAddress + localServerPort + "/hls/" + streamToken + ".json/master.m3u8");
             HttpURLConnection con = (HttpURLConnection) url.openConnection();
             con.setRequestMethod("GET");
             con.setConnectTimeout(5000);
