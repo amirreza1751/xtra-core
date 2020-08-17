@@ -55,14 +55,15 @@ public class VodService {
         // needs to be changed
         // needs to be changed
         vod = this.renameVideo(video_path, vod);
-        String with_sub = this.setSubtitles(vod);
-        vod.setLocation(with_sub);
-        output_video = this.setAudios(vod);
+//        String with_sub = this.setSubtitles(vod);
+//        vod.setLocation(with_sub);
+//        output_video = this.setAudios(vod);
         // needs to be changed
         // needs to be changed
         // needs to be changed
 
-         return output_video;
+//         return output_video;
+        return vod.getLocation();
     }
 
     public String setSubtitles(Vod vod) throws IOException {
