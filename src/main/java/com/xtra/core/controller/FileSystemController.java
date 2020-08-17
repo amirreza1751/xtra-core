@@ -30,13 +30,15 @@ public class FileSystemController {
         ArrayList<com.xtra.core.model.File> result = new ArrayList<>();
         if (filesList != null) {
             for (File file : filesList) {
-                result.add(
-                        new com.xtra.core.model.File(
-                                file.getName(),
-                                file.getAbsolutePath(),
-                                (file.isDirectory()) ? file.getTotalSpace() : file.length(),
-                                file.isDirectory())
-                );
+                if (!file.isHidden()){
+                    result.add(
+                            new com.xtra.core.model.File(
+                                    file.getName(),
+                                    file.getAbsolutePath(),
+                                    (file.isDirectory()) ? file.getTotalSpace() : file.length(),
+                                    file.isDirectory())
+                    );
+                }
             }
         }
 

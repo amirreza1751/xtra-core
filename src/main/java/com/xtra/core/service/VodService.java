@@ -30,7 +30,7 @@ public class VodService {
         Path path = Paths.get(video_path);
         String file_directory = path.getParent().toString();
         String file_name_without_extension = FilenameUtils.removeExtension(String.valueOf(path.getFileName()));
-        String output_video = file_directory + "/" + file_name_without_extension + "_encoded.mp4";
+        String output_video = file_directory + "/" + file_name_without_extension + System.currentTimeMillis() + ".mp4";
         String[] args = new String[]{
                 "ffmpeg",
                 "-i",
@@ -55,16 +55,16 @@ public class VodService {
         // needs to be changed
         // needs to be changed
         // needs to be changed
-        vod.setLocation(output_video);
-        String with_sub = this.setSubtitles(vod);
-        vod.setLocation(with_sub);
-        output_video = this.setAudios(vod);
+        vod = this.renameVideo(video_path, vod);
+//        String with_sub = this.setSubtitles(vod);
+//        vod.setLocation(with_sub);
+//        output_video = this.setAudios(vod);
         // needs to be changed
         // needs to be changed
         // needs to be changed
 
-        return output_video;
-
+//         return output_video;
+        return vod.getLocation();
     }
 
     public String setSubtitles(Vod vod) throws IOException {
@@ -73,7 +73,7 @@ public class VodService {
         Path path = Paths.get(video_path);
         String file_directory = path.getParent().toString();
         String file_name_without_extension = FilenameUtils.removeExtension(String.valueOf(path.getFileName()));
-        String output_video = file_directory + "/" + file_name_without_extension + "_sub.mp4";
+        String output_video = file_directory + "/" + file_name_without_extension + System.currentTimeMillis() + ".mp4";
 
         subtitles.removeIf(subtitle -> {
             try {
@@ -120,6 +120,8 @@ public class VodService {
         } catch (IOException | InterruptedException e) {
             return "Add subtitles failed.";
         }
+        File file_to_delete = new File(video_path);
+        file_to_delete.delete();
         return output_video;
     }
 
@@ -152,7 +154,7 @@ public class VodService {
         Path path = Paths.get(video_path);
         String file_directory = path.getParent().toString();
         String file_name_without_extension = FilenameUtils.removeExtension(String.valueOf(path.getFileName()));
-        String output_video = file_directory + "/" + file_name_without_extension + "_audio_added.mp4";
+        String output_video = file_directory + "/" + file_name_without_extension + System.currentTimeMillis() + ".mp4";
         ArrayList<String> args = new ArrayList<>(Arrays.asList(
                 "ffmpeg",
                 "-i",
@@ -185,6 +187,8 @@ public class VodService {
         } catch (IOException | InterruptedException e) {
             return "Add audios failed.";
         }
+        File file_to_delete = new File(video_path);
+        file_to_delete.delete();
         return output_video;
     }
 
@@ -199,6 +203,14 @@ public class VodService {
             System.out.println(exception.getMessage());
             return "";
         }
+    }
+
+    public Vod renameVideo(String file_name, Vod vod) {
+        File file_to_delete = new File(file_name);
+        if (file_to_delete.delete()) {
+            vod.setLocation(file_name);
+        }
+        return vod;
     }
 
     public Long getVodId(String vodToken) {
