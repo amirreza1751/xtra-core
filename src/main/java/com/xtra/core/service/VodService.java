@@ -15,6 +15,7 @@ import java.util.*;
 
 import org.mozilla.universalchardet.UniversalDetector;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 @Service
@@ -25,25 +26,25 @@ public class VodService {
 
 
     public String encode(Vod vod) throws IOException {
-         String video_path = vod.getLocation();
-         Path path = Paths.get(video_path);
-         String file_directory = path.getParent().toString();
-         String file_name_without_extension = FilenameUtils.removeExtension(String.valueOf(path.getFileName()));
-         String output_video = file_directory + "/" + file_name_without_extension + "_encoded.mp4";
-         String[] args = new String[]{
-                 "ffmpeg",
-                 "-i",
-                 video_path,
-                 "-vcodec",
-                 "copy",
+        String video_path = vod.getLocation();
+        Path path = Paths.get(video_path);
+        String file_directory = path.getParent().toString();
+        String file_name_without_extension = FilenameUtils.removeExtension(String.valueOf(path.getFileName()));
+        String output_video = file_directory + "/" + file_name_without_extension + "_encoded.mp4";
+        String[] args = new String[]{
+                "ffmpeg",
+                "-i",
+                video_path,
+                "-vcodec",
+                "copy",
 //                 "libx264",
-                 "-preset",
-                 "ultrafast",
-                 "-acodec",
-                 "copy",
+                "-preset",
+                "ultrafast",
+                "-acodec",
+                "copy",
 //                 "aac",
-                 output_video,
-         };
+                output_video,
+        };
         Process proc;
         try {
             proc = new ProcessBuilder(args).start();
@@ -62,7 +63,7 @@ public class VodService {
         // needs to be changed
         // needs to be changed
 
-         return output_video;
+        return output_video;
 
     }
 
@@ -94,32 +95,32 @@ public class VodService {
                 "mov_text",
                 output_video,
                 "-y"
-                ));
+        ));
         ArrayList<String> sub_info = new ArrayList<>();
         ArrayList<String> map_option = new ArrayList<>();
         ArrayList<String> sub_label = new ArrayList<>();
 //        System.out.println("final subs = " + subtitles.toString());
         String encoding;
-        for (int i = 0; i < subtitles.size(); i++){
+        for (int i = 0; i < subtitles.size(); i++) {
             encoding = this.getFileEncoding(subtitles.get(i));
 //            System.out.println("i = " + i);
-            sub_info.addAll(Arrays.asList("-sub_charenc", "\""+encoding+"\"", "-i", subtitles.get(i).getLocation()));
+            sub_info.addAll(Arrays.asList("-sub_charenc", "\"" + encoding + "\"", "-i", subtitles.get(i).getLocation()));
             map_option.addAll(Arrays.asList("-map", Integer.toString(i)));
-            sub_label.addAll(Arrays.asList("-metadata:s:s:"+ i, "language="+subtitles.get(i).getLanguage()));
+            sub_label.addAll(Arrays.asList("-metadata:s:s:" + i, "language=" + subtitles.get(i).getLanguage()));
 
         }
         map_option.addAll(Arrays.asList("-map", Integer.toString(subtitles.size())));
         args.addAll(args.indexOf("-c:v"), sub_info);
         args.addAll(args.indexOf("-c:v"), map_option);
         args.addAll(args.indexOf(output_video), sub_label);
-         Process proc;
-         try {
-             proc = new ProcessBuilder(args).start();
-             proc.waitFor();
-         } catch (IOException | InterruptedException e) {
-             return "Add subtitles failed.";
-         }
-         return output_video;
+        Process proc;
+        try {
+            proc = new ProcessBuilder(args).start();
+            proc.waitFor();
+        } catch (IOException | InterruptedException e) {
+            return "Add subtitles failed.";
+        }
+        return output_video;
     }
 
     public String getFileEncoding(Subtitle subtitle) throws IOException {
@@ -145,7 +146,7 @@ public class VodService {
 
     }
 
-    public String setAudios(Vod vod){
+    public String setAudios(Vod vod) {
         String video_path = vod.getLocation();
         List<Audio> audios = vod.getAudios();
         Path path = Paths.get(video_path);
@@ -169,7 +170,7 @@ public class VodService {
 
         ArrayList<String> audio_info = new ArrayList<>();
         ArrayList<String> map_option = new ArrayList<>();
-        for (int i = 0; i < audios.size(); i++){
+        for (int i = 0; i < audios.size(); i++) {
             audio_info.addAll(Arrays.asList("-i", audios.get(i).getLocation()));
             map_option.addAll(Arrays.asList("-map", Integer.toString(i)));
         }
@@ -187,18 +188,26 @@ public class VodService {
         return output_video;
     }
 
-    public String getVodLocation(String streamId) {
+    public String getVodLocation(String vodId) {
         RestTemplate restTemplate = new RestTemplate();
         Vod vod;
         try {
-            System.out.println(mainApiPath + "/movies/" + streamId);
-//            vod = restTemplate.getForObject(mainApiPath + "/movies/" + streamId, Vod.class);
-            vod = restTemplate.getForObject("http://localhost:8082/api" + "/movies/" + streamId, Vod.class);
-             return vod.getLocation();
+            System.out.println(mainApiPath + "/movies/" + vodId);
+            vod = restTemplate.getForObject(mainApiPath + "/movies/" + vodId, Vod.class);
+            return vod.getLocation();
         } catch (HttpClientErrorException exception) {
             System.out.println(exception.getMessage());
             return "";
         }
     }
 
+    public Long getVodId(String vodToken) {
+        try {
+            return new RestTemplate().getForObject(mainApiPath + "/movies/get_id/" + vodToken, Long.class);
+        } catch (RestClientException e) {
+            //@todo log exception
+            System.out.println(e.getMessage());
+            return null;
+        }
+    }
 }
