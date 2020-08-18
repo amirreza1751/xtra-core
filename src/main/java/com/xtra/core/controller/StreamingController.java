@@ -176,17 +176,17 @@ public class StreamingController {
             var vodId = vodService.getVodId(vod_token.replace(".json", ""));
             Vod vod = vodService.getVod(vodId.toString());
             JSONArray sequences = new JSONArray();
-            JSONObject clips_object = new JSONObject();
             for (Subtitle subtitle : vod.getSubtitles()){
+                JSONObject clips_object = new JSONObject();
                 clips_object.put("language", subtitle.getLanguage());
                 clips_object.put("clips", new JSONArray()
                         .put(new JSONObject()
                                 .put("type","source")
                                 .put("path", subtitle.getLocation())));
-                sequences.put(clips_object);
 
+                sequences.put(clips_object);
             }
-            sequences.put(new JSONObject()
+        sequences.put(new JSONObject()
                     .put("clips", new JSONArray()
                             .put(new JSONObject()
                                     .put("type","source")
