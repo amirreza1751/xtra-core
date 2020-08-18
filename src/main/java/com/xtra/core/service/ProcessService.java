@@ -68,5 +68,29 @@ public class ProcessService {
         return output;
     }
 
+    public String getMediaInfo(String sourceInput){
+        Process proc;
+        String output = "";
+        try {
+            proc = new ProcessBuilder(
+                    "ffprobe",
+                    "-show_streams",
+                    "-show_format",
+                    "-of",
+                    "json",
+                    "-v",
+                    "quiet",
+                    "-i",
+                    sourceInput
+            ).start();
+            BufferedReader in = new BufferedReader(new InputStreamReader(proc.getInputStream()));
+            output = in.lines().map(Object::toString).collect(Collectors.joining(" "));
+            proc.waitFor();
+        } catch (IOException | InterruptedException e) {
+            return null;
+        }
+        return output;
+    }
+
 
 }

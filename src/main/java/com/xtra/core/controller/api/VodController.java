@@ -1,5 +1,6 @@
 package com.xtra.core.controller.api;
 
+import com.xtra.core.model.MediaInfo;
 import com.xtra.core.model.Vod;
 import com.xtra.core.service.VodService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,5 +32,10 @@ public class VodController {
     @PostMapping("/set_subtitles")
     public String setSubtitles(@RequestBody Vod vod) throws IOException {
         return vodService.setSubtitles(vod);
+    }
+
+    @PostMapping("/info")
+    public MediaInfo getMediaInfo(@RequestBody Vod vod) {
+        return vodService.getMediaInfo(vod);
     }
 }

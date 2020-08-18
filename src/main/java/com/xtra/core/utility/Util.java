@@ -9,4 +9,8 @@ public class Util {
             return false;
         }
     }
+
+    public static String removeQuotations(String input) {
+        return input.replace("\"", "");
+    }
 }
