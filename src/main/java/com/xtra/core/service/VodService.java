@@ -193,17 +193,10 @@ public class VodService {
     }
 
 
-    public String getVodLocation(String vodId) {
+    public Vod getVod(String vodId) {
         RestTemplate restTemplate = new RestTemplate();
-        Vod vod;
-        try {
-            System.out.println(mainApiPath + "/movies/" + vodId);
-            vod = restTemplate.getForObject(mainApiPath + "/movies/" + vodId, Vod.class);
-            return vod.getLocation();
-        } catch (HttpClientErrorException exception) {
-            System.out.println(exception.getMessage());
-            return "";
-        }
+        Vod vod = restTemplate.getForObject(mainApiPath + "/movies/" + vodId, Vod.class);
+        return vod;
     }
 
 

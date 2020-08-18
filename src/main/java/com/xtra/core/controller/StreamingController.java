@@ -174,16 +174,27 @@ public class StreamingController {
             HttpHeaders responseHeaders = new HttpHeaders();
             ResponseEntity<String> response;
             var vodId = vodService.getVodId(vod_token.replace(".json", ""));
-            String vod_location = vodService.getVodLocation(vodId.toString());
-            String jsonString = new JSONObject()
-                    .put("sequences", new JSONArray()
+            Vod vod = vodService.getVod(vodId.toString());
+            JSONArray sequences = new JSONArray();
+            JSONObject clips_object = new JSONObject();
+            for (Subtitle subtitle : vod.getSubtitles()){
+                clips_object.put("language", subtitle.getLanguage());
+                clips_object.put("clips", new JSONArray()
+                        .put(new JSONObject()
+                                .put("type","source")
+                                .put("path", subtitle.getLocation())));
+                sequences.put(clips_object);
+
+            }
+            sequences.put(new JSONObject()
+                    .put("clips", new JSONArray()
                             .put(new JSONObject()
-                                    .put("clips", new JSONArray()
-                                            .put(new JSONObject()
-                                                    .put("type", "source")
-                                                    .put("path", vod_location)))))
-                    .toString();
-            System.out.println(jsonString);
+                                    .put("type","source")
+                                    .put("path", vod.getLocation()))));
+
+            String jsonString = new JSONObject()
+                    .put("sequences", sequences)
+                        .toString();
 
             response = ResponseEntity.ok()
                 .headers(responseHeaders).contentType(MediaType.APPLICATION_JSON)
