@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import java.io.*;
 import java.io.File;
 import java.lang.Process;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
@@ -34,7 +35,7 @@ public class VodService {
         this.processService = processService;
     }
 
-    public String encode(Vod vod) {
+    public String encode(Vod vod) throws IOException {
         String video_path = vod.getLocation();
         Path path = Paths.get(video_path);
         String file_directory = path.getParent().toString();
@@ -61,13 +62,10 @@ public class VodService {
         } catch (IOException | InterruptedException e) {
             return "Encode failed.";
         }
-        File input = new File(file_directory + "/" + file_name_without_extension + ".mp4");
-        File output = new File(output_video);
-
-        if (output.renameTo(input)){
-            return input.getAbsolutePath();
-        } else
-            return "Rename failed.";
+        Path input = Paths.get(video_path);
+        Path output = Paths.get(output_video);
+        Files.move(output, input);
+        return video_path;
     }
 
     public String setSubtitles(Vod vod) throws IOException {
