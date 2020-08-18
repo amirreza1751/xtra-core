@@ -1,6 +1,7 @@
 package com.xtra.core.controller;
 
 import com.xtra.core.model.LineStatus;
+import com.xtra.core.model.Subtitle;
 import com.xtra.core.model.Vod;
 import com.xtra.core.service.*;
 import org.apache.commons.io.FileUtils;
@@ -173,13 +174,28 @@ public class StreamingController {
         HttpHeaders responseHeaders = new HttpHeaders();
         ResponseEntity<String> response;
         Vod vod = vodService.getVod(file_name.replace(".json", ""));
-        String jsonString = new JSONObject()
-                .put("sequences", new JSONArray()
+        JSONArray sequences = new JSONArray();
+        JSONObject clips_object = new JSONObject();
+        for (Subtitle subtitle : vod.getSubtitles()){
+//        for (int i = 0; i <1 ; i++){
+            clips_object.put("language", subtitle.getLanguage());
+            clips_object.put("clips", new JSONArray()
+                    .put(new JSONObject()
+                            .put("type","source")
+                                    .put("path", subtitle.getLocation())));
+//                            .put("path", "absd.srt")));
+            sequences.put(clips_object);
+
+        }
+        sequences.put(new JSONObject()
+                .put("clips", new JSONArray()
                         .put(new JSONObject()
-                                .put("clips", new JSONArray()
-                                        .put(new JSONObject()
-                                                .put("type","source")
-                                                .put("path", vod.getLocation())))))
+                                .put("type","source")
+                                                .put("path", vod.getLocation()))));
+//                                .put("path", "movie.mp4"))));
+
+        String jsonString = new JSONObject()
+                .put("sequences", sequences)
                 .toString();
         System.out.println(jsonString);
 
