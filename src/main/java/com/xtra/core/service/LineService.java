@@ -43,11 +43,10 @@ public class LineService {
         }
     }
 
-    public LineStatus authorizeLineForVod(String lineToken, String streamToken) {
+    public LineStatus authorizeLineForVod(String lineToken, String vodToken) {
         RestTemplate restTemplate = new RestTemplate();
         try {
-//            return restTemplate.getForObject(mainApiPath + "/lines/stream_auth/" + lineToken + "/" + streamToken, LineStatus.class);
-            return restTemplate.getForObject("http://localhost:8082/api" + "/lines/stream_auth/" + lineToken + "/" + streamToken, LineStatus.class);
+            return restTemplate.getForObject(mainApiPath + "/lines/vod_auth/" + lineToken + "/" + vodToken, LineStatus.class);
         } catch (HttpClientErrorException exception) {
             System.out.println(exception.getMessage());
             return LineStatus.ERROR;

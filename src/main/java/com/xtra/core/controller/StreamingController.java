@@ -36,13 +36,14 @@ public class StreamingController {
     private String serverAddress;
 
     @Autowired
-    public StreamingController(LineService lineService, ProgressInfoService progressInfoService, LineActivityService lineActivityService, StreamService streamService, VodService vodService) {
+    public StreamingController(LineService lineService, StreamService streamService, ProgressInfoService progressInfoService, LineActivityService lineActivityService, VodService vodService) {
         this.lineService = lineService;
+        this.streamService = streamService;
         this.progressInfoService = progressInfoService;
         this.lineActivityService = lineActivityService;
-        this.streamService = streamService;
         this.vodService = vodService;
     }
+
 
     @GetMapping("/streams")
     public @ResponseBody
@@ -130,17 +131,16 @@ public class StreamingController {
         progressInfoService.updateProgressInfo(streamId, dataStream);
     }
 
-    @GetMapping("vod/{line_token}/{stream_token}")
+    @GetMapping("vod/{line_token}/{vod_token}")
     public @ResponseBody
-    ResponseEntity<String> getVodPlaylist(@PathVariable("line_token") String lineToken, @PathVariable("stream_token") String streamToken) throws IOException {
-        LineStatus lineStatus = lineService.authorizeLineForVod(lineToken, streamToken);
+    ResponseEntity<String> getVodPlaylist(@PathVariable("line_token") String lineToken, @PathVariable("vod_token") String vodToken) throws IOException {
+        LineStatus lineStatus = lineService.authorizeLineForVod(lineToken, vodToken);
         HttpHeaders responseHeaders = new HttpHeaders();
         if (lineStatus != LineStatus.OK)
             return new ResponseEntity<>("forbidden", HttpStatus.FORBIDDEN);
         else {
-//            Long streamId = streamService.getStreamId(streamToken);
-            System.out.println("http://" + serverAddress + localServerPort + "/hls/" + streamToken + ".json/master.m3u8");
-            URL url = new URL("http://" + serverAddress + localServerPort + "/hls/" + streamToken + ".json/master.m3u8");
+            Long vodId = vodService.getVodId(vodToken);
+            URL url = new URL("http://" + serverAddress + localServerPort + "/hls/" + vodId + ".json/master.m3u8");
             HttpURLConnection con = (HttpURLConnection) url.openConnection();
             con.setRequestMethod("GET");
             con.setConnectTimeout(5000);
@@ -163,43 +163,29 @@ public class StreamingController {
                     .headers(responseHeaders).contentLength(Long.parseLong(String.valueOf(content.length())))
                     .headers(responseHeaders).cacheControl(CacheControl.noCache())
                     .headers(responseHeaders).cacheControl(CacheControl.noStore())
-                    .header("Content-Disposition", "inline; filename=" + "\"" + streamToken + ".m3u8" + "\"")
+                    .header("Content-Disposition", "inline; filename=" + "\"" + vodToken + ".m3u8" + "\"")
                     .body(content.toString());
         }
 
     }
 
-    @GetMapping("vod/json_handler/hls/{file_name}")
-    public ResponseEntity<String> jsonHandler(@PathVariable String file_name) {
-        HttpHeaders responseHeaders = new HttpHeaders();
-        ResponseEntity<String> response;
-        Vod vod = vodService.getVod(file_name.replace(".json", ""));
-        JSONArray sequences = new JSONArray();
-        JSONObject clips_object = new JSONObject();
-        for (Subtitle subtitle : vod.getSubtitles()){
-//        for (int i = 0; i <1 ; i++){
-            clips_object.put("language", subtitle.getLanguage());
-            clips_object.put("clips", new JSONArray()
-                    .put(new JSONObject()
-                            .put("type","source")
-                                    .put("path", subtitle.getLocation())));
-//                            .put("path", "absd.srt")));
-            sequences.put(clips_object);
+    @GetMapping("vod/json_handler/hls/{vod_token}")
+        public ResponseEntity<String> jsonHandler(@PathVariable String vod_token) {
+            HttpHeaders responseHeaders = new HttpHeaders();
+            ResponseEntity<String> response;
+            var vodId = vodService.getVodId(vod_token.replace(".json", ""));
+            String vod_location = vodService.getVodLocation(vodId.toString());
+            String jsonString = new JSONObject()
+                    .put("sequences", new JSONArray()
+                            .put(new JSONObject()
+                                    .put("clips", new JSONArray()
+                                            .put(new JSONObject()
+                                                    .put("type", "source")
+                                                    .put("path", vod_location)))))
+                    .toString();
+            System.out.println(jsonString);
 
-        }
-        sequences.put(new JSONObject()
-                .put("clips", new JSONArray()
-                        .put(new JSONObject()
-                                .put("type","source")
-                                                .put("path", vod.getLocation()))));
-//                                .put("path", "movie.mp4"))));
-
-        String jsonString = new JSONObject()
-                .put("sequences", sequences)
-                .toString();
-        System.out.println(jsonString);
-
-        response = ResponseEntity.ok()
+            response = ResponseEntity.ok()
                 .headers(responseHeaders).contentType(MediaType.APPLICATION_JSON)
                 .headers(responseHeaders).cacheControl(CacheControl.noCache())
                 .headers(responseHeaders).cacheControl(CacheControl.noStore())
