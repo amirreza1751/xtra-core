@@ -191,18 +191,10 @@ public class VodService {
         return output_video;
     }
 
-    public String getVodLocation(String streamId) {
+    public Vod getVod(String streamId) {
         RestTemplate restTemplate = new RestTemplate();
-        Vod vod;
-        try {
-            System.out.println(mainApiPath + "/movies/" + streamId);
 //            vod = restTemplate.getForObject(mainApiPath + "/movies/" + streamId, Vod.class);
-            vod = restTemplate.getForObject("http://localhost:8082/api" + "/movies/" + streamId, Vod.class);
-             return vod.getLocation();
-        } catch (HttpClientErrorException exception) {
-            System.out.println(exception.getMessage());
-            return "";
-        }
+            return restTemplate.getForObject("http://localhost:8082/api" + "/movies/" + streamId, Vod.class);
     }
 
     public Vod renameVideo(String file_name, Vod vod){

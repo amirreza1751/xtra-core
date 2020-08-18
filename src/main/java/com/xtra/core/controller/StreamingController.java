@@ -1,6 +1,7 @@
 package com.xtra.core.controller;
 
 import com.xtra.core.model.LineStatus;
+import com.xtra.core.model.Vod;
 import com.xtra.core.service.*;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -26,6 +27,7 @@ public class StreamingController {
     private final StreamService streamService;
     private final ProgressInfoService progressInfoService;
     private final LineActivityService lineActivityService;
+    private final VodService vodService;
 
     @Value("${nginx.port}")
     private String localServerPort;
@@ -33,11 +35,12 @@ public class StreamingController {
     private String serverAddress;
 
     @Autowired
-    public StreamingController(LineService lineService, ProgressInfoService progressInfoService, LineActivityService lineActivityService, StreamService streamService) {
+    public StreamingController(LineService lineService, ProgressInfoService progressInfoService, LineActivityService lineActivityService, StreamService streamService, VodService vodService) {
         this.lineService = lineService;
         this.progressInfoService = progressInfoService;
         this.lineActivityService = lineActivityService;
         this.streamService = streamService;
+        this.vodService = vodService;
     }
 
     @GetMapping("/streams")
@@ -169,15 +172,14 @@ public class StreamingController {
     public ResponseEntity<String> jsonHandler(@PathVariable String file_name) {
         HttpHeaders responseHeaders = new HttpHeaders();
         ResponseEntity<String> response;
-        VodService vodService = new VodService();
-        String vod_location = vodService.getVodLocation(file_name.replace(".json", ""));
+        Vod vod = vodService.getVod(file_name.replace(".json", ""));
         String jsonString = new JSONObject()
                 .put("sequences", new JSONArray()
                         .put(new JSONObject()
                                 .put("clips", new JSONArray()
                                         .put(new JSONObject()
                                                 .put("type","source")
-                                                .put("path", vod_location)))))
+                                                .put("path", vod.getLocation())))))
                 .toString();
         System.out.println(jsonString);
 
