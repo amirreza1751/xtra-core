@@ -1,16 +1,19 @@
 package com.xtra.core.service;
 
-import com.xtra.core.model.Audio;
-import com.xtra.core.model.LineStatus;
-import com.xtra.core.model.Subtitle;
-import com.xtra.core.model.Vod;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.xtra.core.model.*;
 import org.apache.commons.io.FilenameUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.*;
+import java.io.File;
+import java.lang.Process;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Duration;
+import java.time.Period;
 import java.util.*;
 
 import org.mozilla.universalchardet.UniversalDetector;
@@ -18,12 +21,18 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
+import static com.xtra.core.utility.Util.removeQuotations;
+
 @Service
 public class VodService {
 
     @Value("${main.apiPath}")
     private String mainApiPath;
+    private final ProcessService processService;
 
+    public VodService(ProcessService processService) {
+        this.processService = processService;
+    }
 
     public String encode(Vod vod) throws IOException {
         String video_path = vod.getLocation();
@@ -218,4 +227,24 @@ public class VodService {
         }
     }
 
+    public MediaInfo getMediaInfo(Vod vod) {
+        String result = processService.getMediaInfo(vod.getLocation());
+        MediaInfo info = new MediaInfo();
+        ObjectMapper objectMapper = new ObjectMapper();
+        try {
+            var root = objectMapper.readTree(result);
+            var video = root.get("streams").get(0);
+            info.setVideoCodec(removeQuotations(video.get("codec_name").toString()));
+            info.setResolution(video.get("width") + "x" + video.get("height"));
+
+            var audio = root.get("streams").get(1);
+            info.setAudioCodec(removeQuotations(audio.get("codec_name").toString()));
+
+            var duration = root.get("format").get("duration").toString();
+            info.setDuration(Duration.ofSeconds((int) Float.parseFloat(removeQuotations(duration))));
+        } catch (JsonProcessingException e) {
+            return null;
+        }
+        return info;
+    }
 }
