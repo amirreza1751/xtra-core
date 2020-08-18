@@ -34,7 +34,7 @@ public class VodController {
         return vodService.setSubtitles(vod);
     }
 
-    @GetMapping("/info")
+    @PostMapping("/info")
     public MediaInfo getMediaInfo(@RequestBody Vod vod) {
         return vodService.getMediaInfo(vod);
     }
