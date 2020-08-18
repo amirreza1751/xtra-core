@@ -25,7 +25,7 @@ public class VodService {
     private String mainApiPath;
 
 
-    public String encode(Vod vod) throws IOException {
+    public String encode(Vod vod) {
         String video_path = vod.getLocation();
         Path path = Paths.get(video_path);
         String file_directory = path.getParent().toString();
