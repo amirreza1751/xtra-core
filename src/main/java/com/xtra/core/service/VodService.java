@@ -54,6 +54,7 @@ public class VodService {
                 "copy",
 //                 "aac",
                 output_video,
+                "-y"
         };
         Process proc;
         try {
@@ -62,10 +63,11 @@ public class VodService {
         } catch (IOException | InterruptedException e) {
             return "Encode failed.";
         }
-        Path input = Paths.get(video_path);
+        Path input = Paths.get(file_directory + "/" + file_name_without_extension + ".mp4");
+        Files.deleteIfExists(input);
         Path output = Paths.get(output_video);
         Files.move(output, input);
-        return video_path;
+        return output_video;
     }
 
     public String setSubtitles(Vod vod) throws IOException {
