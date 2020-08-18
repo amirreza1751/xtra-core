@@ -16,7 +16,7 @@ public class ProcessService {
     public Optional<Process> runProcess(String... args) {
         Process proc;
         try {
-            proc = new ProcessBuilder(args).inheritIO().start();
+            proc = new ProcessBuilder(args).start();
         } catch (IOException e) {
             //@todo log
             System.out.println(e.getMessage());
