@@ -34,7 +34,7 @@ public class VodService {
         this.processService = processService;
     }
 
-    public String encode(Vod vod) throws IOException {
+    public String encode(Vod vod) {
         String video_path = vod.getLocation();
         Path path = Paths.get(video_path);
         String file_directory = path.getParent().toString();
@@ -61,19 +61,13 @@ public class VodService {
         } catch (IOException | InterruptedException e) {
             return "Encode failed.";
         }
-        // needs to be changed
-        // needs to be changed
-        // needs to be changed
-        vod = this.renameVideo(video_path, vod);
-//        String with_sub = this.setSubtitles(vod);
-//        vod.setLocation(with_sub);
-//        output_video = this.setAudios(vod);
-        // needs to be changed
-        // needs to be changed
-        // needs to be changed
+        File input = new File(file_directory + "/" + file_name_without_extension + ".mp4");
+        File output = new File(output_video);
 
-//         return output_video;
-        return vod.getLocation();
+        if (output.renameTo(input)){
+            return input.getAbsolutePath();
+        } else
+            return "Rename failed.";
     }
 
     public String setSubtitles(Vod vod) throws IOException {
