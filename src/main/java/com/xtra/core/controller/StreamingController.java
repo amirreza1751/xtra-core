@@ -220,23 +220,4 @@ public class StreamingController {
             return new ResponseEntity<>("Play", HttpStatus.OK);
         }
     }
-    @GetMapping("info")
-    public String info() throws JsonProcessingException {
-        String result = processService.getMediaInfo("/home/amirak/Downloads/Persepolis/Videos/dir/movie.mkv");
-        MediaInfo info = new MediaInfo();
-        ObjectMapper objectMapper = new ObjectMapper();
-
-            var root = objectMapper.readTree(result);
-            var video = root.get("streams").get(0);
-//            info.setVideoCodec(removeQuotations(video.get("codec_name").toString()));
-//            info.setResolution(video.get("width") + "x" + video.get("height"));
-//
-//            var audio = root.get("streams").get(1);
-//            info.setAudioCodec(removeQuotations(audio.get("codec_name").toString()));
-//
-//            var duration = root.get("format").get("duration").toString();
-//            info.setDuration(Duration.ofSeconds((int) Float.parseFloat(removeQuotations(duration))));
-
-        return video.get("codec_name").toString();
-    }
 }
