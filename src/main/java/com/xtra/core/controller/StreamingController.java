@@ -180,7 +180,9 @@ public class StreamingController {
         public ResponseEntity<String> jsonHandler(@PathVariable String vod_token) {
             HttpHeaders responseHeaders = new HttpHeaders();
             ResponseEntity<String> response;
+            System.out.println("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX = " + vod_token.replace(".json", ""));
             var vodId = vodService.getVodId(vod_token.replace(".json", ""));
+            System.out.println("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX vodId = " + vodId);
             Vod vod = vodService.getVod(vodId.toString());
             JSONArray sequences = new JSONArray();
             for (Subtitle subtitle : vod.getSubtitles()){
