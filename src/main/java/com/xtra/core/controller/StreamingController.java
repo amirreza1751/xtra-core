@@ -204,6 +204,7 @@ public class StreamingController {
             String jsonString = new JSONObject()
                     .put("sequences", sequences)
                         .toString();
+            System.out.println(jsonString);
 
             response = ResponseEntity.ok()
                 .headers(responseHeaders).contentType(MediaType.APPLICATION_JSON)
