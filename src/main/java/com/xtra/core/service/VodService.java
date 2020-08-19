@@ -48,8 +48,6 @@ public class VodService {
                 "-vcodec",
                 "copy",
 //                 "libx264",
-                "-preset",
-                "ultrafast",
                 "-acodec",
                 "copy",
 //                 "aac",
