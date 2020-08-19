@@ -67,7 +67,7 @@ public class VodService {
         Files.deleteIfExists(input);
         Path output = Paths.get(output_video);
         Files.move(output, input);
-        return output.toString();
+        return input.toString();
     }
 
     public String setSubtitles(Vod vod) throws IOException {
