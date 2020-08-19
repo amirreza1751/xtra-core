@@ -47,6 +47,8 @@ public class VodService {
                 video_path,
                 "-vcodec",
                 "copy",
+                "-preset",
+                "veryfast",
 //                 "libx264",
                 "-acodec",
 //                "copy",
