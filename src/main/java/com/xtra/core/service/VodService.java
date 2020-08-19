@@ -49,8 +49,8 @@ public class VodService {
                 "copy",
 //                 "libx264",
                 "-acodec",
-                "copy",
-//                 "aac",
+//                "copy",
+                 "aac",
                 output_video,
                 "-y"
         };
