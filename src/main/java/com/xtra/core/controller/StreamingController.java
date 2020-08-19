@@ -1,6 +1,9 @@
 package com.xtra.core.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xtra.core.model.LineStatus;
+import com.xtra.core.model.MediaInfo;
 import com.xtra.core.model.Subtitle;
 import com.xtra.core.model.Vod;
 import com.xtra.core.service.*;
@@ -19,12 +22,16 @@ import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.file.Files;
+import java.time.Duration;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static com.xtra.core.utility.Util.removeQuotations;
 
 @RestController
 public class StreamingController {
     private final LineService lineService;
+    private final ProcessService processService;
     private final StreamService streamService;
     private final ProgressInfoService progressInfoService;
     private final LineActivityService lineActivityService;
@@ -36,8 +43,9 @@ public class StreamingController {
     private String serverAddress;
 
     @Autowired
-    public StreamingController(LineService lineService, StreamService streamService, ProgressInfoService progressInfoService, LineActivityService lineActivityService, VodService vodService) {
+    public StreamingController(LineService lineService, ProcessService processService, StreamService streamService, ProgressInfoService progressInfoService, LineActivityService lineActivityService, VodService vodService) {
         this.lineService = lineService;
+        this.processService = processService;
         this.streamService = streamService;
         this.progressInfoService = progressInfoService;
         this.lineActivityService = lineActivityService;
@@ -211,5 +219,24 @@ public class StreamingController {
         else {
             return new ResponseEntity<>("Play", HttpStatus.OK);
         }
+    }
+    @GetMapping("info")
+    public String info() throws JsonProcessingException {
+        String result = processService.getMediaInfo("/home/amirak/Downloads/Persepolis/Videos/dir/movie.mkv");
+        MediaInfo info = new MediaInfo();
+        ObjectMapper objectMapper = new ObjectMapper();
+
+            var root = objectMapper.readTree(result);
+            var video = root.get("streams").get(0);
+//            info.setVideoCodec(removeQuotations(video.get("codec_name").toString()));
+//            info.setResolution(video.get("width") + "x" + video.get("height"));
+//
+//            var audio = root.get("streams").get(1);
+//            info.setAudioCodec(removeQuotations(audio.get("codec_name").toString()));
+//
+//            var duration = root.get("format").get("duration").toString();
+//            info.setDuration(Duration.ofSeconds((int) Float.parseFloat(removeQuotations(duration))));
+
+        return video.get("codec_name").toString();
     }
 }
