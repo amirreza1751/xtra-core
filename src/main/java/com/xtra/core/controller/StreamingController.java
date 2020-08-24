@@ -223,8 +223,4 @@ public class StreamingController {
             return new ResponseEntity<>("Play", HttpStatus.OK);
         }
     }
-    @PostMapping("/exec")
-    public String encode(@RequestBody Vod vod) throws IOException {
-        return "method ended. ___ " + vodService.encode(vod);
-    }
 }
