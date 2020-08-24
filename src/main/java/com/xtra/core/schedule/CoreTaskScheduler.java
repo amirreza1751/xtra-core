@@ -21,6 +21,8 @@ import java.io.File;
 import java.time.LocalDateTime;
 import java.util.*;
 
+import static com.xtra.core.utility.Util.removeQuotations;
+
 @Component
 public class CoreTaskScheduler {
     private final ProcessRepository processRepository;
@@ -74,7 +76,7 @@ public class CoreTaskScheduler {
         try {
             var root = objectMapper.readTree(videoAnalysis);
             var video = root.get("streams").get(0);
-            info.setVideoCodec(video.get("codec_name").toPrettyString());
+            info.setVideoCodec(removeQuotations(video.get("codec_name").toPrettyString()));
             info.setResolution(video.get("width") + "x" + video.get("height"));
 
             var audio = root.get("streams").get(1);
