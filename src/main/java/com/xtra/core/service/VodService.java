@@ -82,6 +82,14 @@ public class VodService {
                 e.printStackTrace();
             }
             //        return input.toString();
+            Map<String, String> data = new HashMap<>();
+            data.put("location", input.toString());
+            data.put("encodeStatus", EncodingStatus.ENCODED.toString());
+            try {
+                 new RestTemplate().patchForObject(mainApiPath + "/vod/" + vod.getId(), data, String.class);
+            } catch (RestClientException e) {
+                System.out.println(e.getMessage());
+            }
         });
 
 
