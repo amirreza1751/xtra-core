@@ -46,6 +46,7 @@ public class VodService {
         String file_directory = path.getParent().toString();
         String file_name_without_extension = FilenameUtils.removeExtension(String.valueOf(path.getFileName()));
         String output_video = file_directory + "/" + file_name_without_extension + System.currentTimeMillis() + ".mp4";
+        Map<String, String> data = new HashMap<>();
         String[] args = new String[]{
                 "ffmpeg",
                 "-i",
@@ -67,7 +68,8 @@ public class VodService {
             proc = new ProcessBuilder(args).start();
             proc.waitFor();
         } catch (IOException | InterruptedException e) {
-//            return "Encode failed.";
+            data.put("encodeStatus", EncodingStatus.NOT_ENCODED.toString());
+            this.updateVodStatus(vod.getId(), data);
         }
             Path input = Paths.get(file_directory + "/" + file_name_without_extension + ".mp4");
             try {
@@ -81,19 +83,18 @@ public class VodService {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            //        return input.toString();
-            Map<String, String> data = new HashMap<>();
             data.put("location", input.toString());
             data.put("encodeStatus", EncodingStatus.ENCODED.toString());
-            try {
-                 new RestTemplate().patchForObject(mainApiPath + "/vod/" + vod.getId(), data, String.class);
-            } catch (RestClientException e) {
-                System.out.println(e.getMessage());
-            }
+            this.updateVodStatus(vod.getId(), data);
         });
-
-
         return EncodingStatus.ENCODING;
+    }
+    public void updateVodStatus(Long id, Map<String, String> data){
+        try {
+            new RestTemplate().patchForObject(mainApiPath + "/vod/" + id, data, String.class);
+        } catch (RestClientException e) {
+            System.out.println(e.getMessage());
+        }
     }
 
     public String setSubtitles(Vod vod) throws IOException {
