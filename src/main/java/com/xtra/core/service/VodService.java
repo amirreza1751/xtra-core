@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xtra.core.model.*;
 import org.apache.commons.io.FilenameUtils;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.concurrent.DelegatingSecurityContextExecutorService;
 import org.springframework.stereotype.Service;
 
 import java.io.*;
@@ -16,6 +17,8 @@ import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.Period;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.mozilla.universalchardet.UniversalDetector;
 import org.springframework.web.client.HttpClientErrorException;
@@ -35,7 +38,9 @@ public class VodService {
         this.processService = processService;
     }
 
-    public String encode(Vod vod) throws IOException {
+    public EncodingStatus encode(Vod vod) throws IOException {
+        ExecutorService executor = Executors.newFixedThreadPool(10);
+        executor.submit(() -> {
         String video_path = vod.getLocation();
         Path path = Paths.get(video_path);
         String file_directory = path.getParent().toString();
@@ -56,18 +61,31 @@ public class VodService {
                 output_video,
                 "-y"
         };
+
         Process proc;
         try {
             proc = new ProcessBuilder(args).start();
             proc.waitFor();
         } catch (IOException | InterruptedException e) {
-            return "Encode failed.";
+//            return "Encode failed.";
         }
-        Path input = Paths.get(file_directory + "/" + file_name_without_extension + ".mp4");
-        Files.deleteIfExists(input);
-        Path output = Paths.get(output_video);
-        Files.move(output, input);
-        return input.toString();
+            Path input = Paths.get(file_directory + "/" + file_name_without_extension + ".mp4");
+            try {
+                Files.deleteIfExists(input);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            Path output = Paths.get(output_video);
+            try {
+                Files.move(output, input);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            //        return input.toString();
+        });
+
+
+        return EncodingStatus.ENCODING;
     }
 
     public String setSubtitles(Vod vod) throws IOException {
