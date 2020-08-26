@@ -1,5 +1,6 @@
 package com.xtra.core.controller.api;
 
+import com.xtra.core.model.EncodingStatus;
 import com.xtra.core.model.MediaInfo;
 import com.xtra.core.model.Vod;
 import com.xtra.core.service.VodService;
@@ -20,7 +21,7 @@ public class VodController {
     }
 
     @PostMapping("/encode")
-    public String encode(@RequestBody Vod vod) throws IOException {
+    public EncodingStatus encode(@RequestBody Vod vod) throws IOException {
         return vodService.encode(vod);
     }
 
