@@ -1,9 +1,8 @@
 package com.xtra.core.schedule;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.xtra.core.model.*;
 import com.xtra.core.model.Process;
+import com.xtra.core.model.*;
 import com.xtra.core.repository.LineActivityRepository;
 import com.xtra.core.repository.ProcessRepository;
 import com.xtra.core.repository.ProgressInfoRepository;
@@ -19,7 +18,10 @@ import org.springframework.web.client.RestTemplate;
 import javax.transaction.Transactional;
 import java.io.File;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 @Component
 public class CoreTaskScheduler {
@@ -78,8 +80,9 @@ public class CoreTaskScheduler {
             info.setResolution(video.get("width") + "x" + video.get("height"));
 
             var audio = root.get("streams").get(1);
-            //info.setAudioCodec(audio.get("codec_name").toPrettyString());
-        } catch (JsonProcessingException e) {
+            if (audio.has("codec_name"))
+                info.setAudioCodec(audio.get("codec_name").toPrettyString());
+        } catch (Exception e) {
             e.printStackTrace();
         }
         return info;
@@ -99,7 +102,7 @@ public class CoreTaskScheduler {
         try {
             new RestTemplate().postForObject(mainApiPath + "/streams/updateStreamInfo", infos, Stream.class);
         } catch (RestClientException e) {
-            System.out.println(e.getMessage());
+            e.printStackTrace();
         }
     }
 
@@ -107,15 +110,15 @@ public class CoreTaskScheduler {
     @Transactional
     public void removeOldConnections() {
         List<LineActivity> lineActivities = lineActivityRepository.findAllByLastReadIsLessThanEqual(LocalDateTime.now().minusMinutes(1));
-        if(lineActivities.isEmpty())
+        if (lineActivities.isEmpty())
             return;
         for (LineActivity activity : lineActivities) {
             lineActivityRepository.deleteById(activity.getId());
         }
         try {
-            new RestTemplate().postForObject(mainApiPath + "/lines/deleteLineActivities", lineActivities, String.class);
+            new RestTemplate().delete(mainApiPath + "/line_activities/batch", lineActivities);
         } catch (RestClientException e) {
-            System.out.println(e.getMessage());
+            e.printStackTrace();
         }
     }
 
@@ -128,9 +131,9 @@ public class CoreTaskScheduler {
             lineActivityRepository.deleteById(activity.getId());
         }
         try {
-            new RestTemplate().postForObject(mainApiPath + "/lines/deleteLineActivities", lineActivities, String.class);
+            new RestTemplate().delete(mainApiPath + "/line_activities/batch", lineActivities);
         } catch (RestClientException e) {
-            System.out.println(e.getMessage());
+            e.printStackTrace();
         }
     }
 
@@ -140,9 +143,9 @@ public class CoreTaskScheduler {
         if (lineActivities.isEmpty())
             return;
         try {
-            new RestTemplate().postForObject(mainApiPath + "/lines/updateLineActivities", lineActivities, String.class);
+            new RestTemplate().put(mainApiPath + "/line_activities/batch", lineActivities);
         } catch (RestClientException e) {
-            System.out.println(e.getMessage());
+            e.printStackTrace();
         }
     }
 
