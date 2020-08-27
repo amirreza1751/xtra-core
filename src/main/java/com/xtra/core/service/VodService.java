@@ -41,51 +41,52 @@ public class VodService {
     public EncodingStatus encode(Vod vod) throws IOException {
         ExecutorService executor = Executors.newFixedThreadPool(10);
         executor.submit(() -> {
-        String video_path = vod.getLocation();
-        Path path = Paths.get(video_path);
-        String file_directory = path.getParent().toString();
-        String file_name_without_extension = FilenameUtils.removeExtension(String.valueOf(path.getFileName()));
-        String output_video = file_directory + "/" + file_name_without_extension + System.currentTimeMillis() + ".mp4";
-        Map<String, String> data = new HashMap<>();
-        String[] args = new String[]{
-                "ffmpeg",
-                "-i",
-                video_path,
-                "-vcodec",
-                "copy",
-//                "-preset",
-//                "veryfast",
-//                 "libx264",
-                "-acodec",
-                "copy",
-//                 "aac",
-                output_video,
-                "-y"
-        };
+            String video_path = vod.getLocation();
+            Path path = Paths.get(video_path);
+            String file_directory = path.getParent().toString();
+            String file_name_without_extension = FilenameUtils.removeExtension(String.valueOf(path.getFileName()));
+            String output_video = file_directory + File.separator + file_name_without_extension + System.currentTimeMillis() + ".mp4";
+            Map<String, String> data = new HashMap<>();
+            String[] args = new String[]{
+                    "ffmpeg",
+                    "-i",
+                    video_path,
+                    "-vcodec",
+                    "copy",
+    //                "-preset",
+    //                "veryfast",
+    //                 "libx264",
+                    "-acodec",
+                    "copy",
+    //                 "aac",
+                    output_video,
+                    "-y"
+            };
 
-        Process proc;
-        try {
-            proc = new ProcessBuilder(args).start();
-            proc.waitFor();
-        } catch (IOException | InterruptedException e) {
-            data.put("encodeStatus", EncodingStatus.NOT_ENCODED.toString());
-            this.updateVodStatus(vod.getId(), data);
-        }
-            Path input = Paths.get(file_directory + "/" + file_name_without_extension + ".mp4");
+            Process proc;
             try {
-                Files.deleteIfExists(input);
-            } catch (IOException e) {
-                e.printStackTrace();
+                proc = new ProcessBuilder(args).start();
+                proc.waitFor();
+            } catch (IOException | InterruptedException e) {
+                data.put("encodeStatus", EncodingStatus.NOT_ENCODED.toString());
+                this.updateVodStatus(vod.getId(), data);
             }
-            Path output = Paths.get(output_video);
-            try {
-                Files.move(output, input);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            data.put("location", input.toString());
-            data.put("encodeStatus", EncodingStatus.ENCODED.toString());
-            this.updateVodStatus(vod.getId(), data);
+                Path mp4_path = Paths.get(file_directory + File.separator + file_name_without_extension + ".mp4");
+                try {
+                    Files.deleteIfExists(mp4_path); //if old files with same name exists
+                    Files.deleteIfExists(path); //input mkv file must be deleted
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                Path output = Paths.get(output_video);
+                try {
+                    Files.move(output, mp4_path);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                data.put("location", mp4_path.toString());
+                data.put("encodeStatus", EncodingStatus.ENCODED.toString());
+                this.updateVodStatus(vod.getId(), data);
         });
         return EncodingStatus.ENCODING;
     }
@@ -229,14 +230,6 @@ public class VodService {
         return vod;
     }
 
-
-    public Vod renameVideo(String file_name, Vod vod) {
-        File file_to_delete = new File(file_name);
-        if (file_to_delete.delete()) {
-            vod.setLocation(file_name);
-        }
-        return vod;
-    }
 
     public Long getVodId(String vodToken) {
         try {
