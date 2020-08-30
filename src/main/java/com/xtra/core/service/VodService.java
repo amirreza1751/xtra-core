@@ -5,23 +5,23 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xtra.core.model.*;
 import org.apache.commons.io.FilenameUtils;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.concurrent.DelegatingSecurityContextExecutorService;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 
 import java.io.*;
 import java.io.File;
 import java.lang.Process;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
-import java.time.Period;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import org.mozilla.universalchardet.UniversalDetector;
-import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
@@ -32,10 +32,14 @@ public class VodService {
 
     @Value("${main.apiPath}")
     private String mainApiPath;
+    @Value("${nginx.address}")
+    private String serverAddress;
     private final ProcessService processService;
+    private final LineService lineService;
 
-    public VodService(ProcessService processService) {
+    public VodService(ProcessService processService, LineService lineService) {
         this.processService = processService;
+        this.lineService = lineService;
     }
 
     public EncodingStatus encode(Vod vod) throws IOException {
@@ -261,4 +265,59 @@ public class VodService {
         }
         return info;
     }
+
+
+
+    /** Streaming methods */
+    /** Streaming methods */
+    /** Streaming methods */
+    /** Streaming methods */
+    /** Streaming methods */
+    /** Streaming methods */
+    /** Streaming methods */
+    /** Streaming methods */
+    /** Streaming methods */
+
+    public ResponseEntity<?> getVodPlaylist(String lineToken, String vodToken) throws IOException {
+        LineStatus lineStatus = lineService.authorizeLineForVod(lineToken, vodToken);
+        HttpHeaders responseHeaders = new HttpHeaders();
+        if (lineStatus != LineStatus.OK)
+            return new ResponseEntity<>("forbidden", HttpStatus.FORBIDDEN);
+        else {
+            URL url = new URL(serverAddress + ":1234" + "/hls/" + vodToken + ".json/master.m3u8");
+            HttpURLConnection con = (HttpURLConnection) url.openConnection();
+            con.setRequestMethod("GET");
+            con.setConnectTimeout(5000);
+            con.setReadTimeout(5000);
+            int status = con.getResponseCode();
+            if (status == 500) {
+                return ResponseEntity.status(500).body("Internal Server Error");
+            }
+
+            BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
+            String inputLine;
+            StringBuilder content = new StringBuilder();
+            while ((inputLine = in.readLine()) != null) {
+                content.append(inputLine).append("\n");
+            }
+            in.close();
+
+            return ResponseEntity.ok()
+                    .headers(responseHeaders).contentType(MediaType.valueOf("application/x-mpegurl"))
+                    .headers(responseHeaders).contentLength(Long.parseLong(String.valueOf(content.length())))
+                    .headers(responseHeaders).cacheControl(CacheControl.noCache())
+                    .headers(responseHeaders).cacheControl(CacheControl.noStore())
+                    .header("Content-Disposition", "inline; filename=" + "\"" + vodToken + ".m3u8" + "\"")
+                    .body(content.toString());
+        }
+
+    }
+
+        /** Streaming methods */
+        /** Streaming methods */
+        /** Streaming methods */
+        /** Streaming methods */
+        /** Streaming methods */
+        /** Streaming methods */
+        /** Streaming methods */
 }

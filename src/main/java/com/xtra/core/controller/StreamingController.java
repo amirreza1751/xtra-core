@@ -141,39 +141,8 @@ public class StreamingController {
 
     @GetMapping("vod/{line_token}/{vod_token}")
     public @ResponseBody
-    ResponseEntity<String> getVodPlaylist(@PathVariable("line_token") String lineToken, @PathVariable("vod_token") String vodToken) throws IOException {
-        LineStatus lineStatus = lineService.authorizeLineForVod(lineToken, vodToken);
-        HttpHeaders responseHeaders = new HttpHeaders();
-        if (lineStatus != LineStatus.OK)
-            return new ResponseEntity<>("forbidden", HttpStatus.FORBIDDEN);
-        else {
-            URL url = new URL(serverAddress + ":1234" + "/hls/" + vodToken + ".json/master.m3u8");
-            HttpURLConnection con = (HttpURLConnection) url.openConnection();
-            con.setRequestMethod("GET");
-            con.setConnectTimeout(5000);
-            con.setReadTimeout(5000);
-            int status = con.getResponseCode();
-            if (status == 500) {
-                return ResponseEntity.status(500).body("Internal Server Error");
-            }
-
-            BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
-            String inputLine;
-            StringBuilder content = new StringBuilder();
-            while ((inputLine = in.readLine()) != null) {
-                content.append(inputLine).append("\n");
-            }
-            in.close();
-
-            return ResponseEntity.ok()
-                    .headers(responseHeaders).contentType(MediaType.valueOf("application/x-mpegurl"))
-                    .headers(responseHeaders).contentLength(Long.parseLong(String.valueOf(content.length())))
-                    .headers(responseHeaders).cacheControl(CacheControl.noCache())
-                    .headers(responseHeaders).cacheControl(CacheControl.noStore())
-                    .header("Content-Disposition", "inline; filename=" + "\"" + vodToken + ".m3u8" + "\"")
-                    .body(content.toString());
-        }
-
+    ResponseEntity<?> getVodPlaylist(@PathVariable("line_token") String lineToken, @PathVariable("vod_token") String vodToken) throws IOException {
+        return vodService.getVodPlaylist(lineToken, vodToken);
     }
 
     @GetMapping("vod/json_handler/hls/{vod_token}")
