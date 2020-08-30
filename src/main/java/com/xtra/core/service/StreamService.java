@@ -5,11 +5,16 @@ import com.xtra.core.model.Process;
 import com.xtra.core.repository.ProcessRepository;
 import com.xtra.core.repository.ProgressInfoRepository;
 import com.xtra.core.repository.StreamInfoRepository;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ResourceUtils;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
@@ -142,11 +147,11 @@ public class StreamService {
             processRepository.deleteByProcessIdStreamId(streamId);
 
             Optional<ProgressInfo> progressInfo = progressInfoRepository.findByStreamId(streamId);
-            if (progressInfo.isPresent()){
+            if (progressInfo.isPresent()) {
                 progressInfoRepository.deleteById(streamId);
             }
             Optional<StreamInfo> streamInfo = streamInfoRepository.findByStreamId(streamId);
-            if (streamInfo.isPresent()){
+            if (streamInfo.isPresent()) {
                 streamInfoRepository.deleteById(streamId);
             }
 
@@ -172,7 +177,7 @@ public class StreamService {
         }
     }
 
-    public Long getStreamId(String streamToken){
+    public Long getStreamId(String streamToken) {
         try {
             return new RestTemplate().getForObject(mainApiPath + "/streams/get_id/" + streamToken, Long.class);
         } catch (RestClientException e) {
@@ -188,7 +193,9 @@ public class StreamService {
     /** Stream methods */
     /** Stream methods */
     /** Stream methods */
-    /** Stream methods */
+    /**
+     * Stream methods
+     */
     public Map<String, String> getPlaylist(String lineToken, String streamToken, String extension, String userAgent, HttpServletRequest request) throws IOException {
         Map<String, String> data = new HashMap<>();
         LineStatus status = lineService.authorizeLineForStream(lineToken, streamToken);
@@ -244,6 +251,26 @@ public class StreamService {
         }
         return data;
     }
+
+
+    public byte[] getSegment(String lineToken, String streamToken
+            , String extension, String segment, String userAgent, HttpServletRequest request) throws IOException {
+        LineStatus status = lineService.authorizeLineForStream(lineToken, streamToken);
+        Long streamId = this.getStreamId(streamToken);
+        Long lineId = lineService.getLineId(lineToken);
+        if (status == LineStatus.OK) {
+            var result = lineActivityService.updateLineActivity(lineId, streamId, request.getRemoteAddr(), userAgent);
+            if (!result) {
+//                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
+                throw new RuntimeException("Forbidden " + HttpStatus.FORBIDDEN);
+            }
+            return IOUtils.toByteArray(FileUtils.openInputStream(new File(System.getProperty("user.home") + "/streams/" + streamId + "_" + segment + "." + extension)));
+        } else {
+            throw new RuntimeException("Forbidden " + HttpStatus.FORBIDDEN);
+        }
+    }
+
+
     /** Stream methods */
     /** Stream methods */
     /** Stream methods */

@@ -61,13 +61,13 @@ public class StreamingController {
         //@todo decrypt stream_id and user_id
         Map<String, String> data = streamService.getPlaylist(lineToken, streamToken, extension, userAgent, request);
         HttpHeaders responseHeaders = new HttpHeaders();
-        return  ResponseEntity.ok()
-                    .headers(responseHeaders).contentType(MediaType.valueOf("application/x-mpegurl"))
-                    .headers(responseHeaders).contentLength(Long.parseLong(String.valueOf(data.get("playlist").length())))
-                    .headers(responseHeaders).cacheControl(CacheControl.noCache())
-                    .headers(responseHeaders).cacheControl(CacheControl.noStore())
-                    .header("Content-Disposition", "inline; filename=" + "\"" + data.get("fileName") + "\"")
-                    .body(data.get("playlist"));
+        return ResponseEntity.ok()
+                .headers(responseHeaders).contentType(MediaType.valueOf("application/x-mpegurl"))
+                .headers(responseHeaders).contentLength(Long.parseLong(String.valueOf(data.get("playlist").length())))
+                .headers(responseHeaders).cacheControl(CacheControl.noCache())
+                .headers(responseHeaders).cacheControl(CacheControl.noStore())
+                .header("Content-Disposition", "inline; filename=" + "\"" + data.get("fileName") + "\"")
+                .body(data.get("playlist"));
 
     }
 
@@ -75,22 +75,11 @@ public class StreamingController {
     public @ResponseBody
     ResponseEntity<byte[]> getSegment(@RequestParam("line_token") String lineToken, @RequestParam("stream_token") String streamToken
             , @RequestParam String extension, @RequestParam String segment, @RequestHeader(value = "HTTP_USER_AGENT", defaultValue = "") String userAgent, HttpServletRequest request) throws IOException {
-        LineStatus status = lineService.authorizeLineForStream(lineToken, streamToken);
-        Long streamId = streamService.getStreamId(streamToken);
-        Long lineId = lineService.getLineId(lineToken);
-        if (status == LineStatus.OK) {
-            var result = lineActivityService.updateLineActivity(lineId, streamId, request.getRemoteAddr(), userAgent);
-            if (!result) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
-            }
-            HttpHeaders responseHeaders = new HttpHeaders();
-            return ResponseEntity.ok()
-                    .headers(responseHeaders).contentType(MediaType.valueOf("video/mp2t"))
-                    .body(IOUtils.toByteArray(FileUtils.openInputStream(new File(System.getProperty("user.home") + "/streams/" + streamId + "_" + segment + "." + extension))));
-        } else {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
-        }
-
+        byte[] movie_segment = streamService.getSegment(lineToken, streamToken, extension, segment, userAgent, request);
+        HttpHeaders responseHeaders = new HttpHeaders();
+        return ResponseEntity.ok()
+                .headers(responseHeaders).contentType(MediaType.valueOf("video/mp2t"))
+                .body(movie_segment);
 
     }
 
@@ -115,7 +104,7 @@ public class StreamingController {
     }
 
     @GetMapping("vod/json_handler/hls/{vod_token}")
-        public ResponseEntity<String> jsonHandler(@PathVariable String vod_token) {
+    public ResponseEntity<String> jsonHandler(@PathVariable String vod_token) {
         String jsonString = vodService.jsonHandler(vod_token);
         HttpHeaders responseHeaders = new HttpHeaders();
         return ResponseEntity.ok()
