@@ -23,6 +23,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.file.Files;
 import java.time.Duration;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -55,59 +56,19 @@ public class StreamingController {
 
     @GetMapping("/streams")
     public @ResponseBody
-    ResponseEntity<String> GetPlaylist(@RequestParam("line_token") String lineToken, @RequestParam("stream_token") String streamToken
+    ResponseEntity<String> getPlaylist(@RequestParam("line_token") String lineToken, @RequestParam("stream_token") String streamToken
             , @RequestParam String extension, @RequestHeader(value = "HTTP_USER_AGENT", defaultValue = "") String userAgent, HttpServletRequest request) throws IOException {
         //@todo decrypt stream_id and user_id
+        Map<String, String> data = streamService.getPlaylist(lineToken, streamToken, extension, userAgent, request);
         HttpHeaders responseHeaders = new HttpHeaders();
-        ResponseEntity<String> response;
-        LineStatus status = lineService.authorizeLineForStream(lineToken, streamToken);
-        if (status != LineStatus.OK) {
-            if (status == LineStatus.NOT_FOUND)
-                response = new ResponseEntity<>("Line Not found", HttpStatus.NOT_FOUND);
-            else if (status == LineStatus.BANNED)
-                response = new ResponseEntity<>("Line is Banned", HttpStatus.FORBIDDEN);
-            else if (status == LineStatus.BLOCKED)
-                response = new ResponseEntity<>("Line is Blocked", HttpStatus.FORBIDDEN);
-            else if (status == LineStatus.EXPIRED)
-                response = new ResponseEntity<>("Line is Expired, Please Extend Your Line", HttpStatus.FORBIDDEN);
-            else if (status == LineStatus.MAX_CONNECTION_REACHED)
-                response = new ResponseEntity<>("You Have Used All of your connection capacity", HttpStatus.FORBIDDEN);
-            else if (status == LineStatus.NO_ACCESS_TO_STREAM)
-                response = new ResponseEntity<>("Cannot Access Stream", HttpStatus.FORBIDDEN);
-            else
-                response = new ResponseEntity<>("Unknown Error", HttpStatus.FORBIDDEN);
-        } else {
-            Long lineId = lineService.getLineId(lineToken);
-            Long streamId = streamService.getStreamId(streamToken);
-            if (lineId == null || streamId == null) {
-                return new ResponseEntity<>("Unknown Error", HttpStatus.FORBIDDEN);
-            }
-
-            var result = lineActivityService.updateLineActivity(lineId, streamId, request.getRemoteAddr(), userAgent);
-
-            if (!result) {
-                return new ResponseEntity<>("Forbidden", HttpStatus.FORBIDDEN);
-            }
-
-            File file = ResourceUtils.getFile(System.getProperty("user.home") + "/streams/" + streamId + "_." + extension);
-            String playlist = new String(Files.readAllBytes(file.toPath()));
-
-            Pattern pattern = Pattern.compile("(.*)\\.ts");
-            Matcher match = pattern.matcher(playlist);
-
-            while (match.find()) {
-                String link = match.group(0);
-                playlist = playlist.replace(match.group(0), String.format(serverAddress + ":" + localServerPort + "/hls/%s/%s/%s", lineToken, streamToken, link.split("_")[1]));
-            }
-            response = ResponseEntity.ok()
+        return  ResponseEntity.ok()
                     .headers(responseHeaders).contentType(MediaType.valueOf("application/x-mpegurl"))
-                    .headers(responseHeaders).contentLength(Long.parseLong(String.valueOf(playlist.length())))
+                    .headers(responseHeaders).contentLength(Long.parseLong(String.valueOf(data.get("playlist").length())))
                     .headers(responseHeaders).cacheControl(CacheControl.noCache())
                     .headers(responseHeaders).cacheControl(CacheControl.noStore())
-                    .header("Content-Disposition", "inline; filename=" + "\"" + file.getName() + "\"")
-                    .body(playlist);
-        }
-        return response;
+                    .header("Content-Disposition", "inline; filename=" + "\"" + data.get("fileName") + "\"")
+                    .body(data.get("playlist"));
+
     }
 
     @GetMapping("segment")

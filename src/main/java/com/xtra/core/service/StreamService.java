@@ -1,20 +1,28 @@
 package com.xtra.core.service;
 
+import com.xtra.core.model.*;
 import com.xtra.core.model.Process;
-import com.xtra.core.model.ProgressInfo;
-import com.xtra.core.model.Stream;
-import com.xtra.core.model.StreamInfo;
 import com.xtra.core.repository.ProcessRepository;
 import com.xtra.core.repository.ProgressInfoRepository;
 import com.xtra.core.repository.StreamInfoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ResourceUtils;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
+import javax.servlet.http.HttpServletRequest;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service
 public class StreamService {
@@ -22,6 +30,8 @@ public class StreamService {
     private final ProcessService processService;
     private final StreamInfoRepository streamInfoRepository;
     private final ProgressInfoRepository progressInfoRepository;
+    private final LineService lineService;
+    private final LineActivityService lineActivityService;
 
     @Value("${main.apiPath}")
     private String mainApiPath;
@@ -30,12 +40,19 @@ public class StreamService {
     @Value("${server.port}")
     private String serverPort;
 
+    @Value("${nginx.address}")
+    private String nginxAddress;
+    @Value("${nginx.port}")
+    private String nginxPort;
+
     @Autowired
-    public StreamService(ProcessRepository processRepository, ProcessService processService, StreamInfoRepository streamInfoRepository, ProgressInfoRepository progressInfoRepository) {
+    public StreamService(ProcessRepository processRepository, ProcessService processService, StreamInfoRepository streamInfoRepository, ProgressInfoRepository progressInfoRepository, LineService lineService, LineActivityService lineActivityService) {
         this.processRepository = processRepository;
         this.processService = processService;
         this.streamInfoRepository = streamInfoRepository;
         this.progressInfoRepository = progressInfoRepository;
+        this.lineService = lineService;
+        this.lineActivityService = lineActivityService;
     }
 
     public boolean startStream(Long streamId) {
@@ -164,4 +181,73 @@ public class StreamService {
             return null;
         }
     }
+
+    /** Stream methods */
+    /** Stream methods */
+    /** Stream methods */
+    /** Stream methods */
+    /** Stream methods */
+    /** Stream methods */
+    /** Stream methods */
+    public Map<String, String> getPlaylist(String lineToken, String streamToken, String extension, String userAgent, HttpServletRequest request) throws IOException {
+        Map<String, String> data = new HashMap<>();
+        LineStatus status = lineService.authorizeLineForStream(lineToken, streamToken);
+        if (status != LineStatus.OK) {
+            if (status == LineStatus.NOT_FOUND)
+//                response = new ResponseEntity<>("Line Not found", HttpStatus.NOT_FOUND);
+                throw new RuntimeException("Line Not found " + HttpStatus.NOT_FOUND);
+            else if (status == LineStatus.BANNED)
+//                response = new ResponseEntity<>("Line is Banned", HttpStatus.FORBIDDEN);
+                throw new RuntimeException("Line is Banned " + HttpStatus.FORBIDDEN);
+            else if (status == LineStatus.BLOCKED)
+//                response = new ResponseEntity<>("Line is Blocked", HttpStatus.FORBIDDEN);
+                throw new RuntimeException("Line is Blocked " + HttpStatus.FORBIDDEN);
+            else if (status == LineStatus.EXPIRED)
+//                response = new ResponseEntity<>("Line is Expired, Please Extend Your Line", HttpStatus.FORBIDDEN);
+                throw new RuntimeException("Line is Expired, Please Extend Your Line " + HttpStatus.FORBIDDEN);
+            else if (status == LineStatus.MAX_CONNECTION_REACHED)
+//                response = new ResponseEntity<>("You Have Used All of your connection capacity", HttpStatus.FORBIDDEN);
+                throw new RuntimeException("You Have Used All of your connection capacity " + HttpStatus.FORBIDDEN);
+            else if (status == LineStatus.NO_ACCESS_TO_STREAM)
+//                response = new ResponseEntity<>("Cannot Access Stream", HttpStatus.FORBIDDEN);
+                throw new RuntimeException("Cannot Access Stream " + HttpStatus.FORBIDDEN);
+            else
+//                response = new ResponseEntity<>("Unknown Error", HttpStatus.FORBIDDEN);
+                throw new RuntimeException("Unknown Error " + HttpStatus.FORBIDDEN);
+        } else {
+            Long lineId = lineService.getLineId(lineToken);
+            Long streamId = this.getStreamId(streamToken);
+            if (lineId == null || streamId == null) {
+//                return new ResponseEntity<>("Unknown Error", HttpStatus.FORBIDDEN);
+                throw new RuntimeException("Unknown Error " + HttpStatus.FORBIDDEN);
+            }
+
+            var result = lineActivityService.updateLineActivity(lineId, streamId, request.getRemoteAddr(), userAgent);
+
+            if (!result) {
+                throw new RuntimeException("Forbidden " + HttpStatus.FORBIDDEN);
+            }
+
+            File file = ResourceUtils.getFile(System.getProperty("user.home") + "/streams/" + streamId + "_." + extension);
+            String playlist = new String(Files.readAllBytes(file.toPath()));
+
+            Pattern pattern = Pattern.compile("(.*)\\.ts");
+            Matcher match = pattern.matcher(playlist);
+
+            while (match.find()) {
+                String link = match.group(0);
+                playlist = playlist.replace(match.group(0), String.format(nginxAddress + ":" + nginxPort + "/hls/%s/%s/%s", lineToken, streamToken, link.split("_")[1]));
+            }
+
+            data.put("fileName", file.getName());
+            data.put("playlist", playlist);
+        }
+        return data;
+    }
+    /** Stream methods */
+    /** Stream methods */
+    /** Stream methods */
+    /** Stream methods */
+    /** Stream methods */
+    /** Stream methods */
 }
