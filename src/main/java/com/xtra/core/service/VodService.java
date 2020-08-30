@@ -281,11 +281,11 @@ public class VodService {
     /** Streaming methods */
     /** Streaming methods */
 
-    public ResponseEntity<?> getVodPlaylist(String lineToken, String vodToken) throws IOException {
+    public String getVodPlaylist(String lineToken, String vodToken) throws IOException {
         LineStatus lineStatus = lineService.authorizeLineForVod(lineToken, vodToken);
-        HttpHeaders responseHeaders = new HttpHeaders();
         if (lineStatus != LineStatus.OK)
-            return new ResponseEntity<>("forbidden", HttpStatus.FORBIDDEN);
+//            return new ResponseEntity<>("forbidden", HttpStatus.FORBIDDEN);
+            throw new RuntimeException("Forbidden " + HttpStatus.FORBIDDEN);
         else {
             URL url = new URL(serverAddress + ":1234" + "/hls/" + vodToken + ".json/master.m3u8");
             HttpURLConnection con = (HttpURLConnection) url.openConnection();
@@ -294,7 +294,8 @@ public class VodService {
             con.setReadTimeout(5000);
             int status = con.getResponseCode();
             if (status == 500) {
-                return ResponseEntity.status(500).body("Internal Server Error");
+//                return ResponseEntity.status(500).body("Internal Server Error");
+                throw new RuntimeException("Internal Server Error");
             }
 
             BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
@@ -305,24 +306,14 @@ public class VodService {
             }
             in.close();
 
-            return ResponseEntity.ok()
-                    .headers(responseHeaders).contentType(MediaType.valueOf("application/x-mpegurl"))
-                    .headers(responseHeaders).contentLength(Long.parseLong(String.valueOf(content.length())))
-                    .headers(responseHeaders).cacheControl(CacheControl.noCache())
-                    .headers(responseHeaders).cacheControl(CacheControl.noStore())
-                    .header("Content-Disposition", "inline; filename=" + "\"" + vodToken + ".m3u8" + "\"")
-                    .body(content.toString());
+            return content.toString();
         }
 
     }
 
 
-    public ResponseEntity<?> jsonHandler(String vod_token) {
-        HttpHeaders responseHeaders = new HttpHeaders();
-        ResponseEntity<String> response;
-        System.out.println("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX = " + vod_token.replace(".json", ""));
+    public String jsonHandler(String vod_token) {
         var vodId = this.getVodId(vod_token.replace(".json", ""));
-        System.out.println("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX vodId = " + vodId);
         Vod vod = this.getVod(vodId.toString());
         JSONArray sequences = new JSONArray();
         for (Subtitle subtitle : vod.getSubtitles()){
@@ -344,14 +335,7 @@ public class VodService {
         String jsonString = new JSONObject()
                 .put("sequences", sequences)
                 .toString();
-        System.out.println(jsonString);
-
-        response = ResponseEntity.ok()
-                .headers(responseHeaders).contentType(MediaType.APPLICATION_JSON)
-                .headers(responseHeaders).cacheControl(CacheControl.noCache())
-                .headers(responseHeaders).cacheControl(CacheControl.noStore())
-                .body(jsonString);
-        return response;
+        return jsonString;
     }
 
         /** Streaming methods */

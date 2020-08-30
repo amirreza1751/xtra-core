@@ -141,13 +141,27 @@ public class StreamingController {
 
     @GetMapping("vod/{line_token}/{vod_token}")
     public @ResponseBody
-    ResponseEntity<?> getVodPlaylist(@PathVariable("line_token") String lineToken, @PathVariable("vod_token") String vodToken) throws IOException {
-        return vodService.getVodPlaylist(lineToken, vodToken);
+    ResponseEntity<String> getVodPlaylist(@PathVariable("line_token") String lineToken, @PathVariable("vod_token") String vodToken) throws IOException {
+        String content = vodService.getVodPlaylist(lineToken, vodToken);
+        HttpHeaders responseHeaders = new HttpHeaders();
+        return ResponseEntity.ok()
+                .headers(responseHeaders).contentType(MediaType.valueOf("application/x-mpegurl"))
+                .headers(responseHeaders).contentLength(Long.parseLong(String.valueOf(content.length())))
+                .headers(responseHeaders).cacheControl(CacheControl.noCache())
+                .headers(responseHeaders).cacheControl(CacheControl.noStore())
+                .header("Content-Disposition", "inline; filename=" + "\"" + vodToken + ".m3u8" + "\"")
+                .body(content);
     }
 
     @GetMapping("vod/json_handler/hls/{vod_token}")
-        public ResponseEntity<?> jsonHandler(@PathVariable String vod_token) {
-        return vodService.jsonHandler(vod_token);
+        public ResponseEntity<String> jsonHandler(@PathVariable String vod_token) {
+        String jsonString = vodService.jsonHandler(vod_token);
+        HttpHeaders responseHeaders = new HttpHeaders();
+        return ResponseEntity.ok()
+                .headers(responseHeaders).contentType(MediaType.APPLICATION_JSON)
+                .headers(responseHeaders).cacheControl(CacheControl.noCache())
+                .headers(responseHeaders).cacheControl(CacheControl.noStore())
+                .body(jsonString);
     }
 
     @GetMapping("vod/auth")
