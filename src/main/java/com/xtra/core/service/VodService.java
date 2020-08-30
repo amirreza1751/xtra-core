@@ -4,6 +4,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xtra.core.model.*;
 import org.apache.commons.io.FilenameUtils;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
@@ -22,6 +24,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import org.mozilla.universalchardet.UniversalDetector;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
@@ -311,6 +314,44 @@ public class VodService {
                     .body(content.toString());
         }
 
+    }
+
+
+    public ResponseEntity<?> jsonHandler(String vod_token) {
+        HttpHeaders responseHeaders = new HttpHeaders();
+        ResponseEntity<String> response;
+        System.out.println("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX = " + vod_token.replace(".json", ""));
+        var vodId = this.getVodId(vod_token.replace(".json", ""));
+        System.out.println("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX vodId = " + vodId);
+        Vod vod = this.getVod(vodId.toString());
+        JSONArray sequences = new JSONArray();
+        for (Subtitle subtitle : vod.getSubtitles()){
+            JSONObject clips_object = new JSONObject();
+            clips_object.put("language", subtitle.getLanguage());
+            clips_object.put("clips", new JSONArray()
+                    .put(new JSONObject()
+                            .put("type","source")
+                            .put("path", subtitle.getLocation())));
+
+            sequences.put(clips_object);
+        }
+        sequences.put(new JSONObject()
+                .put("clips", new JSONArray()
+                        .put(new JSONObject()
+                                .put("type","source")
+                                .put("path", vod.getLocation()))));
+
+        String jsonString = new JSONObject()
+                .put("sequences", sequences)
+                .toString();
+        System.out.println(jsonString);
+
+        response = ResponseEntity.ok()
+                .headers(responseHeaders).contentType(MediaType.APPLICATION_JSON)
+                .headers(responseHeaders).cacheControl(CacheControl.noCache())
+                .headers(responseHeaders).cacheControl(CacheControl.noStore())
+                .body(jsonString);
+        return response;
     }
 
         /** Streaming methods */

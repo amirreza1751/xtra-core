@@ -146,41 +146,8 @@ public class StreamingController {
     }
 
     @GetMapping("vod/json_handler/hls/{vod_token}")
-        public ResponseEntity<String> jsonHandler(@PathVariable String vod_token) {
-            HttpHeaders responseHeaders = new HttpHeaders();
-            ResponseEntity<String> response;
-            System.out.println("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX = " + vod_token.replace(".json", ""));
-            var vodId = vodService.getVodId(vod_token.replace(".json", ""));
-            System.out.println("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX vodId = " + vodId);
-            Vod vod = vodService.getVod(vodId.toString());
-            JSONArray sequences = new JSONArray();
-            for (Subtitle subtitle : vod.getSubtitles()){
-                JSONObject clips_object = new JSONObject();
-                clips_object.put("language", subtitle.getLanguage());
-                clips_object.put("clips", new JSONArray()
-                        .put(new JSONObject()
-                                .put("type","source")
-                                .put("path", subtitle.getLocation())));
-
-                sequences.put(clips_object);
-            }
-        sequences.put(new JSONObject()
-                    .put("clips", new JSONArray()
-                            .put(new JSONObject()
-                                    .put("type","source")
-                                    .put("path", vod.getLocation()))));
-
-            String jsonString = new JSONObject()
-                    .put("sequences", sequences)
-                        .toString();
-            System.out.println(jsonString);
-
-            response = ResponseEntity.ok()
-                .headers(responseHeaders).contentType(MediaType.APPLICATION_JSON)
-                .headers(responseHeaders).cacheControl(CacheControl.noCache())
-                .headers(responseHeaders).cacheControl(CacheControl.noStore())
-                .body(jsonString);
-        return response;
+        public ResponseEntity<?> jsonHandler(@PathVariable String vod_token) {
+        return vodService.jsonHandler(vod_token);
     }
 
     @GetMapping("vod/auth")
