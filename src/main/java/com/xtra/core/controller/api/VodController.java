@@ -25,16 +25,6 @@ public class VodController {
         return vodService.encode(vod);
     }
 
-    @PostMapping("/set_audios")
-    public String setAudios(@RequestBody Vod vod) {
-        return vodService.setAudios(vod);
-    }
-
-    @PostMapping("/set_subtitles")
-    public String setSubtitles(@RequestBody Vod vod) throws IOException {
-        return vodService.setSubtitles(vod);
-    }
-
     @PostMapping("/info")
     public MediaInfo getMediaInfo(@RequestBody Vod vod) {
         return vodService.getMediaInfo(vod);

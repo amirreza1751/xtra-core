@@ -1,55 +1,31 @@
 package com.xtra.core.controller;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xtra.core.model.LineStatus;
-import com.xtra.core.model.MediaInfo;
-import com.xtra.core.model.Subtitle;
-import com.xtra.core.model.Vod;
-import com.xtra.core.service.*;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
-import org.json.JSONArray;
-import org.json.JSONObject;
+import com.xtra.core.service.LineService;
+import com.xtra.core.service.ProgressInfoService;
+import com.xtra.core.service.StreamService;
+import com.xtra.core.service.VodService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
-import org.springframework.util.ResourceUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
-import java.io.*;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.nio.file.Files;
-import java.time.Duration;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import static com.xtra.core.utility.Util.removeQuotations;
 
 @RestController
 public class StreamingController {
     private final LineService lineService;
-    private final ProcessService processService;
     private final StreamService streamService;
     private final ProgressInfoService progressInfoService;
-    private final LineActivityService lineActivityService;
     private final VodService vodService;
 
-    @Value("${nginx.port}")
-    private String localServerPort;
-    @Value("${nginx.address}")
-    private String serverAddress;
-
     @Autowired
-    public StreamingController(LineService lineService, ProcessService processService, StreamService streamService, ProgressInfoService progressInfoService, LineActivityService lineActivityService, VodService vodService) {
+    public StreamingController(LineService lineService, StreamService streamService, ProgressInfoService progressInfoService, VodService vodService) {
         this.lineService = lineService;
-        this.processService = processService;
         this.streamService = streamService;
         this.progressInfoService = progressInfoService;
-        this.lineActivityService = lineActivityService;
         this.vodService = vodService;
     }
 

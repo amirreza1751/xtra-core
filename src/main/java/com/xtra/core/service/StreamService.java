@@ -187,15 +187,7 @@ public class StreamService {
         }
     }
 
-    /** Stream methods */
-    /** Stream methods */
-    /** Stream methods */
-    /** Stream methods */
-    /** Stream methods */
-    /** Stream methods */
-    /**
-     * Stream methods
-     */
+
     public Map<String, String> getPlaylist(String lineToken, String streamToken, String extension, String userAgent, HttpServletRequest request) throws IOException {
         Map<String, String> data = new HashMap<>();
         LineStatus status = lineService.authorizeLineForStream(lineToken, streamToken);
@@ -271,10 +263,4 @@ public class StreamService {
     }
 
 
-    /** Stream methods */
-    /** Stream methods */
-    /** Stream methods */
-    /** Stream methods */
-    /** Stream methods */
-    /** Stream methods */
 }

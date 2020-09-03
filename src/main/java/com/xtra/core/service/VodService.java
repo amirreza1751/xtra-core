@@ -105,64 +105,6 @@ public class VodService {
         }
     }
 
-    public String setSubtitles(Vod vod) throws IOException {
-        String video_path = vod.getLocation();
-        List<Subtitle> subtitles = vod.getSubtitles();
-        Path path = Paths.get(video_path);
-        String file_directory = path.getParent().toString();
-        String file_name_without_extension = FilenameUtils.removeExtension(String.valueOf(path.getFileName()));
-        String output_video = file_directory + "/" + file_name_without_extension + System.currentTimeMillis() + ".mp4";
-
-        subtitles.removeIf(subtitle -> {
-            try {
-                return this.getFileEncoding(subtitle).equals("unknown");
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            return false;
-        });
-        ArrayList<String> args = new ArrayList<>(Arrays.asList(
-                "ffmpeg",
-                "-i",
-                video_path,
-                "-c:v",
-                "copy",
-                "-c:a",
-                "copy",
-                "-c:s",
-                "mov_text",
-                output_video,
-                "-y"
-        ));
-        ArrayList<String> sub_info = new ArrayList<>();
-        ArrayList<String> map_option = new ArrayList<>();
-        ArrayList<String> sub_label = new ArrayList<>();
-//        System.out.println("final subs = " + subtitles.toString());
-        String encoding;
-        for (int i = 0; i < subtitles.size(); i++) {
-            encoding = this.getFileEncoding(subtitles.get(i));
-//            System.out.println("i = " + i);
-            sub_info.addAll(Arrays.asList("-sub_charenc", "\"" + encoding + "\"", "-i", subtitles.get(i).getLocation()));
-            map_option.addAll(Arrays.asList("-map", Integer.toString(i)));
-            sub_label.addAll(Arrays.asList("-metadata:s:s:" + i, "language=" + subtitles.get(i).getLanguage()));
-
-        }
-        map_option.addAll(Arrays.asList("-map", Integer.toString(subtitles.size())));
-        args.addAll(args.indexOf("-c:v"), sub_info);
-        args.addAll(args.indexOf("-c:v"), map_option);
-        args.addAll(args.indexOf(output_video), sub_label);
-        Process proc;
-        try {
-            proc = new ProcessBuilder(args).start();
-            proc.waitFor();
-        } catch (IOException | InterruptedException e) {
-            return "Add subtitles failed.";
-        }
-        File file_to_delete = new File(video_path);
-        file_to_delete.delete();
-        return output_video;
-    }
-
     public String getFileEncoding(Subtitle subtitle) throws IOException {
         UniversalDetector detector = new UniversalDetector(null);
         FileInputStream fis;
@@ -184,50 +126,6 @@ public class VodService {
             return "unknown";
         }
 
-    }
-
-    public String setAudios(Vod vod) {
-        String video_path = vod.getLocation();
-        List<Audio> audios = vod.getAudios();
-        Path path = Paths.get(video_path);
-        String file_directory = path.getParent().toString();
-        String file_name_without_extension = FilenameUtils.removeExtension(String.valueOf(path.getFileName()));
-        String output_video = file_directory + "/" + file_name_without_extension + System.currentTimeMillis() + ".mp4";
-        ArrayList<String> args = new ArrayList<>(Arrays.asList(
-                "ffmpeg",
-                "-i",
-                video_path,
-                //input audios
-                "-c",
-                "copy",
-                "-c:s",
-                "mov_text",
-                // map option
-                "mov_text",
-                output_video,
-                "-y"
-        ));
-
-        ArrayList<String> audio_info = new ArrayList<>();
-        ArrayList<String> map_option = new ArrayList<>();
-        for (int i = 0; i < audios.size(); i++) {
-            audio_info.addAll(Arrays.asList("-i", audios.get(i).getLocation()));
-            map_option.addAll(Arrays.asList("-map", Integer.toString(i)));
-        }
-        map_option.addAll(Arrays.asList("-map", Integer.toString(audios.size())));
-        args.addAll(args.indexOf("-c"), audio_info);
-        args.addAll(args.indexOf("mov_text"), map_option);
-
-        Process proc;
-        try {
-            proc = new ProcessBuilder(args).start();
-            proc.waitFor();
-        } catch (IOException | InterruptedException e) {
-            return "Add audios failed.";
-        }
-        File file_to_delete = new File(video_path);
-        file_to_delete.delete();
-        return output_video;
     }
 
 
@@ -271,15 +169,6 @@ public class VodService {
 
 
 
-    /** Streaming methods */
-    /** Streaming methods */
-    /** Streaming methods */
-    /** Streaming methods */
-    /** Streaming methods */
-    /** Streaming methods */
-    /** Streaming methods */
-    /** Streaming methods */
-    /** Streaming methods */
 
     public String getVodPlaylist(String lineToken, String vodToken) throws IOException {
         LineStatus lineStatus = lineService.authorizeLineForVod(lineToken, vodToken);
@@ -338,11 +227,4 @@ public class VodService {
         return jsonString;
     }
 
-        /** Streaming methods */
-        /** Streaming methods */
-        /** Streaming methods */
-        /** Streaming methods */
-        /** Streaming methods */
-        /** Streaming methods */
-        /** Streaming methods */
 }
