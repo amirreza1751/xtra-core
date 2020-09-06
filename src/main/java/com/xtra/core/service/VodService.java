@@ -24,7 +24,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import org.mozilla.universalchardet.UniversalDetector;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
@@ -39,13 +38,15 @@ public class VodService {
     private String serverAddress;
     private final ProcessService processService;
     private final LineService lineService;
+    private final MainServerApiService mainServerApiService;
 
-    public VodService(ProcessService processService, LineService lineService) {
+    public VodService(ProcessService processService, LineService lineService, MainServerApiService mainServerApiService) {
         this.processService = processService;
         this.lineService = lineService;
+        this.mainServerApiService = mainServerApiService;
     }
 
-    public EncodingStatus encode(Vod vod) throws IOException {
+    public EncodingStatus encode(Vod vod) {
         ExecutorService executor = Executors.newFixedThreadPool(10);
         executor.submit(() -> {
             String video_path = vod.getLocation();
@@ -100,6 +101,7 @@ public class VodService {
     public void updateVodStatus(Long id, Map<String, String> data){
         try {
             new RestTemplate().patchForObject(mainApiPath + "/vod/" + id, data, String.class);
+//            mainServerApiService.sendPatchRequest(mainApiPath + "/vod/" + id, data, String.class);
         } catch (RestClientException e) {
             System.out.println(e.getMessage());
         }
@@ -130,15 +132,13 @@ public class VodService {
 
 
     public Vod getVod(String vodId) {
-        RestTemplate restTemplate = new RestTemplate();
-        Vod vod = restTemplate.getForObject(mainApiPath + "/movies/" + vodId, Vod.class);
-        return vod;
+        return mainServerApiService.sendGetRequest(mainApiPath+ "/movies/" + vodId, Vod.class);
     }
 
 
     public Long getVodId(String vodToken) {
         try {
-            return new RestTemplate().getForObject(mainApiPath + "/movies/get_id/" + vodToken, Long.class);
+            return mainServerApiService.sendGetRequest(mainApiPath + "/movies/get_id/" + vodToken, Long.class);
         } catch (RestClientException e) {
             //@todo log exception
             System.out.println(e.getMessage());
@@ -173,7 +173,6 @@ public class VodService {
     public String getVodPlaylist(String lineToken, String vodToken) throws IOException {
         LineStatus lineStatus = lineService.authorizeLineForVod(lineToken, vodToken);
         if (lineStatus != LineStatus.OK)
-//            return new ResponseEntity<>("forbidden", HttpStatus.FORBIDDEN);
             throw new RuntimeException("Forbidden " + HttpStatus.FORBIDDEN);
         else {
             URL url = new URL(serverAddress + ":1234" + "/hls/" + vodToken + ".json/master.m3u8");
@@ -183,7 +182,6 @@ public class VodService {
             con.setReadTimeout(5000);
             int status = con.getResponseCode();
             if (status == 500) {
-//                return ResponseEntity.status(500).body("Internal Server Error");
                 throw new RuntimeException("Internal Server Error");
             }
 
