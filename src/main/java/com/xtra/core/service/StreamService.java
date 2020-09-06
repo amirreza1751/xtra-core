@@ -12,15 +12,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ResourceUtils;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.HashMap;
@@ -37,6 +33,7 @@ public class StreamService {
     private final ProgressInfoRepository progressInfoRepository;
     private final LineService lineService;
     private final LineActivityService lineActivityService;
+    private final MainServerApiService mainServerApiService;
 
     @Value("${main.apiPath}")
     private String mainApiPath;
@@ -51,13 +48,14 @@ public class StreamService {
     private String nginxPort;
 
     @Autowired
-    public StreamService(ProcessRepository processRepository, ProcessService processService, StreamInfoRepository streamInfoRepository, ProgressInfoRepository progressInfoRepository, LineService lineService, LineActivityService lineActivityService) {
+    public StreamService(ProcessRepository processRepository, ProcessService processService, StreamInfoRepository streamInfoRepository, ProgressInfoRepository progressInfoRepository, LineService lineService, LineActivityService lineActivityService, MainServerApiService mainServerApiService) {
         this.processRepository = processRepository;
         this.processService = processService;
         this.streamInfoRepository = streamInfoRepository;
         this.progressInfoRepository = progressInfoRepository;
         this.lineService = lineService;
         this.lineActivityService = lineActivityService;
+        this.mainServerApiService = mainServerApiService;
     }
 
     public boolean startStream(Long streamId) {
@@ -169,7 +167,7 @@ public class StreamService {
 
     public Stream getStream(Long streamId) {
         try {
-            return new RestTemplate().getForObject(mainApiPath + "/streams/" + streamId, Stream.class);
+            return mainServerApiService.sendGetRequest(mainApiPath + "/streams/" + streamId, Stream.class);
         } catch (RestClientException e) {
             //@todo log exception
             System.out.println(e.getMessage());
@@ -179,7 +177,7 @@ public class StreamService {
 
     public Long getStreamId(String streamToken) {
         try {
-            return new RestTemplate().getForObject(mainApiPath + "/streams/get_id/" + streamToken, Long.class);
+            return mainServerApiService.sendGetRequest(mainApiPath + "/streams/get_id/" + streamToken, Long.class);
         } catch (RestClientException e) {
             //@todo log exception
             System.out.println(e.getMessage());
