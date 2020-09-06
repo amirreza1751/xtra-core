@@ -7,7 +7,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -17,16 +16,17 @@ public class LineService {
     @Value("${main.apiPath}")
     private String mainApiPath;
     private final LineActivityRepository lineActivityRepository;
+    private final MainServerApiService mainServerApiService;
 
     @Autowired
-    public LineService(LineActivityRepository lineActivityRepository) {
+    public LineService(LineActivityRepository lineActivityRepository, MainServerApiService mainServerApiService) {
         this.lineActivityRepository = lineActivityRepository;
+        this.mainServerApiService = mainServerApiService;
     }
 
     public LineStatus authorizeLineForStream(String lineToken, String streamToken) {
-        RestTemplate restTemplate = new RestTemplate();
         try {
-            return restTemplate.getForObject(mainApiPath + "/lines/stream_auth/" + lineToken + "/" + streamToken, LineStatus.class);
+            return mainServerApiService.sendGetRequest(mainApiPath + "/lines/stream_auth/" + lineToken + "/" + streamToken, LineStatus.class);
         } catch (HttpClientErrorException exception) {
             System.out.println(exception.getMessage());
             return LineStatus.ERROR;
@@ -34,9 +34,8 @@ public class LineService {
     }
 
     public Long getLineId(String lineToken) {
-        RestTemplate restTemplate = new RestTemplate();
         try {
-            return restTemplate.getForObject(mainApiPath + "/lines/get_id/" + lineToken, Long.class);
+            return mainServerApiService.sendGetRequest(mainApiPath + "/lines/get_id/" + lineToken, Long.class);
         } catch (HttpClientErrorException exception) {
             System.out.println(exception.getMessage());
             return null;
@@ -44,9 +43,8 @@ public class LineService {
     }
 
     public LineStatus authorizeLineForVod(String lineToken, String vodToken) {
-        RestTemplate restTemplate = new RestTemplate();
         try {
-            return restTemplate.getForObject(mainApiPath + "/lines/vod_auth/" + lineToken + "/" + vodToken, LineStatus.class);
+            return mainServerApiService.sendGetRequest(mainApiPath + "/lines/vod_auth/" + lineToken + "/" + vodToken, LineStatus.class);
         } catch (HttpClientErrorException exception) {
             System.out.println(exception.getMessage());
             return LineStatus.ERROR;
