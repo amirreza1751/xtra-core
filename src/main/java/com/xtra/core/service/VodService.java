@@ -100,8 +100,7 @@ public class VodService {
     }
     public void updateVodStatus(Long id, Map<String, String> data){
         try {
-            new RestTemplate().patchForObject(mainApiPath + "/vod/" + id, data, String.class);
-//            mainServerApiService.sendPatchRequest(mainApiPath + "/vod/" + id, data, String.class);
+            mainServerApiService.sendPatchRequest(mainApiPath + "/vod/" + id, String.class, data);
         } catch (RestClientException e) {
             System.out.println(e.getMessage());
         }
