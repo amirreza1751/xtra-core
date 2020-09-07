@@ -166,7 +166,7 @@ public class StreamService {
 
     public Stream getStream(Long streamId) {
         try {
-            return mainServerApiService.sendGetRequest(mainApiPath + "/streams/" + streamId, Stream.class);
+            return mainServerApiService.sendGetRequest("/channels/" + streamId, Stream.class);
         } catch (RestClientException e) {
             //@todo log exception
             System.out.println(e.getMessage());
@@ -176,7 +176,7 @@ public class StreamService {
 
     public Long getStreamId(String streamToken) {
         try {
-            return mainServerApiService.sendGetRequest(mainApiPath + "/streams/get_id/" + streamToken, Long.class);
+            return mainServerApiService.sendGetRequest("/channels/get_id/" + streamToken, Long.class);
         } catch (RestClientException e) {
             //@todo log exception
             System.out.println(e.getMessage());

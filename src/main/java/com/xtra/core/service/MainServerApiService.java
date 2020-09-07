@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
+import java.net.URI;
 import java.util.HashMap;
 
 @Service
@@ -22,9 +23,9 @@ public class MainServerApiService {
     public <T> T sendGetRequest(String path, Class<T> tClass) {
         String uri = mainApiPath + path;
         ResponseEntity<T> result = null;
-        try{
-             result = restTemplate.getForEntity(uri, tClass);
-        } catch (HttpClientErrorException | NullPointerException exception){
+        try {
+            result = restTemplate.getForEntity(uri, tClass);
+        } catch (HttpClientErrorException | NullPointerException exception) {
             System.out.println(exception.getMessage());
             return null;
         }
@@ -34,38 +35,38 @@ public class MainServerApiService {
     public <T> T sendPostRequest(String path, Class<T> tClass, Object data) {
         String uri = mainApiPath + path;
         ResponseEntity<T> result = null;
-        try{
-            result = restTemplate.postForEntity(mainApiPath, data, tClass);
-        } catch (HttpClientErrorException | NullPointerException exception){
+        try {
+            result = restTemplate.postForEntity(uri, data, tClass);
+        } catch (HttpClientErrorException | NullPointerException exception) {
             System.out.println(exception.getMessage());
             return null;
         }
         return result.getBody();
     }
 
-    public <T> void sendPatchRequest(String path, Class<T> tClass, Object data) {
+    public <T> void sendPatchRequest(String path, Object data) {
         String uri = mainApiPath + path;
-        try{
-            restTemplate.patchForObject(mainApiPath, data, tClass, new HashMap<>());
-        } catch (HttpClientErrorException exception){
+        try {
+            restTemplate.patchForObject(uri, data, ResponseEntity.class);
+        } catch (HttpClientErrorException exception) {
             System.out.println(exception.getMessage());
         }
     }
 
     public <T> void sendDeleteRequest(String path) {
         String uri = mainApiPath + path;
-        try{
-            restTemplate.delete(mainApiPath);
-        } catch (HttpClientErrorException exception){
+        try {
+            restTemplate.delete(uri);
+        } catch (HttpClientErrorException exception) {
             System.out.println(exception.getMessage());
         }
     }
 
-    public <T> void sendPutRequest(String path, Class<T> tClass, Object data) {
+    public <T> void sendPutRequest(String path, Object data) {
         String uri = mainApiPath + path;
-        try{
-            restTemplate.put(mainApiPath, data, tClass);
-        } catch (HttpClientErrorException exception){
+        try {
+            restTemplate.put(URI.create(uri), data);
+        } catch (HttpClientErrorException exception) {
             System.out.println(exception.getMessage());
         }
     }

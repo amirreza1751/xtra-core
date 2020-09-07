@@ -15,7 +15,7 @@ public class Vod {
     private String name;
     private String location;
 
-    private EncodingStatus encodeStatus;
+    private EncodeStatus encodeStatus;
 
     private List<Subtitle> subtitles = new ArrayList<>();
 

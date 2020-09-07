@@ -46,9 +46,9 @@ public class VodService {
         this.mainServerApiService = mainServerApiService;
     }
 
-    public EncodingStatus encode(Vod vod) {
+    public void encode(Vod vod) {
         ExecutorService executor = Executors.newFixedThreadPool(10);
-        executor.submit(() -> {
+        executor.execute(() -> {
             String video_path = vod.getLocation();
             Path path = Paths.get(video_path);
             String file_directory = path.getParent().toString();
@@ -61,12 +61,12 @@ public class VodService {
                     video_path,
                     "-vcodec",
                     "copy",
-    //                "-preset",
-    //                "veryfast",
-    //                 "libx264",
+                    //                "-preset",
+                    //                "veryfast",
+                    //                 "libx264",
                     "-acodec",
                     "copy",
-    //                 "aac",
+                    //                 "aac",
                     output_video,
                     "-y"
             };
@@ -76,31 +76,31 @@ public class VodService {
                 proc = new ProcessBuilder(args).start();
                 proc.waitFor();
             } catch (IOException | InterruptedException e) {
-                data.put("encodeStatus", EncodingStatus.NOT_ENCODED.toString());
+                data.put("encodeStatus", EncodeStatus.ENCODING_FAILED.toString());
                 this.updateVodStatus(vod.getId(), data);
             }
-                Path mp4_path = Paths.get(file_directory + File.separator + file_name_without_extension + ".mp4");
-                try {
-                    Files.deleteIfExists(mp4_path); //if old files with same name exists
-                    Files.deleteIfExists(path); //input mkv file must be deleted
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                Path output = Paths.get(output_video);
-                try {
-                    Files.move(output, mp4_path);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                data.put("location", mp4_path.toString());
-                data.put("encodeStatus", EncodingStatus.ENCODED.toString());
-                this.updateVodStatus(vod.getId(), data);
+            Path mp4_path = Paths.get(file_directory + File.separator + file_name_without_extension + ".mp4");
+            try {
+                Files.deleteIfExists(mp4_path); //if old files with same name exists
+                Files.deleteIfExists(path); //input mkv file must be deleted
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            Path output = Paths.get(output_video);
+            try {
+                Files.move(output, mp4_path);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            data.put("location", mp4_path.toString());
+            data.put("encodeStatus", EncodeStatus.ENCODED.toString());
+            this.updateVodStatus(vod.getId(), data);
         });
-        return EncodingStatus.ENCODING;
     }
-    public void updateVodStatus(Long id, Map<String, String> data){
+
+    public void updateVodStatus(Long id, Map<String, String> data) {
         try {
-            mainServerApiService.sendPatchRequest(mainApiPath + "/vod/" + id, String.class, data);
+            mainServerApiService.sendPatchRequest("/vod/" + id, data);
         } catch (RestClientException e) {
             System.out.println(e.getMessage());
         }
@@ -129,15 +129,14 @@ public class VodService {
 
     }
 
-
     public Vod getVod(String vodId) {
-        return mainServerApiService.sendGetRequest(mainApiPath+ "/movies/" + vodId, Vod.class);
+        return mainServerApiService.sendGetRequest("/vod/" + vodId, Vod.class);
     }
 
 
     public Long getVodId(String vodToken) {
         try {
-            return mainServerApiService.sendGetRequest(mainApiPath + "/movies/get_id/" + vodToken, Long.class);
+            return mainServerApiService.sendGetRequest("/vod/get_id/" + vodToken, Long.class);
         } catch (RestClientException e) {
             //@todo log exception
             System.out.println(e.getMessage());
@@ -165,8 +164,6 @@ public class VodService {
         }
         return info;
     }
-
-
 
 
     public String getVodPlaylist(String lineToken, String vodToken) throws IOException {
@@ -202,12 +199,12 @@ public class VodService {
         var vodId = this.getVodId(vod_token.replace(".json", ""));
         Vod vod = this.getVod(vodId.toString());
         JSONArray sequences = new JSONArray();
-        for (Subtitle subtitle : vod.getSubtitles()){
+        for (Subtitle subtitle : vod.getSubtitles()) {
             JSONObject clips_object = new JSONObject();
             clips_object.put("language", subtitle.getLanguage());
             clips_object.put("clips", new JSONArray()
                     .put(new JSONObject()
-                            .put("type","source")
+                            .put("type", "source")
                             .put("path", subtitle.getLocation())));
 
             sequences.put(clips_object);
@@ -215,13 +212,12 @@ public class VodService {
         sequences.put(new JSONObject()
                 .put("clips", new JSONArray()
                         .put(new JSONObject()
-                                .put("type","source")
+                                .put("type", "source")
                                 .put("path", vod.getLocation()))));
 
-        String jsonString = new JSONObject()
+        return new JSONObject()
                 .put("sequences", sequences)
                 .toString();
-        return jsonString;
     }
 
 }

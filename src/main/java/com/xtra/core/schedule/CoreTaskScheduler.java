@@ -1,18 +1,20 @@
 package com.xtra.core.schedule;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.xtra.core.model.LineActivity;
 import com.xtra.core.model.Process;
-import com.xtra.core.model.*;
+import com.xtra.core.model.ProgressInfo;
+import com.xtra.core.model.StreamInfo;
 import com.xtra.core.repository.LineActivityRepository;
 import com.xtra.core.repository.ProcessRepository;
 import com.xtra.core.repository.ProgressInfoRepository;
 import com.xtra.core.repository.StreamInfoRepository;
+import com.xtra.core.service.MainServerApiService;
 import com.xtra.core.service.ProcessService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import javax.transaction.Transactional;
@@ -32,19 +34,18 @@ public class CoreTaskScheduler {
     private final StreamInfoRepository streamInfoRepository;
     private final ProgressInfoRepository progressInfoRepository;
     private final LineActivityRepository lineActivityRepository;
-
-    @Value("${main.apiPath}")
-    private String mainApiPath;
+    private final MainServerApiService mainServerApiService;
 
     @Autowired
     public CoreTaskScheduler(ProcessRepository processRepository, ProcessService processService,
                              StreamInfoRepository streamInfoRepository, ProgressInfoRepository progressInfoRepository,
-                             LineActivityRepository lineActivityRepository) {
+                             LineActivityRepository lineActivityRepository, MainServerApiService mainServerApiService) {
         this.processRepository = processRepository;
         this.processService = processService;
         this.streamInfoRepository = streamInfoRepository;
         this.progressInfoRepository = progressInfoRepository;
         this.lineActivityRepository = lineActivityRepository;
+        this.mainServerApiService = mainServerApiService;
     }
 
     @Scheduled(fixedDelay = 1000)
@@ -100,12 +101,8 @@ public class CoreTaskScheduler {
         Map<String, Object> infos = new HashMap<>();
         infos.put("streamInfoList", streamInfoList);
         infos.put("progressInfoList", progressInfoList);
+        mainServerApiService.sendPostRequest("/channels/stream_info/batch", String.class, infos);
 
-        try {
-            new RestTemplate().postForObject(mainApiPath + "/streams/updateStreamInfo", infos, Stream.class);
-        } catch (RestClientException e) {
-            e.printStackTrace();
-        }
     }
 
     @Scheduled(fixedDelay = 10000)
@@ -117,11 +114,7 @@ public class CoreTaskScheduler {
         for (LineActivity activity : lineActivities) {
             lineActivityRepository.deleteById(activity.getId());
         }
-        try {
-            new RestTemplate().delete(mainApiPath + "/line_activities/batch", lineActivities);
-        } catch (RestClientException e) {
-            e.printStackTrace();
-        }
+        mainServerApiService.sendPostRequest("/line_activities/batch_delete", String.class, lineActivities);
     }
 
     @Scheduled(fixedDelay = 5000)
@@ -132,11 +125,8 @@ public class CoreTaskScheduler {
         for (LineActivity activity : lineActivities) {
             lineActivityRepository.deleteById(activity.getId());
         }
-        try {
-            new RestTemplate().delete(mainApiPath + "/line_activities/batch", lineActivities);
-        } catch (RestClientException e) {
-            e.printStackTrace();
-        }
+        new RestTemplate().delete("/line_activities/batch_delete", lineActivities);
+
     }
 
     @Scheduled(fixedDelay = 5000)
@@ -144,11 +134,7 @@ public class CoreTaskScheduler {
         List<LineActivity> lineActivities = lineActivityRepository.findAll();
         if (lineActivities.isEmpty())
             return;
-        try {
-            new RestTemplate().put(mainApiPath + "/line_activities/batch", lineActivities);
-        } catch (RestClientException e) {
-            e.printStackTrace();
-        }
+        mainServerApiService.sendPostRequest("/line_activities/batch", String.class, lineActivities);
     }
 
 }
