@@ -92,5 +92,29 @@ public class ProcessService {
         return output;
     }
 
+    public String getMemoryUsage(){
+        Process proc;
+        String output = "";
+        try {
+            proc = new ProcessBuilder(
+                    "free",
+                    "-m",
+                    "|",
+                    "grep",
+                    "'Mem'",
+                    "|",
+                    "awk",
+                    "'{print $1 \"-\" $2 \"-\" $3}'"
+            ).start();
+            BufferedReader in = new BufferedReader(new InputStreamReader(proc.getInputStream()));
+            output = in.lines().map(Object::toString).collect(Collectors.joining(" "));
+            proc.waitFor();
+        } catch (IOException | InterruptedException e) {
+            return null;
+        }
+        System.out.println(output);
+        return output;
+    }
+
 
 }
