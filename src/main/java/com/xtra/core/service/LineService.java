@@ -34,7 +34,7 @@ public class LineService {
     }
 
     public boolean killAllConnections(Long lineId) {
-        List<LineActivity> lineActivities = lineActivityRepository.findAllByLineId(lineId);
+        List<LineActivity> lineActivities = lineActivityRepository.findAllByIdLineId(lineId);
         if (!lineActivities.isEmpty()) {
             lineActivities.forEach((activity) -> {
                 activity.setHlsEnded(true);

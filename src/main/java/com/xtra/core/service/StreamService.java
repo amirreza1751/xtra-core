@@ -213,12 +213,16 @@ public class StreamService {
         } else {
             Long lineId = lineService.getLineId(lineToken);
             Long streamId = this.getStreamId(streamToken);
+            LineActivityId lineActivityId = null;
+            lineActivityId.setStreamId(streamId);
+            lineActivityId.setLineId(lineId);
+            lineActivityId.setUserIp(request.getRemoteAddr());
             if (lineId == null || streamId == null) {
 //                return new ResponseEntity<>("Unknown Error", HttpStatus.FORBIDDEN);
                 throw new RuntimeException("Unknown Error " + HttpStatus.FORBIDDEN);
             }
 
-            var result = lineActivityService.updateLineActivity(lineId, streamId, request.getRemoteAddr(), userAgent);
+            var result = lineActivityService.updateLineActivity(lineActivityId, userAgent);
 
             if (!result) {
                 throw new RuntimeException("Forbidden " + HttpStatus.FORBIDDEN);
@@ -247,8 +251,9 @@ public class StreamService {
         LineStatus status = lineService.authorizeLineForStream(lineToken, streamToken);
         Long streamId = this.getStreamId(streamToken);
         Long lineId = lineService.getLineId(lineToken);
+        LineActivityId lineActivityId = new LineActivityId(lineId, streamId, 1L, request.getRemoteAddr());
         if (status == LineStatus.OK) {
-            var result = lineActivityService.updateLineActivity(lineId, streamId, request.getRemoteAddr(), userAgent);
+            var result = lineActivityService.updateLineActivity(lineActivityId, userAgent);
             if (!result) {
 //                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
                 throw new RuntimeException("Forbidden " + HttpStatus.FORBIDDEN);

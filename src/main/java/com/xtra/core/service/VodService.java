@@ -81,7 +81,7 @@ public class VodService {
             }
             Path mp4_path = Paths.get(file_directory + File.separator + file_name_without_extension + ".mp4");
             try {
-                Files.deleteIfExists(mp4_path); //if old files with same name exists
+//                Files.deleteIfExists(mp4_path); //if old files with same name exists
                 Files.deleteIfExists(path); //input mkv file must be deleted
             } catch (IOException e) {
                 e.printStackTrace();
@@ -100,7 +100,7 @@ public class VodService {
 
     public void updateVodStatus(Long id, Map<String, String> data) {
         try {
-            mainServerApiService.sendPatchRequest("/vod/" + id, data);
+            mainServerApiService.sendPatchRequest("/movies/" + id, data);
         } catch (RestClientException e) {
             System.out.println(e.getMessage());
         }
@@ -130,13 +130,13 @@ public class VodService {
     }
 
     public Vod getVod(String vodId) {
-        return mainServerApiService.sendGetRequest("/vod/" + vodId, Vod.class);
+        return mainServerApiService.sendGetRequest("/movies/" + vodId, Vod.class);
     }
 
 
     public Long getVodId(String vodToken) {
         try {
-            return mainServerApiService.sendGetRequest("/vod/get_id/" + vodToken, Long.class);
+            return mainServerApiService.sendGetRequest("/movies/token/" + vodToken + "/id", Long.class);
         } catch (RestClientException e) {
             //@todo log exception
             System.out.println(e.getMessage());
@@ -214,7 +214,9 @@ public class VodService {
                         .put(new JSONObject()
                                 .put("type", "source")
                                 .put("path", vod.getLocation()))));
-
+        System.out.println(new JSONObject()
+                .put("sequences", sequences)
+                .toString());
         return new JSONObject()
                 .put("sequences", sequences)
                 .toString();
