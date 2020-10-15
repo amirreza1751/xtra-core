@@ -8,5 +8,6 @@ public class Resource {
 
     private Cpu cpu;
     private Memory memory;
+    private NetworkInterface networkInterface;
 
 }
