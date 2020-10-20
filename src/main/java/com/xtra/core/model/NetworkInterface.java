@@ -2,6 +2,8 @@ package com.xtra.core.model;
 
 import lombok.Data;
 
+import javax.persistence.Column;
+
 
 @Data
 public class NetworkInterface {
@@ -16,4 +18,9 @@ public class NetworkInterface {
         BytesRecv = bytesRecv;
     }
     public NetworkInterface(){}
+
+    private Resource resource;
+
+    @Column(name = "resource_id")
+    private Long resourceId;
 }
