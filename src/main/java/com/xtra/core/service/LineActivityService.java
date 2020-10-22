@@ -21,7 +21,6 @@ public class LineActivityService {
     public boolean updateLineActivity(LineActivityId lineActivityId, String userAgent) {
         Optional<LineActivity> existingActivity = lineActivityRepository.findByIdLineIdAndIdUserIp(lineActivityId.getLineId(), lineActivityId.getUserIp());
         LineActivity activity;
-        LineActivityId lineActivityId1 = null;
         if (existingActivity.isPresent()) {
             if (existingActivity.get().isHlsEnded()) {
                 return false;
@@ -29,14 +28,8 @@ public class LineActivityService {
             activity = existingActivity.get();
         } else {
             activity = new LineActivity();
-            lineActivityId1.setLineId(lineActivityId.getLineId());
-            lineActivityId1.setUserIp(lineActivityId.getUserIp());
-//            activity.setLineId(lineId);
-//            activity.setUserIp(userIp);
         }
-        lineActivityId1.setStreamId(lineActivityId.getStreamId());
-//        activity.setStreamId(streamId);
-        activity.setId(lineActivityId1);
+        activity.setId(lineActivityId);
 
         activity.setUserAgent(userAgent);
         activity.setLastRead(LocalDateTime.now());

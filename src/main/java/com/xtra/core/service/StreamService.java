@@ -213,14 +213,11 @@ public class StreamService {
         } else {
             Long lineId = lineService.getLineId(lineToken);
             Long streamId = this.getStreamId(streamToken);
-            LineActivityId lineActivityId = null;
-            lineActivityId.setStreamId(streamId);
-            lineActivityId.setLineId(lineId);
-            lineActivityId.setUserIp(request.getRemoteAddr());
             if (lineId == null || streamId == null) {
 //                return new ResponseEntity<>("Unknown Error", HttpStatus.FORBIDDEN);
                 throw new RuntimeException("Unknown Error " + HttpStatus.FORBIDDEN);
             }
+            LineActivityId lineActivityId = new LineActivityId(lineId, streamId, request.getRemoteAddr());
 
             var result = lineActivityService.updateLineActivity(lineActivityId, userAgent);
 
@@ -251,7 +248,7 @@ public class StreamService {
         LineStatus status = lineService.authorizeLineForStream(lineToken, streamToken);
         Long streamId = this.getStreamId(streamToken);
         Long lineId = lineService.getLineId(lineToken);
-        LineActivityId lineActivityId = new LineActivityId(lineId, streamId, 1L, request.getRemoteAddr());
+        LineActivityId lineActivityId = new LineActivityId(lineId, streamId, request.getRemoteAddr());
         if (status == LineStatus.OK) {
             var result = lineActivityService.updateLineActivity(lineActivityId, userAgent);
             if (!result) {

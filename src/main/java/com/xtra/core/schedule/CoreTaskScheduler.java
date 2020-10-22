@@ -1,10 +1,8 @@
 package com.xtra.core.schedule;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.xtra.core.model.LineActivity;
+import com.xtra.core.model.*;
 import com.xtra.core.model.Process;
-import com.xtra.core.model.ProgressInfo;
-import com.xtra.core.model.StreamInfo;
 import com.xtra.core.repository.LineActivityRepository;
 import com.xtra.core.repository.ProcessRepository;
 import com.xtra.core.repository.ProgressInfoRepository;
@@ -130,10 +128,9 @@ public class CoreTaskScheduler {
     }
 
     @Scheduled(fixedDelay = 5000)
-    public void sendStreamActivity() {
+    public void  sendStreamActivity() {
         List<LineActivity> lineActivities = lineActivityRepository.findAll();
-        if (lineActivities.isEmpty())
-            return;
+        if (!lineActivities.isEmpty())
         mainServerApiService.sendPostRequest("/line_activities/batch", String.class, lineActivities);
     }
 

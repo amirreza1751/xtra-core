@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 public class LineActivity {
 
     @EmbeddedId
-    private LineActivityId id;
+    private LineActivityId id = new LineActivityId();
 
     private LocalDateTime startDate;
     private LocalDateTime endDate;
