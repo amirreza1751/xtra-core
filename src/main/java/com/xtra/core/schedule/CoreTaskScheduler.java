@@ -46,6 +46,9 @@ public class CoreTaskScheduler {
         this.mainServerApiService = mainServerApiService;
     }
 
+    @Value("${server.port}")
+    private String portNumber;
+
     @Scheduled(fixedDelay = 1000)
     public void StreamChecker() {
         List<Process> processes = processRepository.findAll();
@@ -130,8 +133,9 @@ public class CoreTaskScheduler {
     @Scheduled(fixedDelay = 5000)
     public void  sendStreamActivity() {
         List<LineActivity> lineActivities = lineActivityRepository.findAll();
-        if (!lineActivities.isEmpty())
-        mainServerApiService.sendPostRequest("/line_activities/batch", String.class, lineActivities);
+        if (!lineActivities.isEmpty()){
+            mainServerApiService.sendPostRequest("/line_activities/batch/?portNumber=" +  portNumber, String.class, lineActivities);
+        }
     }
 
 }
