@@ -87,7 +87,7 @@ public class CoreTaskScheduler {
             if (audio.has("codec_name"))
                 info.setAudioCodec(audio.get("codec_name").toPrettyString());
         } catch (Exception e) {
-            e.printStackTrace();
+            System.out.println(e.getMessage());
         }
         return info;
     }
@@ -102,7 +102,7 @@ public class CoreTaskScheduler {
         Map<String, Object> infos = new HashMap<>();
         infos.put("streamInfoList", streamInfoList);
         infos.put("progressInfoList", progressInfoList);
-        mainServerApiService.sendPostRequest("/channels/stream_info/batch", String.class, infos);
+        mainServerApiService.sendPostRequest("/channels/stream_info/batch/?portNumber=" + portNumber, String.class, infos);
 
     }
 
