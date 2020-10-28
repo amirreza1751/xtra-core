@@ -39,7 +39,7 @@ public class ProcessService {
         Process proc;
         try {
             proc = new ProcessBuilder("kill", pid.toString()).start();
-            var process = processRepository.findById(pid).get();
+            var process = processRepository.findByProcessIdPid(pid).get();
             var streamInfo = streamInfoRepository.findByStreamId(process.getStreamId()).get();
             streamInfo.setUptime(DurationFormatUtils.formatDuration(0, "H:mm:ss"));
             streamInfoRepository.save(streamInfo);
