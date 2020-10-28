@@ -22,7 +22,7 @@ public class Stream {
     private TranscodeProfile transcodeProfile;
     private String customFFMPEG;
 
-    private List<Server> servers;
+    private List<StreamServer> streamServers;
 
     private List<StreamInput> streamInputs;
 

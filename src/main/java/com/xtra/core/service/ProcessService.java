@@ -1,5 +1,7 @@
 package com.xtra.core.service;
 
+import com.xtra.core.repository.ProcessRepository;
+import com.xtra.core.repository.StreamInfoRepository;
 import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.springframework.stereotype.Service;
 
@@ -13,6 +15,14 @@ import java.util.stream.Collectors;
 
 @Service
 public class ProcessService {
+    private final StreamInfoRepository streamInfoRepository;
+    private final ProcessRepository processRepository;
+
+    public ProcessService(StreamInfoRepository streamInfoRepository, ProcessRepository processRepository) {
+        this.streamInfoRepository = streamInfoRepository;
+        this.processRepository = processRepository;
+    }
+
     public Optional<Process> runProcess(String... args) {
         Process proc;
         try {
@@ -29,6 +39,10 @@ public class ProcessService {
         Process proc;
         try {
             proc = new ProcessBuilder("kill", pid.toString()).start();
+            var process = processRepository.findById(pid).get();
+            var streamInfo = streamInfoRepository.findByStreamId(process.getStreamId()).get();
+            streamInfo.setUptime(DurationFormatUtils.formatDuration(0, "H:mm:ss"));
+            streamInfoRepository.save(streamInfo);
         } catch (IOException e) {
             return -1;
         }
