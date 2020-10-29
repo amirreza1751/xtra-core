@@ -76,10 +76,13 @@ public class CoreTaskScheduler {
 
     public StreamInfo updateStreamFFProbeData(Process process, StreamInfo info) {
         String streamUrl = System.getProperty("user.home") + File.separator + "streams" + File.separator + process.getStreamId() + "_.m3u8";
-        String videoAnalysis = processService.analyzeStream(streamUrl, "codec_name,width,height,bit_rate");
+        ProcessOutput processOutput = processService.analyzeStream(streamUrl, "codec_name,width,height,bit_rate");
+        if (processOutput.getExitValue() == 1){
+            throw new RuntimeException("No info available for the stream. Maybe the source is unavailable.");
+        }
         ObjectMapper objectMapper = new ObjectMapper();
         try {
-            var root = objectMapper.readTree(videoAnalysis);
+            var root = objectMapper.readTree(processOutput.getOutput());
             var video = root.get("streams").get(0);
             info.setVideoCodec(removeQuotations(video.get("codec_name").toPrettyString()));
             info.setResolution(video.get("width") + "x" + video.get("height"));

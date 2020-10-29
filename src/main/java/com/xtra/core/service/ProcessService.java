@@ -1,5 +1,6 @@
 package com.xtra.core.service;
 
+import com.xtra.core.model.ProcessOutput;
 import com.xtra.core.repository.ProcessRepository;
 import com.xtra.core.repository.StreamInfoRepository;
 import org.apache.commons.lang3.time.DurationFormatUtils;
@@ -57,7 +58,7 @@ public class ProcessService {
         return DurationFormatUtils.formatDuration(duration.toMillis(), "H:mm:ss", true);
     }
 
-    public String analyzeStream(String sourceInput, String params) {
+    public ProcessOutput analyzeStream(String sourceInput, String params) {
         Process proc;
         String output = "";
         try {
@@ -79,7 +80,7 @@ public class ProcessService {
         } catch (IOException | InterruptedException e) {
             return null;
         }
-        return output;
+        return new ProcessOutput(output, proc.exitValue());
     }
 
     public String getMediaInfo(String sourceInput){
