@@ -1,16 +1,4 @@
 image: gradle:jdk11
-services:
-  - docker:dind
-
-variables:
-  DOCKER_DRIVER: overlay
-  SPRING_PROFILES_ACTIVE: gitlab-ci
-
-
-stages:
-  - build
-  - package
-  - deploy
 
 before_script:
   - export GRADLE_USER_HOME=`pwd`/.gradle
@@ -20,10 +8,13 @@ cache:
     - .gradle/wrapper
     - .gradle/caches
 
-build:
+package:
   stage: build
   script:
+    - export SPRING_PROFILES_ACTIVE=dev
     - ./gradlew assemble
+    - sudo cp build/libs/*.jar /var/xtra/core.jar
+    - sudo systemctl restart core
   artifacts:
     paths:
       - build/libs/*.jar
@@ -31,9 +22,12 @@ build:
   only:
     - master
 
-docker-build:
-  stage: package
+test:
+  stage: test
   script:
-    - docker build -t registry.gitlab.com/xtrapanel/xtra-core .
-    - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN registry.gitlab.com
-    - docker push registry.gitlab.com/xtrapanel/xtra-core
+    - ./gradlew check
+  only:
+    - deploy
+
+after_script:
+  - echo "End CI/CD"
