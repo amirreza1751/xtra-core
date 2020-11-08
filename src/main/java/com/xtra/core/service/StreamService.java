@@ -19,8 +19,10 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -33,6 +35,7 @@ public class StreamService {
     private final LineService lineService;
     private final LineActivityService lineActivityService;
     private final MainServerApiService mainServerApiService;
+    private final ServerService serverService;
 
     @Value("${main.apiPath}")
     private String mainApiPath;
@@ -47,7 +50,7 @@ public class StreamService {
     private String nginxPort;
 
     @Autowired
-    public StreamService(ProcessRepository processRepository, ProcessService processService, StreamInfoRepository streamInfoRepository, ProgressInfoRepository progressInfoRepository, LineService lineService, LineActivityService lineActivityService, MainServerApiService mainServerApiService) {
+    public StreamService(ProcessRepository processRepository, ProcessService processService, StreamInfoRepository streamInfoRepository, ProgressInfoRepository progressInfoRepository, LineService lineService, LineActivityService lineActivityService, MainServerApiService mainServerApiService, ServerService serverService) {
         this.processRepository = processRepository;
         this.processService = processService;
         this.streamInfoRepository = streamInfoRepository;
@@ -55,9 +58,10 @@ public class StreamService {
         this.lineService = lineService;
         this.lineActivityService = lineActivityService;
         this.mainServerApiService = mainServerApiService;
+        this.serverService = serverService;
     }
 
-    public boolean startStream(Long streamId) {
+    public boolean startStream(Long streamId, Long serverId) {
         Stream stream = getStream(streamId);
         if (stream == null) {
             System.out.println("Stream is null");
@@ -80,7 +84,23 @@ public class StreamService {
             }
         }
 
-        String currentInput = stream.getStreamInputs().get(0).getUrl();
+
+        int selectedSource = 0;
+        StreamServer streamServer = new StreamServer(new StreamServerId(streamId, serverId));
+        List<StreamServer> streamServers = stream.getStreamServers();
+        if (!streamServers.contains(streamServer)){
+            throw new RuntimeException("There is a problem with the relation between channel and the server.");
+        }
+        for (StreamServer item : streamServers){
+            if (item.equals(streamServer)){
+                selectedSource = item.getSelectedSource();
+                break;
+            }
+        }
+        String currentInput = stream.getStreamInputs().get(selectedSource).getUrl();
+        System.out.println("playing source  " + currentInput);
+
+
 
         String[] args = new String[]{
                 "ffmpeg",
@@ -125,9 +145,16 @@ public class StreamService {
         };
         Optional<java.lang.Process> result = processService.runProcess(args);
         if (result.isEmpty() || !result.get().isAlive()) {
+            Process ppp = processRepository.save(new Process(stream.getId(), 0L));
+            System.out.println("pid = " + ppp.getPid() + "___ streamId = " + ppp.getStreamId() + "___ processId = " +  ppp.getProcessId());
+            Optional<StreamInfo> streamInfoRecord = streamInfoRepository.findByStreamId(streamId);
+            StreamInfo streamInfo = streamInfoRecord.orElseGet(() -> new StreamInfo(streamId));
+            streamInfo.setCurrentInput(currentInput);
+            streamInfoRepository.save(streamInfo);
             return false;
         } else {
-            processRepository.save(new Process(stream.getId(), result.get().pid()));
+            Process ppp = processRepository.save(new Process(stream.getId(), result.get().pid()));
+            //System.out.println("pid = " + ppp.getPid() + "___ streamId = " + ppp.getStreamId() + "___ processId = " +  ppp.getProcessId());
             Optional<StreamInfo> streamInfoRecord = streamInfoRepository.findByStreamId(streamId);
             StreamInfo streamInfo = streamInfoRecord.orElseGet(() -> new StreamInfo(streamId));
             streamInfo.setCurrentInput(currentInput);
@@ -158,15 +185,15 @@ public class StreamService {
         return true;
     }
 
-    public boolean restartStream(Long streamId) {
+    public boolean restartStream(Long streamId, Long serverId) {
         this.stopStream(streamId);
-        this.startStream(streamId);
+        this.startStream(streamId, serverId);
         return true;
     }
 
     public Stream getStream(Long streamId) {
         try {
-            return mainServerApiService.sendGetRequest("/channels/" + streamId, Stream.class);
+            return mainServerApiService.sendGetRequest("/channels/" + streamId + "/full", Stream.class);
         } catch (RestClientException e) {
             //@todo log exception
             System.out.println(e.getMessage());

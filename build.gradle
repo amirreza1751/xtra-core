@@ -27,6 +27,7 @@ dependencies {
 	implementation 'org.json:json:20200518'
 	implementation 'com.googlecode.juniversalchardet:juniversalchardet:1.0.3'
 	implementation 'com.github.oshi:oshi-core:5.3.0'
+	compile 'org.apache.httpcomponents:httpclient:4.5.13'
 	compile group: 'net.bramp.ffmpeg', name: 'ffmpeg', version: '0.6.2'
 	implementation 'io.projectreactor:reactor-core'
 	compileOnly 'org.projectlombok:lombok'

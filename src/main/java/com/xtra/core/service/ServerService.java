@@ -2,7 +2,9 @@ package com.xtra.core.service;
 
 import com.xtra.core.model.NetworkInterface;
 import com.xtra.core.model.Resource;
+import com.xtra.core.model.Server;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClientException;
 import oshi.SystemInfo;
 import oshi.hardware.CentralProcessor;
 import oshi.hardware.GlobalMemory;
@@ -15,6 +17,11 @@ import java.util.List;
 
 @Service
 public class ServerService {
+    private final MainServerApiService mainServerApiService;
+
+    public ServerService(MainServerApiService mainServerApiService) {
+        this.mainServerApiService = mainServerApiService;
+    }
 
     public Resource getResourceUsage(String interfaceName){
 
@@ -51,5 +58,15 @@ public class ServerService {
             ntf.setBytesSent(networkIF.getBytesSent());
         });
         return ntf;
+    }
+
+    public Server getServer(Long serverId) {
+        try {
+            return mainServerApiService.sendGetRequest("/servers/" + serverId, Server.class);
+        } catch (RestClientException e) {
+            //@todo log exception
+            System.out.println(e.getMessage());
+            return null;
+        }
     }
 }

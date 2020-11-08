@@ -10,7 +10,7 @@ public class UploadController {
 
     @PostMapping("")
     public boolean uploadFile(@RequestParam("file") MultipartFile file, @RequestParam("path") String path) {
-        System.out.println(path);
+        //System.out.println(path);
         return true;
     }
 }

@@ -72,7 +72,9 @@ public class ProcessService {
                     "-v",
                     "quiet",
                     "-i",
-                    sourceInput
+                    sourceInput,
+                    "-analyzeduration",
+                    "500000"
             ).start();
             BufferedReader in = new BufferedReader(new InputStreamReader(proc.getInputStream()));
             output = in.lines().map(Object::toString).collect(Collectors.joining(" "));

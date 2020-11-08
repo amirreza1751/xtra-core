@@ -6,4 +6,9 @@ import lombok.Data;
 public class StreamInput {
     private Long id;
     private String url;
+    public StreamInput(){}
+
+    public StreamInput(String url) {
+        this.url = url;
+    }
 }
