@@ -51,18 +51,15 @@ public class CoreTaskScheduler {
     @Value("${server.port}")
     private String portNumber;
 
-    @Scheduled(fixedDelay = 5000)
+    @Scheduled(fixedDelay = 10000)
     public void StreamChecker() {
         List<Process> processes = processRepository.findAll();
         processes.parallelStream().forEach((process -> {
             Optional<StreamInfo> infoRecord = streamInfoRepository.findByStreamId(process.getStreamId());
             StreamInfo info = infoRecord.orElseGet(() -> new StreamInfo(process.getStreamId()));
-            if (process.getPid() != 0L){
                 info = updateStreamUptime(process, info);
                 info = updateStreamFFProbeData(process, info);
-            }
-//            int repeat = 0;
-            while (info.getVideoCodec() == null){
+            if (info.getVideoCodec() == null){
                 File streamsDirectory = new File(
                         System.getProperty("user.home") + File.separator + "streams"
                 );
@@ -71,18 +68,6 @@ public class CoreTaskScheduler {
                         f.delete();
                     }
                 }
-                infoRecord = streamInfoRepository.findByStreamId(process.getStreamId());
-                info = infoRecord.orElseGet(() -> new StreamInfo(process.getStreamId()));
-                info = updateStreamFFProbeData(process, info);
-
-                //delay here for about 2 seconds.
-                try {
-                    TimeUnit.SECONDS.sleep(2);
-                } catch (InterruptedException ie) {
-                    Thread.currentThread().interrupt();
-                }
-                //delay here for about 2 seconds.
-//                repeat++;
             }
                 streamInfoRepository.save(info);
         }));

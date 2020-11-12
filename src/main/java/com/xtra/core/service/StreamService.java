@@ -98,9 +98,6 @@ public class StreamService {
             }
         }
         String currentInput = stream.getStreamInputs().get(selectedSource).getUrl();
-        System.out.println("playing source  " + currentInput);
-
-
 
         String[] args = new String[]{
                 "ffmpeg",
@@ -145,16 +142,9 @@ public class StreamService {
         };
         Optional<java.lang.Process> result = processService.runProcess(args);
         if (result.isEmpty() || !result.get().isAlive()) {
-            Process ppp = processRepository.save(new Process(stream.getId(), 0L));
-            System.out.println("pid = " + ppp.getPid() + "___ streamId = " + ppp.getStreamId() + "___ processId = " +  ppp.getProcessId());
-            Optional<StreamInfo> streamInfoRecord = streamInfoRepository.findByStreamId(streamId);
-            StreamInfo streamInfo = streamInfoRecord.orElseGet(() -> new StreamInfo(streamId));
-            streamInfo.setCurrentInput(currentInput);
-            streamInfoRepository.save(streamInfo);
             return false;
         } else {
             Process ppp = processRepository.save(new Process(stream.getId(), result.get().pid()));
-            //System.out.println("pid = " + ppp.getPid() + "___ streamId = " + ppp.getStreamId() + "___ processId = " +  ppp.getProcessId());
             Optional<StreamInfo> streamInfoRecord = streamInfoRepository.findByStreamId(streamId);
             StreamInfo streamInfo = streamInfoRecord.orElseGet(() -> new StreamInfo(streamId));
             streamInfo.setCurrentInput(currentInput);
