@@ -22,7 +22,9 @@ public class Resource {
 
     private int connections; // no need to use in constructor.
 
-    public Resource(double cpuMaxFreq, List<Double> cpuCurrentFreq, double memoryTotal, double memoryAvailable, String networkName, Long networkBytesSent, Long networkBytesRecv) {
+    private Long upTime;
+
+    public Resource(double cpuMaxFreq, List<Double> cpuCurrentFreq, double memoryTotal, double memoryAvailable, String networkName, Long networkBytesSent, Long networkBytesRecv, Long upTime) {
         this.cpuMaxFreq = cpuMaxFreq;
         this.cpuCurrentFreq = cpuCurrentFreq;
         this.memoryTotal = memoryTotal;
@@ -30,6 +32,7 @@ public class Resource {
         this.networkName = networkName;
         this.networkBytesSent = networkBytesSent;
         this.networkBytesRecv = networkBytesRecv;
+        this.upTime = upTime;
     }
 
 }
