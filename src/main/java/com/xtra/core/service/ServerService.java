@@ -54,7 +54,8 @@ public class ServerService {
                 mem.getAvailable()/1000000000.0,
                 networkInterface.getName(),
                 networkInterface.getBytesSent(),
-                networkInterface.getBytesRecv()
+                networkInterface.getBytesRecv(),
+                si.getOperatingSystem().getSystemUptime()
                 );
 
         return resource;

@@ -30,6 +30,7 @@ public class Resource {
         this.networkName = networkName;
         this.networkBytesSent = networkBytesSent;
         this.networkBytesRecv = networkBytesRecv;
+        this.upTime = upTime;
     }
     public Resource (){}
 
