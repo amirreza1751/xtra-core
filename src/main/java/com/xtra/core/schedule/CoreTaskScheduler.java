@@ -7,6 +7,7 @@ import com.xtra.core.repository.LineActivityRepository;
 import com.xtra.core.repository.ProcessRepository;
 import com.xtra.core.repository.ProgressInfoRepository;
 import com.xtra.core.repository.StreamInfoRepository;
+import com.xtra.core.service.FileSystemService;
 import com.xtra.core.service.MainServerApiService;
 import com.xtra.core.service.ProcessService;
 import com.xtra.core.service.StreamService;
@@ -34,11 +35,12 @@ public class CoreTaskScheduler {
     private final LineActivityRepository lineActivityRepository;
     private final MainServerApiService mainServerApiService;
     private final StreamService streamService;
+    private final FileSystemService fileSystemService;
 
     @Autowired
     public CoreTaskScheduler(ProcessRepository processRepository, ProcessService processService,
                              StreamInfoRepository streamInfoRepository, ProgressInfoRepository progressInfoRepository,
-                             LineActivityRepository lineActivityRepository, MainServerApiService mainServerApiService, StreamService streamService) {
+                             LineActivityRepository lineActivityRepository, MainServerApiService mainServerApiService, StreamService streamService, FileSystemService fileSystemService) {
         this.processRepository = processRepository;
         this.processService = processService;
         this.streamInfoRepository = streamInfoRepository;
@@ -46,6 +48,7 @@ public class CoreTaskScheduler {
         this.lineActivityRepository = lineActivityRepository;
         this.mainServerApiService = mainServerApiService;
         this.streamService = streamService;
+        this.fileSystemService = fileSystemService;
     }
 
     @Value("${server.port}")
@@ -71,6 +74,7 @@ public class CoreTaskScheduler {
             }
                 streamInfoRepository.save(info);
         }));
+        fileSystemService.deleteOldSegments(30000,"_.m3u8", System.getProperty("user.home") + File.separator + "streams");
     }
 
     public void restartStreamIfStopped(Long streamId) {
@@ -98,7 +102,7 @@ public class CoreTaskScheduler {
 
             var audio = root.get("streams").get(1);
             if (audio.has("codec_name"))
-                info.setAudioCodec(audio.get("codec_name").toPrettyString());
+                info.setAudioCodec(removeQuotations(audio.get("codec_name").toPrettyString()));
         } catch (Exception e) {
             System.out.println(e.getMessage());
         }

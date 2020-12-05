@@ -37,4 +37,30 @@ public class FileSystemService {
 
         return result;
     }
+
+    public void deleteOldSegments(long afterMilliSeconds, String fileExtension, String dirPath) {
+
+        java.io.File folder = new java.io.File(dirPath);
+
+        if (folder.exists()) {
+
+            java.io.File[] listFiles = folder.listFiles();
+
+            long eligibleForDeletion = System.currentTimeMillis() - afterMilliSeconds;
+//                    (days * 24 * 60 * 60 * 1000L);
+
+            for (java.io.File listFile: listFiles) {
+
+                if (listFile.getName().endsWith(fileExtension) &&
+                        listFile.lastModified() < eligibleForDeletion) {
+
+                    if (!listFile.delete()) {
+
+                        System.out.println("Sorry Unable to Delete Files..");
+
+                    }
+                }
+            }
+        }
+    }
 }
