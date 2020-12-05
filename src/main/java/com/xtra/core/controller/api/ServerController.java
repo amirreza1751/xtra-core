@@ -19,7 +19,7 @@ public class ServerController {
     }
 
     @GetMapping("/resources")
-    public Resource getResourceUsage(@RequestParam String interfaceName){
+    public Resource getResourceUsage(@RequestParam String interfaceName) throws InterruptedException {
         return serverService.getResourceUsage(interfaceName);
     }
 

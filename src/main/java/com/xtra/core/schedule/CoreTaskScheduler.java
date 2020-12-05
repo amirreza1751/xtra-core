@@ -7,9 +7,10 @@ import com.xtra.core.repository.LineActivityRepository;
 import com.xtra.core.repository.ProcessRepository;
 import com.xtra.core.repository.ProgressInfoRepository;
 import com.xtra.core.repository.StreamInfoRepository;
+import com.xtra.core.service.FileSystemService;
 import com.xtra.core.service.MainServerApiService;
 import com.xtra.core.service.ProcessService;
-import org.apache.commons.lang3.time.DurationFormatUtils;
+import com.xtra.core.service.StreamService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -19,10 +20,9 @@ import org.springframework.web.client.RestTemplate;
 import javax.transaction.Transactional;
 import java.io.File;
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static com.xtra.core.utility.Util.removeQuotations;
 
@@ -34,38 +34,64 @@ public class CoreTaskScheduler {
     private final ProgressInfoRepository progressInfoRepository;
     private final LineActivityRepository lineActivityRepository;
     private final MainServerApiService mainServerApiService;
+    private final StreamService streamService;
+    private final FileSystemService fileSystemService;
 
     @Autowired
     public CoreTaskScheduler(ProcessRepository processRepository, ProcessService processService,
                              StreamInfoRepository streamInfoRepository, ProgressInfoRepository progressInfoRepository,
-                             LineActivityRepository lineActivityRepository, MainServerApiService mainServerApiService) {
+                             LineActivityRepository lineActivityRepository, MainServerApiService mainServerApiService, StreamService streamService, FileSystemService fileSystemService) {
         this.processRepository = processRepository;
         this.processService = processService;
         this.streamInfoRepository = streamInfoRepository;
         this.progressInfoRepository = progressInfoRepository;
         this.lineActivityRepository = lineActivityRepository;
         this.mainServerApiService = mainServerApiService;
+        this.streamService = streamService;
+        this.fileSystemService = fileSystemService;
     }
 
     @Value("${server.port}")
     private String portNumber;
 
-    @Scheduled(fixedDelay = 1000)
+    @Scheduled(fixedDelay = 10000)
     public void StreamChecker() {
         List<Process> processes = processRepository.findAll();
         processes.parallelStream().forEach((process -> {
-            restartStreamIfStopped(process);
             Optional<StreamInfo> infoRecord = streamInfoRepository.findByStreamId(process.getStreamId());
             StreamInfo info = infoRecord.orElseGet(() -> new StreamInfo(process.getStreamId()));
-            info = updateStreamUptime(process, info);
-            info = updateStreamFFProbeData(process, info);
-            streamInfoRepository.save(info);
+                info = updateStreamUptime(process, info);
+                info = updateStreamFFProbeData(process, info);
+            int repeat = 0;
+            while(repeat < 3 && info.getVideoCodec() == null){
+                repeat++;
+                try {
+                    Thread.sleep(10000L);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+            if (info.getVideoCodec() == null){
+                File streamsDirectory = new File(
+                        System.getProperty("user.home") + File.separator + "streams"
+                );
+                for (File f : streamsDirectory.listFiles()) {
+                    if (f.getName().startsWith(process.getStreamId()+ "_")) {
+                        f.delete();
+                    }
+                }
+            }
+                streamInfoRepository.save(info);
         }));
-
     }
 
-    public void restartStreamIfStopped(Process process) {
+    @Scheduled(fixedDelay = 1000)
+    public void autoDeleteOldFiles(){
+        fileSystemService.deleteOldSegments(35000,"_.m3u8", System.getProperty("user.home") + File.separator + "streams");
+    }
 
+    public void restartStreamIfStopped(Long streamId) {
+        mainServerApiService.sendGetRequest("/channels/" + streamId + "/change-source/?portNumber=" + portNumber, Integer.class);
     }
 
     public StreamInfo updateStreamUptime(Process process, StreamInfo info) {
@@ -78,7 +104,8 @@ public class CoreTaskScheduler {
         String streamUrl = System.getProperty("user.home") + File.separator + "streams" + File.separator + process.getStreamId() + "_.m3u8";
         ProcessOutput processOutput = processService.analyzeStream(streamUrl, "codec_name,width,height,bit_rate");
         if (processOutput.getExitValue() == 1){
-            throw new RuntimeException("No info available for the stream. Maybe the source is unavailable.");
+            restartStreamIfStopped(process.getStreamId());
+            autoDeleteOldFiles();
         }
         ObjectMapper objectMapper = new ObjectMapper();
         try {
@@ -89,7 +116,7 @@ public class CoreTaskScheduler {
 
             var audio = root.get("streams").get(1);
             if (audio.has("codec_name"))
-                info.setAudioCodec(audio.get("codec_name").toPrettyString());
+                info.setAudioCodec(removeQuotations(audio.get("codec_name").toPrettyString()));
         } catch (Exception e) {
             System.out.println(e.getMessage());
         }

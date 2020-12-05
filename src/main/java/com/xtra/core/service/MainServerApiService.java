@@ -1,14 +1,18 @@
 package com.xtra.core.service;
 
-import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
+import org.springframework.http.converter.HttpMessageConverter;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import java.net.URI;
-import java.util.HashMap;
+import java.util.Arrays;
+import java.util.List;
 
 @Service
 public class MainServerApiService {
@@ -46,11 +50,22 @@ public class MainServerApiService {
 
     public <T> void sendPatchRequest(String path, Object data) {
         String uri = mainApiPath + path;
+        HttpComponentsClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory();
+        requestFactory.setConnectTimeout(5000);
+        requestFactory.setReadTimeout(5000);
+
+        MappingJackson2HttpMessageConverter mappingJackson2HttpMessageConverter = new MappingJackson2HttpMessageConverter();
+        mappingJackson2HttpMessageConverter.setSupportedMediaTypes(Arrays.asList(MediaType.APPLICATION_JSON, MediaType.APPLICATION_OCTET_STREAM));
+        restTemplate.setRequestFactory(requestFactory);
+        List<HttpMessageConverter<?>> httpMessageConverters = restTemplate.getMessageConverters();
+        httpMessageConverters.add(mappingJackson2HttpMessageConverter);
+        restTemplate.setMessageConverters(httpMessageConverters);
         try {
-            restTemplate.patchForObject(uri, data, ResponseEntity.class);
+             restTemplate.patchForObject(uri, data, String.class);
         } catch (HttpClientErrorException exception) {
             System.out.println(exception.getMessage());
         }
+
     }
 
     public <T> void sendDeleteRequest(String path) {

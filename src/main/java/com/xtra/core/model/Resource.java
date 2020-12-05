@@ -11,7 +11,7 @@ public class Resource {
 
     private double cpuMaxFreq;
     @ElementCollection
-    private List<Double> cpuCurrentFreq;
+    private List<Float> cpuCurrentFreq;
 
     private double memoryTotal;
     private double memoryAvailable;
@@ -22,9 +22,7 @@ public class Resource {
 
     private int connections; // no need to use in constructor.
 
-    private Long upTime;
-
-    public Resource(double cpuMaxFreq, List<Double> cpuCurrentFreq, double memoryTotal, double memoryAvailable, String networkName, Long networkBytesSent, Long networkBytesRecv, Long upTime) {
+    public Resource(double cpuMaxFreq, List<Float> cpuCurrentFreq, double memoryTotal, double memoryAvailable, String networkName, Long networkBytesSent, Long networkBytesRecv) {
         this.cpuMaxFreq = cpuMaxFreq;
         this.cpuCurrentFreq = cpuCurrentFreq;
         this.memoryTotal = memoryTotal;
@@ -34,5 +32,6 @@ public class Resource {
         this.networkBytesRecv = networkBytesRecv;
         this.upTime = upTime;
     }
+    public Resource (){}
 
 }

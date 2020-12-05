@@ -15,15 +15,15 @@ public class StreamOpController {
     }
 
     @GetMapping("/start/{streamId}")
-    public boolean startStream(@PathVariable Long streamId){
-        return streamService.startStream(streamId);
+    public boolean startStream(@PathVariable Long streamId, @RequestParam Long serverId){
+        return streamService.startStream(streamId, serverId);
     }
 
     @GetMapping("/stop/{streamId}")
     public boolean stopStream(@PathVariable Long streamId){return streamService.stopStream(streamId);}
 
     @GetMapping("/restart/{streamId}")
-    public boolean restartStream(@PathVariable Long streamId){
-        return streamService.restartStream(streamId);
+    public boolean restartStream(@PathVariable Long streamId, @RequestParam Long serverId){
+        return streamService.restartStream(streamId, serverId);
     }
 }

@@ -2,7 +2,9 @@ package com.xtra.core.service;
 
 import com.xtra.core.model.NetworkInterface;
 import com.xtra.core.model.Resource;
+import com.xtra.core.model.Server;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClientException;
 import oshi.SystemInfo;
 import oshi.hardware.CentralProcessor;
 import oshi.hardware.GlobalMemory;
@@ -15,23 +17,39 @@ import java.util.List;
 
 @Service
 public class ServerService {
+    private final MainServerApiService mainServerApiService;
 
-    public Resource getResourceUsage(String interfaceName){
+    public ServerService(MainServerApiService mainServerApiService) {
+        this.mainServerApiService = mainServerApiService;
+    }
+
+    public Resource getResourceUsage(String interfaceName) throws InterruptedException {
 
         SystemInfo si = new SystemInfo();
         HardwareAbstractionLayer hal = si.getHardware();
         CentralProcessor cpu = hal.getProcessor();
-        long[] currentFreq = cpu.getCurrentFreq();
-        List<Double> currentFrequencies = new ArrayList<>();
-        for (long cf : currentFreq) {
-            currentFrequencies.add(cf / 1000000000.0);
+
+        long[][] oldProcTicks;
+        oldProcTicks = new long[cpu.getLogicalProcessorCount()][CentralProcessor.TickType.values().length];
+        double[] p = new double[cpu.getLogicalProcessorCount()];
+        int i = 0;
+        while (i< 2){
+            p = cpu.getProcessorCpuLoadBetweenTicks(oldProcTicks);
+            oldProcTicks = cpu.getProcessorCpuLoadTicks();
+            Thread.sleep(400l);
+            i++;
         }
+        List<Float> currentUsage = new ArrayList<>();
+        for (double item : p) {
+            currentUsage.add( (float) item * 100);
+        }
+
         GlobalMemory mem = hal.getMemory();
         NetworkInterface networkInterface = this.getNetworkInterfaceDetails(interfaceName, hal);
 
         Resource resource = new Resource(
                 cpu.getMaxFreq()/1000000000000.0,
-                currentFrequencies,
+                currentUsage,
                 mem.getTotal()/1000000000.0,
                 mem.getAvailable()/1000000000.0,
                 networkInterface.getName(),
@@ -52,5 +70,15 @@ public class ServerService {
             ntf.setBytesSent(networkIF.getBytesSent());
         });
         return ntf;
+    }
+
+    public Server getServer(Long serverId) {
+        try {
+            return mainServerApiService.sendGetRequest("/servers/" + serverId, Server.class);
+        } catch (RestClientException e) {
+            //@todo log exception
+            System.out.println(e.getMessage());
+            return null;
+        }
     }
 }
