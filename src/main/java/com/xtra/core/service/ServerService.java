@@ -23,22 +23,33 @@ public class ServerService {
         this.mainServerApiService = mainServerApiService;
     }
 
-    public Resource getResourceUsage(String interfaceName){
+    public Resource getResourceUsage(String interfaceName) throws InterruptedException {
 
         SystemInfo si = new SystemInfo();
         HardwareAbstractionLayer hal = si.getHardware();
         CentralProcessor cpu = hal.getProcessor();
-        long[] currentFreq = cpu.getCurrentFreq();
-        List<Double> currentFrequencies = new ArrayList<>();
-        for (long cf : currentFreq) {
-            currentFrequencies.add(cf / 1000000000.0);
+
+        long[][] oldProcTicks;
+        oldProcTicks = new long[cpu.getLogicalProcessorCount()][CentralProcessor.TickType.values().length];
+        double[] p = new double[cpu.getLogicalProcessorCount()];
+        int i = 0;
+        while (i< 2){
+            p = cpu.getProcessorCpuLoadBetweenTicks(oldProcTicks);
+            oldProcTicks = cpu.getProcessorCpuLoadTicks();
+            Thread.sleep(400l);
+            i++;
         }
+        List<Float> currentUsage = new ArrayList<>();
+        for (double item : p) {
+            currentUsage.add( (float) item * 100);
+        }
+
         GlobalMemory mem = hal.getMemory();
         NetworkInterface networkInterface = this.getNetworkInterfaceDetails(interfaceName, hal);
 
         Resource resource = new Resource(
                 cpu.getMaxFreq()/1000000000000.0,
-                currentFrequencies,
+                currentUsage,
                 mem.getTotal()/1000000000.0,
                 mem.getAvailable()/1000000000.0,
                 networkInterface.getName(),
