@@ -23,13 +23,4 @@ public class ServerController {
         return serverService.getResourceUsage(interfaceName);
     }
 
-    @GetMapping("/test")
-    public void test(){
-        int i = 0;
-        while (true){
-            i += 1;
-            i -= 1;
-        }
-    }
-
 }

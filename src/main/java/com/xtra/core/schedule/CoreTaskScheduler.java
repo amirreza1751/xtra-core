@@ -62,6 +62,15 @@ public class CoreTaskScheduler {
             StreamInfo info = infoRecord.orElseGet(() -> new StreamInfo(process.getStreamId()));
                 info = updateStreamUptime(process, info);
                 info = updateStreamFFProbeData(process, info);
+            int repeat = 0;
+            while(repeat < 3 && info.getVideoCodec() == null){
+                repeat++;
+                try {
+                    Thread.sleep(10000L);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
             if (info.getVideoCodec() == null){
                 File streamsDirectory = new File(
                         System.getProperty("user.home") + File.separator + "streams"
@@ -74,7 +83,11 @@ public class CoreTaskScheduler {
             }
                 streamInfoRepository.save(info);
         }));
-        fileSystemService.deleteOldSegments(30000,"_.m3u8", System.getProperty("user.home") + File.separator + "streams");
+    }
+
+    @Scheduled(fixedDelay = 1000)
+    public void autoDeleteOldFiles(){
+        fileSystemService.deleteOldSegments(35000,"_.m3u8", System.getProperty("user.home") + File.separator + "streams");
     }
 
     public void restartStreamIfStopped(Long streamId) {
@@ -92,6 +105,7 @@ public class CoreTaskScheduler {
         ProcessOutput processOutput = processService.analyzeStream(streamUrl, "codec_name,width,height,bit_rate");
         if (processOutput.getExitValue() == 1){
             restartStreamIfStopped(process.getStreamId());
+            autoDeleteOldFiles();
         }
         ObjectMapper objectMapper = new ObjectMapper();
         try {

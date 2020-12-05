@@ -183,7 +183,7 @@ public class StreamService {
 
     public Stream getStream(Long streamId) {
         try {
-            return mainServerApiService.sendGetRequest("/channels/" + streamId + "/full", Stream.class);
+            return mainServerApiService.sendGetRequest("/channels/" + streamId + "/to-start", Stream.class);
         } catch (RestClientException e) {
             //@todo log exception
             System.out.println(e.getMessage());
