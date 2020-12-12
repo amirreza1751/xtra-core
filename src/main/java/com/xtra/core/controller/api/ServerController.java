@@ -29,4 +29,14 @@ public class ServerController {
         return streamService.startStream(serverId, streamIds);
     }
 
+    @GetMapping("/streams/batch-stop/")
+    public boolean stopStream(@RequestParam List<Long> streamIds) {
+        return streamService.stopStream(streamIds);
+    }
+
+    @GetMapping("/streams/batch-restart/")
+    public boolean restartStream(@RequestParam Long serverId, @RequestParam List<Long> streamIds) {
+        return streamService.restartStream(serverId, streamIds);
+    }
+
 }

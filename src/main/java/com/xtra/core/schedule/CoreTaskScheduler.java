@@ -105,7 +105,7 @@ public class CoreTaskScheduler {
         ProcessOutput processOutput = processService.analyzeStream(streamUrl, "codec_name,width,height,bit_rate");
         if (processOutput.getExitValue() == 1){
             restartStreamIfStopped(process.getStreamId());
-            autoDeleteOldFiles();
+//            autoDeleteOldFiles();
         }
         ObjectMapper objectMapper = new ObjectMapper();
         try {

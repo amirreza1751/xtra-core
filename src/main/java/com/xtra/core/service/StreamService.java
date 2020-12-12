@@ -191,9 +191,22 @@ public class StreamService {
         return true;
     }
 
-    public boolean restartStream( Long serverId, Long streamId) {
+    public boolean stopStream(List<Long> streamIds){
+        for (Long streamId : streamIds){
+            stopStream(streamId);
+        }
+        return true;
+    }
+
+    public boolean restartStream(Long serverId, Long streamId) {
         this.stopStream(streamId);
         this.startStream(streamId, serverId);
+        return true;
+    }
+
+    public boolean restartStream(Long serverId, List<Long> streamIds){
+        this.stopStream(streamIds);
+        this.startStream(serverId, streamIds);
         return true;
     }
 
