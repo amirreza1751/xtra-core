@@ -19,7 +19,7 @@ public class LineActivityService {
     }
 
     public boolean updateLineActivity(LineActivityId lineActivityId, String userAgent) {
-        Optional<LineActivity> existingActivity = lineActivityRepository.findByIdLineIdAndIdUserIp(lineActivityId.getLineId(), lineActivityId.getUserIp());
+        Optional<LineActivity> existingActivity = lineActivityRepository.findByIdLineIdAndIdUserIpAndIdStreamId(lineActivityId.getLineId(), lineActivityId.getUserIp(), lineActivityId.getStreamId());
         LineActivity activity;
         if (existingActivity.isPresent()) {
             if (existingActivity.get().isHlsEnded()) {

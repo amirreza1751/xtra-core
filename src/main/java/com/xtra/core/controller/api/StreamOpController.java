@@ -16,7 +16,7 @@ public class StreamOpController {
 
     @GetMapping("/start/{streamId}")
     public boolean startStream(@PathVariable Long streamId, @RequestParam Long serverId){
-        return streamService.startStream(streamId, serverId);
+        return streamService.startStream(serverId, streamId);
     }
 
     @GetMapping("/stop/{streamId}")
@@ -24,6 +24,6 @@ public class StreamOpController {
 
     @GetMapping("/restart/{streamId}")
     public boolean restartStream(@PathVariable Long streamId, @RequestParam Long serverId){
-        return streamService.restartStream(streamId, serverId);
+        return streamService.restartStream(serverId, streamId);
     }
 }

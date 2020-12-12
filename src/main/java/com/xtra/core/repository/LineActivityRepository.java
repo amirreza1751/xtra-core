@@ -13,7 +13,7 @@ public interface LineActivityRepository extends JpaRepository<LineActivity, Line
 
     List<LineActivity> findAllByIdLineId(Long lineId);
 
-    Optional<LineActivity> findByIdLineIdAndIdUserIp(Long lineId, String userIp);
+    Optional<LineActivity> findByIdLineIdAndIdUserIpAndIdStreamId(Long lineId, String userIp, Long streamId);
 
     List<LineActivity> findAllByLastReadIsLessThanEqual(LocalDateTime lastReadBefore);
 
