@@ -87,10 +87,7 @@ public class StreamService {
 
         int selectedSource = 0;
         StreamServer streamServer = new StreamServer(new StreamServerId(streamId, serverId));
-        List<StreamServer> streamServers = stream.getStreamServers();
-        if (!streamServers.contains(streamServer)){
-            throw new RuntimeException("There is a problem with the relation between channel and the server.");
-        }
+        Set<StreamServer> streamServers = stream.getStreamServers();
         for (StreamServer item : streamServers){
             if (item.equals(streamServer)){
                 selectedSource = item.getSelectedSource();
@@ -200,7 +197,7 @@ public class StreamService {
 
     public boolean restartStream(Long serverId, Long streamId) {
         this.stopStream(streamId);
-        this.startStream(streamId, serverId);
+        this.startStream(serverId, streamId);
         return true;
     }
 

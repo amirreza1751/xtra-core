@@ -7,6 +7,8 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.util.List;
+import java.util.Set;
+
 @Getter
 @Setter
 @JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy.class)
@@ -25,7 +27,7 @@ public class Stream {
     private TranscodeProfile transcodeProfile;
     private String customFFMPEG;
 
-    private List<StreamServer> streamServers;
+    private Set<StreamServer> streamServers;
 
     private List<StreamInput> streamInputs;
 
