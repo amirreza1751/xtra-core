@@ -47,7 +47,7 @@ public class VodService {
     }
 
     public void encode(Vod vod) {
-        ExecutorService executor = Executors.newFixedThreadPool(10);
+        ExecutorService executor = Executors.newFixedThreadPool(2);
         executor.execute(() -> {
             String video_path = vod.getLocation();
             Path path = Paths.get(video_path);
@@ -129,14 +129,9 @@ public class VodService {
 
     }
 
-    public Vod getVod(String vodId) {
-        return mainServerApiService.sendGetRequest("/movies/" + vodId, Vod.class);
-    }
-
-
-    public Long getVodId(String vodToken) {
+    public Vod getVodByToken(String vodToken) {
         try {
-            return mainServerApiService.sendGetRequest("/movies/token/" + vodToken + "/id", Long.class);
+            return mainServerApiService.sendGetRequest("/movies/token/" + vodToken + "/id", Vod.class);
         } catch (RestClientException e) {
             //@todo log exception
             System.out.println(e.getMessage());
@@ -196,8 +191,7 @@ public class VodService {
 
 
     public String jsonHandler(String vod_token) {
-        var vodId = this.getVodId(vod_token.replace(".json", ""));
-        Vod vod = this.getVod(vodId.toString());
+        Vod vod = this.getVodByToken(vod_token.replace(".json", ""));
         JSONArray sequences = new JSONArray();
         for (Subtitle subtitle : vod.getSubtitles()) {
             JSONObject clips_object = new JSONObject();
