@@ -100,7 +100,7 @@ public class VodService {
 
     public void updateVodStatus(Long id, Map<String, String> data) {
         try {
-            mainServerApiService.sendPatchRequest("/movies/" + id, data);
+            mainServerApiService.sendPatchRequest("/videos/" + id, data);
         } catch (RestClientException e) {
             System.out.println(e.getMessage());
         }
