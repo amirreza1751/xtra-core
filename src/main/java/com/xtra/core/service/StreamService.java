@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xtra.core.model.*;
 import com.xtra.core.model.Process;
+import com.xtra.core.projection.LineAuth;
 import com.xtra.core.repository.ProcessRepository;
 import com.xtra.core.repository.ProgressInfoRepository;
 import com.xtra.core.repository.StreamInfoRepository;
@@ -21,6 +22,7 @@ import org.springframework.web.client.RestClientException;
 import javax.servlet.http.HttpServletRequest;
 import java.io.File;
 import java.io.IOException;
+import java.net.Inet4Address;
 import java.nio.file.Files;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -88,8 +90,8 @@ public class StreamService {
         int selectedSource = 0;
         StreamServer streamServer = new StreamServer(new StreamServerId(streamId, serverId));
         Set<StreamServer> streamServers = stream.getStreamServers();
-        for (StreamServer item : streamServers){
-            if (item.equals(streamServer)){
+        for (StreamServer item : streamServers) {
+            if (item.equals(streamServer)) {
                 selectedSource = item.getSelectedSource();
                 break;
             }
@@ -149,6 +151,7 @@ public class StreamService {
         }
         return true;
     }
+
     public boolean startStream(Long serverId, Long streamId) { //Overload start stream for starting single stream
         Stream stream = getStream(streamId);
         if (stream == null) {
@@ -157,10 +160,11 @@ public class StreamService {
         }
         return startStream(serverId, stream);
     }
+
     public boolean startStream(Long serverId, List<Long> streamIds) { //Overload start stream for batch start streams
         List<Stream> streams = getBatchStreams(streamIds).getChannelList();
 
-        for (Stream stream : streams){
+        for (Stream stream : streams) {
             startStream(serverId, stream);
         }
         return true;
@@ -188,8 +192,8 @@ public class StreamService {
         return true;
     }
 
-    public boolean stopStream(List<Long> streamIds){
-        for (Long streamId : streamIds){
+    public boolean stopStream(List<Long> streamIds) {
+        for (Long streamId : streamIds) {
             stopStream(streamId);
         }
         return true;
@@ -201,7 +205,7 @@ public class StreamService {
         return true;
     }
 
-    public boolean restartStream(Long serverId, List<Long> streamIds){
+    public boolean restartStream(Long serverId, List<Long> streamIds) {
         this.stopStream(streamIds);
         this.startStream(serverId, streamIds);
         return true;
@@ -217,13 +221,13 @@ public class StreamService {
         }
     }
 
-    public ChannelList getBatchStreams(List<Long> streamIds){
+    public ChannelList getBatchStreams(List<Long> streamIds) {
         StringJoiner joiner = new StringJoiner(",");
-        for (Long streamId: streamIds){
+        for (Long streamId : streamIds) {
             joiner.add(streamId.toString());
         }
         try {
-            return mainServerApiService.sendGetRequest("/channels/batch-get?streamIds=" + joiner.toString() , ChannelList.class);
+            return mainServerApiService.sendGetRequest("/channels/batch-get?streamIds=" + joiner.toString(), ChannelList.class);
         } catch (RestClientException e) {
             System.out.println(e.getMessage());
             return null;
@@ -241,9 +245,9 @@ public class StreamService {
     }
 
 
-    public Map<String, String> getPlaylist(String lineToken, String streamToken, String extension, String userAgent, HttpServletRequest request) throws IOException {
+    public Map<String, String> getPlaylist(String lineToken, String streamToken, String extension, String userAgent, String ipAddress) throws IOException {
         Map<String, String> data = new HashMap<>();
-        LineStatus status = lineService.authorizeLineForStream(lineToken, streamToken);
+        LineStatus status = lineService.authorizeLineForStream(new LineAuth(lineToken, streamToken, ipAddress, userAgent));
         if (status != LineStatus.OK) {
             if (status == LineStatus.NOT_FOUND)
 //                response = new ResponseEntity<>("Line Not found", HttpStatus.NOT_FOUND);
@@ -273,7 +277,7 @@ public class StreamService {
 //                return new ResponseEntity<>("Unknown Error", HttpStatus.FORBIDDEN);
                 throw new RuntimeException("Unknown Error " + HttpStatus.FORBIDDEN);
             }
-            LineActivityId lineActivityId = new LineActivityId(lineId, streamId, request.getRemoteAddr());
+            LineActivityId lineActivityId = new LineActivityId(lineId, streamId, ipAddress);
             System.out.println("line id:" + lineActivityId.getLineId() + " stream id:" + lineActivityId.getStreamId() + " user Ip" + lineActivityId.getUserIp());
 
             var result = lineActivityService.updateLineActivity(lineActivityId, userAgent);
@@ -301,11 +305,11 @@ public class StreamService {
 
 
     public byte[] getSegment(String lineToken, String streamToken
-            , String extension, String segment, String userAgent, HttpServletRequest request) throws IOException {
-        LineStatus status = lineService.authorizeLineForStream(lineToken, streamToken);
+            , String extension, String segment, String userAgent, String ipAddress) throws IOException {
+        LineStatus status = lineService.authorizeLineForStream(new LineAuth(lineToken, streamToken, ipAddress, userAgent));
         Long streamId = this.getStreamId(streamToken);
         Long lineId = lineService.getLineId(lineToken);
-        LineActivityId lineActivityId = new LineActivityId(lineId, streamId, request.getRemoteAddr());
+        LineActivityId lineActivityId = new LineActivityId(lineId, streamId, ipAddress);
         if (status == LineStatus.OK) {
             System.out.println("line id:" + lineActivityId.getLineId() + " stream id:" + lineActivityId.getStreamId() + " user Ip" + lineActivityId.getUserIp());
             var result = lineActivityService.updateLineActivity(lineActivityId, userAgent);

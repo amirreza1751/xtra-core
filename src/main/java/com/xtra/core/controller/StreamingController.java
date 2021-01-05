@@ -1,6 +1,7 @@
 package com.xtra.core.controller;
 
 import com.xtra.core.model.LineStatus;
+import com.xtra.core.projection.LineAuth;
 import com.xtra.core.service.LineService;
 import com.xtra.core.service.ProgressInfoService;
 import com.xtra.core.service.StreamService;
@@ -35,7 +36,7 @@ public class StreamingController {
     ResponseEntity<String> getPlaylist(@RequestParam("line_token") String lineToken, @RequestParam("stream_token") String streamToken
             , @RequestParam String extension, @RequestHeader(value = "HTTP_USER_AGENT", defaultValue = "") String userAgent, HttpServletRequest request) throws IOException {
         //@todo decrypt stream_id and user_id
-        Map<String, String> data = streamService.getPlaylist(lineToken, streamToken, extension, userAgent, request);
+        Map<String, String> data = streamService.getPlaylist(lineToken, streamToken, extension, userAgent, request.getRemoteAddr());
         HttpHeaders responseHeaders = new HttpHeaders();
         return ResponseEntity.ok()
                 .headers(responseHeaders).contentType(MediaType.valueOf("application/x-mpegurl"))
@@ -51,7 +52,7 @@ public class StreamingController {
     public @ResponseBody
     ResponseEntity<byte[]> getSegment(@RequestParam("line_token") String lineToken, @RequestParam("stream_token") String streamToken
             , @RequestParam String extension, @RequestParam String segment, @RequestHeader(value = "HTTP_USER_AGENT", defaultValue = "") String userAgent, HttpServletRequest request) throws IOException {
-        byte[] movie_segment = streamService.getSegment(lineToken, streamToken, extension, segment, userAgent, request);
+        byte[] movie_segment = streamService.getSegment(lineToken, streamToken, extension, segment, userAgent, request.getRemoteAddr());
         HttpHeaders responseHeaders = new HttpHeaders();
         return ResponseEntity.ok()
                 .headers(responseHeaders).contentType(MediaType.valueOf("video/mp2t"))
@@ -67,8 +68,8 @@ public class StreamingController {
 
     @GetMapping("vod/{line_token}/{vod_token}")
     public @ResponseBody
-    ResponseEntity<String> getVodPlaylist(@PathVariable("line_token") String lineToken, @PathVariable("vod_token") String vodToken) throws IOException {
-        String content = vodService.getVodPlaylist(lineToken, vodToken);
+    ResponseEntity<String> getVodPlaylist(@PathVariable("line_token") String lineToken, @PathVariable("vod_token") String vodToken, @RequestHeader(value = "HTTP_USER_AGENT", defaultValue = "") String userAgent, HttpServletRequest request) throws IOException {
+        String content = vodService.getVodPlaylist(lineToken, vodToken, request.getRemoteAddr(), userAgent);
         HttpHeaders responseHeaders = new HttpHeaders();
         return ResponseEntity.ok()
                 .headers(responseHeaders).contentType(MediaType.valueOf("application/x-mpegurl"))
@@ -91,8 +92,8 @@ public class StreamingController {
     }
 
     @GetMapping("vod/auth")
-    public ResponseEntity<String> vodAuth(@RequestParam String lineToken, @RequestParam String streamToken) {
-        LineStatus lineStatus = lineService.authorizeLineForVod(lineToken, streamToken);
+    public ResponseEntity<String> vodAuth(@RequestParam String lineToken, @RequestParam String vodToken, @RequestHeader(value = "HTTP_USER_AGENT", defaultValue = "") String userAgent, HttpServletRequest request) {
+        LineStatus lineStatus = lineService.authorizeLineForVod(new LineAuth(lineToken, vodToken, request.getRemoteAddr(), userAgent));
         if (lineStatus != LineStatus.OK)
             return new ResponseEntity<>("forbidden", HttpStatus.FORBIDDEN);
         else {
