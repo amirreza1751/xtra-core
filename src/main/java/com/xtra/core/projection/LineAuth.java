@@ -2,8 +2,6 @@ package com.xtra.core.projection;
 
 import lombok.Data;
 
-import java.net.Inet4Address;
-
 @Data
 public class LineAuth {
     private String lineToken;
@@ -18,6 +16,4 @@ public class LineAuth {
         this.userAgent = userAgent;
     }
 
-    public LineAuth() {
-    }
 }

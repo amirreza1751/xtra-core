@@ -250,25 +250,18 @@ public class StreamService {
         LineStatus status = lineService.authorizeLineForStream(new LineAuth(lineToken, streamToken, ipAddress, userAgent));
         if (status != LineStatus.OK) {
             if (status == LineStatus.NOT_FOUND)
-//                response = new ResponseEntity<>("Line Not found", HttpStatus.NOT_FOUND);
                 throw new RuntimeException("Line Not found " + HttpStatus.NOT_FOUND);
             else if (status == LineStatus.BANNED)
-//                response = new ResponseEntity<>("Line is Banned", HttpStatus.FORBIDDEN);
                 throw new RuntimeException("Line is Banned " + HttpStatus.FORBIDDEN);
             else if (status == LineStatus.BLOCKED)
-//                response = new ResponseEntity<>("Line is Blocked", HttpStatus.FORBIDDEN);
                 throw new RuntimeException("Line is Blocked " + HttpStatus.FORBIDDEN);
             else if (status == LineStatus.EXPIRED)
-//                response = new ResponseEntity<>("Line is Expired, Please Extend Your Line", HttpStatus.FORBIDDEN);
                 throw new RuntimeException("Line is Expired, Please Extend Your Line " + HttpStatus.FORBIDDEN);
             else if (status == LineStatus.MAX_CONNECTION_REACHED)
-//                response = new ResponseEntity<>("You Have Used All of your connection capacity", HttpStatus.FORBIDDEN);
                 throw new RuntimeException("You Have Used All of your connection capacity " + HttpStatus.FORBIDDEN);
             else if (status == LineStatus.NO_ACCESS_TO_STREAM)
-//                response = new ResponseEntity<>("Cannot Access Stream", HttpStatus.FORBIDDEN);
                 throw new RuntimeException("Cannot Access Stream " + HttpStatus.FORBIDDEN);
             else
-//                response = new ResponseEntity<>("Unknown Error", HttpStatus.FORBIDDEN);
                 throw new RuntimeException("Unknown Error " + HttpStatus.FORBIDDEN);
         } else {
             Long lineId = lineService.getLineId(lineToken);

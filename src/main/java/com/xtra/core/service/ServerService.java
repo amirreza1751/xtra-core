@@ -36,7 +36,7 @@ public class ServerService {
         while (i< 2){
             p = cpu.getProcessorCpuLoadBetweenTicks(oldProcTicks);
             oldProcTicks = cpu.getProcessorCpuLoadTicks();
-            Thread.sleep(400l);
+            Thread.sleep(400L);
             i++;
         }
         List<Float> currentUsage = new ArrayList<>();
@@ -47,7 +47,7 @@ public class ServerService {
         GlobalMemory mem = hal.getMemory();
         NetworkInterface networkInterface = this.getNetworkInterfaceDetails(interfaceName, hal);
 
-        Resource resource = new Resource(
+        return new Resource(
                 cpu.getMaxFreq()/1000000000000.0,
                 currentUsage,
                 mem.getTotal()/1000000000.0,
@@ -57,8 +57,6 @@ public class ServerService {
                 networkInterface.getBytesRecv(),
                 si.getOperatingSystem().getSystemUptime()
                 );
-
-        return resource;
     }
 
     public NetworkInterface getNetworkInterfaceDetails(String interfaceName, HardwareAbstractionLayer hal){
@@ -72,13 +70,4 @@ public class ServerService {
         return ntf;
     }
 
-    public Server getServer(Long serverId) {
-        try {
-            return mainServerApiService.sendGetRequest("/servers/" + serverId, Server.class);
-        } catch (RestClientException e) {
-            //@todo log exception
-            System.out.println(e.getMessage());
-            return null;
-        }
-    }
 }

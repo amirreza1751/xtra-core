@@ -26,7 +26,7 @@ public class MainServerApiService {
 
     public <T> T sendGetRequest(String path, Class<T> tClass) {
         String uri = mainApiPath + path;
-        ResponseEntity<T> result = null;
+        ResponseEntity<T> result;
         try {
             result = restTemplate.getForEntity(uri, tClass);
         } catch (HttpClientErrorException | NullPointerException exception) {
@@ -38,7 +38,7 @@ public class MainServerApiService {
 
     public <T> T sendPostRequest(String path, Class<T> tClass, Object data) {
         String uri = mainApiPath + path;
-        ResponseEntity<T> result = null;
+        ResponseEntity<T> result;
         try {
             result = restTemplate.postForEntity(uri, data, tClass);
         } catch (HttpClientErrorException | NullPointerException exception) {
