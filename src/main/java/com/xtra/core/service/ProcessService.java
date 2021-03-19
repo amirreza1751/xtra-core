@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.sql.SQLOutput;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;
@@ -24,16 +25,16 @@ public class ProcessService {
         this.processRepository = processRepository;
     }
 
-    public Optional<Process> runProcess(String... args) {
+    public Long runProcess(String... args) {
         Process proc;
         try {
             proc = new ProcessBuilder(args).start();
         } catch (IOException e) {
             //@todo log
             System.out.println(e.getMessage());
-            return Optional.empty();
+            return -1L;
         }
-        return Optional.of(proc);
+        return proc.pid();
     }
 
     public long stopProcess(Long pid) {
