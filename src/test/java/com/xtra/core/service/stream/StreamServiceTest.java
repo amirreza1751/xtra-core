@@ -93,4 +93,22 @@ class StreamServiceTest {
         assertTrue(streamService.startStream(12L, stream));
     }
 
+    @Test
+    void stopStreamTest(){
+        Stream stream = new Stream();
+        stream.setId(6L);
+
+        Mockito.doReturn(Optional.of(new Process(stream.getId(), 1400L))).when(processRepository).findByProcessIdStreamId(stream.getId());
+
+        Mockito.doReturn(1000L).when(processService).stopProcess(Mockito.anyLong());
+
+        Mockito.doReturn(1000L).when(processRepository).deleteByProcessIdStreamId(stream.getId());
+
+        ProgressInfo progressInfo = new ProgressInfo();
+        progressInfo.setStreamId(stream.getId());
+        Mockito.doReturn(Optional.of(progressInfo)).when(progressInfoRepository).findByStreamId(stream.getId());
+
+        assertTrue(streamService.stopStream(stream.getId()));
+    }
+
 }
