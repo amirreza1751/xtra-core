@@ -64,11 +64,11 @@ public class StreamService {
     }
 
     public boolean startStream(Long serverId, Stream stream) {
-        Long streamId = stream.getId();
         if (stream == null) {
             System.out.println("Stream is null");
             return false;
         }
+        Long streamId = stream.getId();
 
         Optional<Process> process = processRepository.findByProcessIdStreamId(streamId);
         if (process.isPresent()) {
@@ -139,11 +139,11 @@ public class StreamService {
                 streamsDirectory.getAbsolutePath() + "/" + stream.getId() + "_%d.ts",
                 streamsDirectory.getAbsolutePath() + "/" + stream.getId() + "_.m3u8"
         };
-        Optional<java.lang.Process> result = processService.runProcess(args);
-        if (result.isEmpty() || !result.get().isAlive()) {
+        Long pid = processService.runProcess(args);
+        if (pid == -1L) {
             return false;
         } else {
-            Process ppp = processRepository.save(new Process(stream.getId(), result.get().pid()));
+            processRepository.save(new Process(stream.getId(), pid));
             Optional<StreamInfo> streamInfoRecord = streamInfoRepository.findByStreamId(streamId);
             StreamInfo streamInfo = streamInfoRecord.orElseGet(() -> new StreamInfo(streamId));
             streamInfo.setCurrentInput(currentInput);
