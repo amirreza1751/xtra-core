@@ -23,7 +23,7 @@ public class FileSystemService {
         ArrayList<com.xtra.core.model.File> result = new ArrayList<>();
         if (filesList != null) {
             for (java.io.File file : filesList) {
-                if (!file.isHidden()){
+                if (!file.isHidden()) {
                     result.add(
                             new com.xtra.core.model.File(
                                     file.getName(),
@@ -49,7 +49,7 @@ public class FileSystemService {
             long eligibleForDeletion = System.currentTimeMillis() - afterMilliSeconds;
 //                    (days * 24 * 60 * 60 * 1000L);
 
-            for (java.io.File listFile: listFiles) {
+            for (java.io.File listFile : listFiles) {
 
                 if (listFile.getName().endsWith(fileExtension) &&
                         listFile.lastModified() < eligibleForDeletion) {

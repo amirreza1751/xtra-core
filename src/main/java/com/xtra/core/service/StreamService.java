@@ -1,9 +1,5 @@
 package com.xtra.core.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xtra.core.model.*;
 import com.xtra.core.model.Process;
 import com.xtra.core.projection.LineAuth;
@@ -19,10 +15,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.ResourceUtils;
 import org.springframework.web.client.RestClientException;
 
-import javax.servlet.http.HttpServletRequest;
 import java.io.File;
 import java.io.IOException;
-import java.net.Inet4Address;
 import java.nio.file.Files;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -36,7 +30,7 @@ public class StreamService {
     private final ProgressInfoRepository progressInfoRepository;
     private final LineService lineService;
     private final LineActivityService lineActivityService;
-    private final MainServerApiService mainServerApiService;
+    private final ApiService apiService;
 
     @Value("${main.apiPath}")
     private String mainApiPath;
@@ -51,14 +45,14 @@ public class StreamService {
     private String nginxPort;
 
     @Autowired
-    public StreamService(ProcessRepository processRepository, ProcessService processService, StreamInfoRepository streamInfoRepository, ProgressInfoRepository progressInfoRepository, LineService lineService, LineActivityService lineActivityService, MainServerApiService mainServerApiService) {
+    public StreamService(ProcessRepository processRepository, ProcessService processService, StreamInfoRepository streamInfoRepository, ProgressInfoRepository progressInfoRepository, LineService lineService, LineActivityService lineActivityService, ApiService apiService) {
         this.processRepository = processRepository;
         this.processService = processService;
         this.streamInfoRepository = streamInfoRepository;
         this.progressInfoRepository = progressInfoRepository;
         this.lineService = lineService;
         this.lineActivityService = lineActivityService;
-        this.mainServerApiService = mainServerApiService;
+        this.apiService = apiService;
     }
 
     public boolean startStream(Stream stream) {
@@ -201,7 +195,7 @@ public class StreamService {
 
     public Stream getStream(Long streamId) {
         try {
-            return mainServerApiService.sendGetRequest("/channels/" + streamId + "/to-start", Stream.class);
+            return apiService.sendGetRequest("/channels/" + streamId + "/to-start", Stream.class);
         } catch (RestClientException e) {
             //@todo log exception
             System.out.println(e.getMessage());
@@ -215,7 +209,7 @@ public class StreamService {
             joiner.add(streamId.toString());
         }
         try {
-            return mainServerApiService.sendGetRequest("/channels/batch-get?streamIds=" + joiner.toString(), ChannelList.class);
+            return apiService.sendGetRequest("/channels/batch-get?streamIds=" + joiner.toString(), ChannelList.class);
         } catch (RestClientException e) {
             System.out.println(e.getMessage());
             return null;
@@ -224,7 +218,7 @@ public class StreamService {
 
     public Long getStreamId(String streamToken) {
         try {
-            return mainServerApiService.sendGetRequest("/channels/get_id/" + streamToken, Long.class);
+            return apiService.sendGetRequest("/channels/get_id/" + streamToken, Long.class);
         } catch (RestClientException e) {
             //@todo log exception
             System.out.println(e.getMessage());
@@ -258,10 +252,10 @@ public class StreamService {
 //                return new ResponseEntity<>("Unknown Error", HttpStatus.FORBIDDEN);
                 throw new RuntimeException("Unknown Error " + HttpStatus.FORBIDDEN);
             }
-            LineActivityId lineActivityId = new LineActivityId(lineId, streamId, ipAddress);
-            System.out.println("line id:" + lineActivityId.getLineId() + " stream id:" + lineActivityId.getStreamId() + " user Ip" + lineActivityId.getUserIp());
+            ConnectionId connectionId = new ConnectionId(lineId, streamId, ipAddress);
+            System.out.println("line id:" + connectionId.getLineId() + " stream id:" + connectionId.getStreamId() + " user Ip" + connectionId.getUserIp());
 
-            var result = lineActivityService.updateLineActivity(lineActivityId, userAgent);
+            var result = lineActivityService.updateLineActivity(connectionId, userAgent);
 
             if (!result) {
                 throw new RuntimeException("Forbidden " + HttpStatus.FORBIDDEN);
@@ -290,10 +284,10 @@ public class StreamService {
         LineStatus status = lineService.authorizeLineForStream(new LineAuth(lineToken, streamToken, ipAddress, userAgent));
         Long streamId = this.getStreamId(streamToken);
         Long lineId = lineService.getLineId(lineToken);
-        LineActivityId lineActivityId = new LineActivityId(lineId, streamId, ipAddress);
+        ConnectionId connectionId = new ConnectionId(lineId, streamId, ipAddress);
         if (status == LineStatus.OK) {
-            System.out.println("line id:" + lineActivityId.getLineId() + " stream id:" + lineActivityId.getStreamId() + " user Ip" + lineActivityId.getUserIp());
-            var result = lineActivityService.updateLineActivity(lineActivityId, userAgent);
+            System.out.println("line id:" + connectionId.getLineId() + " stream id:" + connectionId.getStreamId() + " user Ip" + connectionId.getUserIp());
+            var result = lineActivityService.updateLineActivity(connectionId, userAgent);
             if (!result) {
 //                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
                 throw new RuntimeException("Forbidden " + HttpStatus.FORBIDDEN);

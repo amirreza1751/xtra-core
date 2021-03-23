@@ -15,12 +15,12 @@ import java.util.Arrays;
 import java.util.List;
 
 @Service
-public class MainServerApiService {
+public class ApiService {
     private final RestTemplate restTemplate;
     @Value("${main.apiPath}")
     private String mainApiPath;
 
-    public MainServerApiService() {
+    public ApiService() {
         this.restTemplate = new RestTemplate();
     }
 

@@ -1,25 +1,25 @@
 package com.xtra.core.repository;
 
-import com.xtra.core.model.LineActivity;
-import com.xtra.core.model.LineActivityId;
+import com.xtra.core.model.Connection;
+import com.xtra.core.model.ConnectionId;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
-public interface LineActivityRepository extends JpaRepository<LineActivity, LineActivityId> {
-    Optional<LineActivity> findByIdLineId(Long lineId);
+public interface LineActivityRepository extends JpaRepository<Connection, ConnectionId> {
+    Optional<Connection> findByIdLineId(Long lineId);
 
-    List<LineActivity> findAllByIdLineId(Long lineId);
+    List<Connection> findAllByIdLineId(Long lineId);
 
-    Optional<LineActivity> findByIdLineIdAndIdUserIpAndIdStreamId(Long lineId, String userIp, Long streamId);
+    Optional<Connection> findByIdLineIdAndIdUserIpAndIdStreamId(Long lineId, String userIp, Long streamId);
 
-    List<LineActivity> findAllByLastReadIsLessThanEqual(LocalDateTime lastReadBefore);
+    List<Connection> findAllByLastReadIsLessThanEqual(LocalDateTime lastReadBefore);
 
-    List<LineActivity> findAllByHlsEndedAndEndDateBefore(boolean hlsEnded, LocalDateTime endDateBefore);
+    List<Connection> findAllByHlsEndedAndEndDateBefore(boolean hlsEnded, LocalDateTime endDateBefore);
 
-    List<LineActivity> findAllByHlsEnded(boolean hlsEnded);
+    List<Connection> findAllByHlsEnded(boolean hlsEnded);
 
-    void deleteById(LineActivityId lineActivityId);
+    void deleteById(ConnectionId connectionId);
 }

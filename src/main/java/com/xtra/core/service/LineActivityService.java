@@ -1,7 +1,7 @@
 package com.xtra.core.service;
 
-import com.xtra.core.model.LineActivity;
-import com.xtra.core.model.LineActivityId;
+import com.xtra.core.model.Connection;
+import com.xtra.core.model.ConnectionId;
 import com.xtra.core.repository.LineActivityRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -18,18 +18,18 @@ public class LineActivityService {
         this.lineActivityRepository = lineActivityRepository;
     }
 
-    public boolean updateLineActivity(LineActivityId lineActivityId, String userAgent) {
-        Optional<LineActivity> existingActivity = lineActivityRepository.findByIdLineIdAndIdUserIpAndIdStreamId(lineActivityId.getLineId(), lineActivityId.getUserIp(), lineActivityId.getStreamId());
-        LineActivity activity;
+    public boolean updateLineActivity(ConnectionId connectionId, String userAgent) {
+        Optional<Connection> existingActivity = lineActivityRepository.findByIdLineIdAndIdUserIpAndIdStreamId(connectionId.getLineId(), connectionId.getUserIp(), connectionId.getStreamId());
+        Connection activity;
         if (existingActivity.isPresent()) {
             if (existingActivity.get().isHlsEnded()) {
                 return false;
             }
             activity = existingActivity.get();
         } else {
-            activity = new LineActivity();
+            activity = new Connection();
         }
-        activity.setId(lineActivityId);
+        activity.setId(connectionId);
 
         activity.setUserAgent(userAgent);
         activity.setLastRead(LocalDateTime.now());

@@ -26,7 +26,6 @@ import java.util.concurrent.Executors;
 
 import org.mozilla.universalchardet.UniversalDetector;
 import org.springframework.web.client.RestClientException;
-import org.springframework.web.client.RestTemplate;
 
 import static com.xtra.core.utility.Util.removeQuotations;
 
@@ -39,12 +38,12 @@ public class VodService {
     private String serverAddress;
     private final ProcessService processService;
     private final LineService lineService;
-    private final MainServerApiService mainServerApiService;
+    private final ApiService apiService;
 
-    public VodService(ProcessService processService, LineService lineService, MainServerApiService mainServerApiService) {
+    public VodService(ProcessService processService, LineService lineService, ApiService apiService) {
         this.processService = processService;
         this.lineService = lineService;
-        this.mainServerApiService = mainServerApiService;
+        this.apiService = apiService;
     }
 
     public void encode(Vod vod) {
@@ -101,7 +100,7 @@ public class VodService {
 
     public void updateVodStatus(Long id, Map<String, String> data) {
         try {
-            mainServerApiService.sendPatchRequest("/videos/" + id, data);
+            apiService.sendPatchRequest("/videos/" + id, data);
         } catch (RestClientException e) {
             System.out.println(e.getMessage());
         }
@@ -132,7 +131,7 @@ public class VodService {
 
     public Vod getVodByToken(String vodToken) {
         try {
-            return mainServerApiService.sendGetRequest("/movies/token/" + vodToken + "/id", Vod.class);
+            return apiService.sendGetRequest("/movies/token/" + vodToken + "/id", Vod.class);
         } catch (RestClientException e) {
             //@todo log exception
             System.out.println(e.getMessage());

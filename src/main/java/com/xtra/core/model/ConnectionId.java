@@ -10,13 +10,13 @@ import java.io.Serializable;
 @Data
 @Embeddable
 @JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy.class)
-public class LineActivityId implements Serializable {
+public class ConnectionId implements Serializable {
     private Long lineId;
     private Long streamId;
     private String userIp;
 
-    public LineActivityId() {}
-    public LineActivityId(Long lineId, Long streamId, String userIp){
+    public ConnectionId() {}
+    public ConnectionId(Long lineId, Long streamId, String userIp){
         this.lineId = lineId;
         this.streamId = streamId;
         this.userIp = userIp;

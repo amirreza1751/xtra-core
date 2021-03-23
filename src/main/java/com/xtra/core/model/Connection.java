@@ -10,10 +10,10 @@ import java.time.LocalDateTime;
 @Entity
 @Data
 @JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy.class)
-public class LineActivity {
+public class Connection {
 
     @EmbeddedId
-    private LineActivityId id = new LineActivityId();
+    private ConnectionId id = new ConnectionId();
 
     private LocalDateTime startDate;
     private LocalDateTime endDate;

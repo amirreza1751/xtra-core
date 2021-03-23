@@ -8,7 +8,7 @@ import com.xtra.core.repository.ProcessRepository;
 import com.xtra.core.repository.ProgressInfoRepository;
 import com.xtra.core.repository.StreamInfoRepository;
 import com.xtra.core.service.FileSystemService;
-import com.xtra.core.service.MainServerApiService;
+import com.xtra.core.service.ApiService;
 import com.xtra.core.service.ProcessService;
 import com.xtra.core.service.StreamService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,8 +21,6 @@ import javax.transaction.Transactional;
 import java.io.File;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 import static com.xtra.core.utility.Util.removeQuotations;
 
@@ -33,20 +31,20 @@ public class CoreTaskScheduler {
     private final StreamInfoRepository streamInfoRepository;
     private final ProgressInfoRepository progressInfoRepository;
     private final LineActivityRepository lineActivityRepository;
-    private final MainServerApiService mainServerApiService;
+    private final ApiService apiService;
     private final StreamService streamService;
     private final FileSystemService fileSystemService;
 
     @Autowired
     public CoreTaskScheduler(ProcessRepository processRepository, ProcessService processService,
                              StreamInfoRepository streamInfoRepository, ProgressInfoRepository progressInfoRepository,
-                             LineActivityRepository lineActivityRepository, MainServerApiService mainServerApiService, StreamService streamService, FileSystemService fileSystemService) {
+                             LineActivityRepository lineActivityRepository, ApiService apiService, StreamService streamService, FileSystemService fileSystemService) {
         this.processRepository = processRepository;
         this.processService = processService;
         this.streamInfoRepository = streamInfoRepository;
         this.progressInfoRepository = progressInfoRepository;
         this.lineActivityRepository = lineActivityRepository;
-        this.mainServerApiService = mainServerApiService;
+        this.apiService = apiService;
         this.streamService = streamService;
         this.fileSystemService = fileSystemService;
     }
@@ -91,7 +89,7 @@ public class CoreTaskScheduler {
     }
 
     public void restartStreamIfStopped(Long streamId) {
-        mainServerApiService.sendGetRequest("/channels/" + streamId + "/change-source/?portNumber=" + portNumber, Integer.class);
+        apiService.sendGetRequest("/channels/" + streamId + "/change-source/?portNumber=" + portNumber, Integer.class);
     }
 
     public StreamInfo updateStreamUptime(Process process, StreamInfo info) {
@@ -133,28 +131,28 @@ public class CoreTaskScheduler {
         Map<String, Object> infos = new HashMap<>();
         infos.put("streamInfoList", streamInfoList);
         infos.put("progressInfoList", progressInfoList);
-        mainServerApiService.sendPostRequest("/channels/stream_info/batch/?portNumber=" + portNumber, String.class, infos);
+        apiService.sendPostRequest("/channels/stream_info/batch/?portNumber=" + portNumber, String.class, infos);
 
     }
 
     @Scheduled(fixedDelay = 10000)
     @Transactional
     public void removeOldConnections() {
-        List<LineActivity> lineActivities = lineActivityRepository.findAllByLastReadIsLessThanEqual(LocalDateTime.now().minusMinutes(1));
+        List<Connection> lineActivities = lineActivityRepository.findAllByLastReadIsLessThanEqual(LocalDateTime.now().minusMinutes(1));
         if (lineActivities.isEmpty())
             return;
-        for (LineActivity activity : lineActivities) {
+        for (Connection activity : lineActivities) {
             lineActivityRepository.deleteById(activity.getId());
         }
-        mainServerApiService.sendPostRequest("/line_activities/batch_delete", String.class, lineActivities);
+        apiService.sendPostRequest("/line_activities/batch_delete", String.class, lineActivities);
     }
 
     @Scheduled(fixedDelay = 5000)
     public void removeHlsEndedConnections() {
-        List<LineActivity> lineActivities = lineActivityRepository.findAllByHlsEndedAndEndDateBefore(true, LocalDateTime.now().minusMinutes(1));
+        List<Connection> lineActivities = lineActivityRepository.findAllByHlsEndedAndEndDateBefore(true, LocalDateTime.now().minusMinutes(1));
         if (lineActivities.isEmpty())
             return;
-        for (LineActivity activity : lineActivities) {
+        for (Connection activity : lineActivities) {
             lineActivityRepository.deleteById(activity.getId());
         }
         new RestTemplate().delete("/line_activities/batch_delete", lineActivities);
@@ -163,9 +161,9 @@ public class CoreTaskScheduler {
 
     @Scheduled(fixedDelay = 5000)
     public void  sendStreamActivity() {
-        List<LineActivity> lineActivities = lineActivityRepository.findAll();
+        List<Connection> lineActivities = lineActivityRepository.findAll();
         if (!lineActivities.isEmpty()){
-            mainServerApiService.sendPostRequest("/line_activities/batch/?portNumber=" +  portNumber, String.class, lineActivities);
+            apiService.sendPostRequest("/line_activities/batch/?portNumber=" +  portNumber, String.class, lineActivities);
         }
     }
 
