@@ -1,22 +1,17 @@
 package com.xtra.core.model;
 
-import com.fasterxml.jackson.databind.PropertyNamingStrategy;
-import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
 
 import java.util.List;
-import java.util.Set;
 
-@Getter
-@Setter
-@JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy.class)
+@Data
 public class Stream {
 
     private Long id;
     private String name;
     private StreamType streamType;
+    private ProgressInfo progressInfo;
+    private int selectedSource;
     private boolean readNative = false;
     private boolean streamAll = false;
     private boolean directSource = false;
@@ -26,8 +21,6 @@ public class Stream {
 
     private TranscodeProfile transcodeProfile;
     private String customFFMPEG;
-
-    private Set<StreamServer> streamServers;
 
     private List<StreamInput> streamInputs;
 

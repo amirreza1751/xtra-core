@@ -1,6 +1,8 @@
-package com.xtra.core.service;
+package com.xtra.core.integration;
 
-import com.xtra.core.model.*;
+import com.xtra.core.model.Stream;
+import com.xtra.core.model.StreamInput;
+import com.xtra.core.service.StreamService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
@@ -8,19 +10,11 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.util.ReflectionTestUtils;
-import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
-import static org.hamcrest.Matchers.containsString;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -32,10 +26,7 @@ class StreamServiceIntegrationTest {
     StreamService streamService;
 
     @Test
-    void startStream() throws Exception {
-
-        Server server = new Server();
-        server.setId(12L);
+    void startStream() {
 
         Stream stream = new Stream();
         stream.setId(6L);
@@ -46,18 +37,10 @@ class StreamServiceIntegrationTest {
         streamInputs.add(streamInput);
         stream.setStreamInputs(streamInputs);
 
-        StreamServer streamServer = new StreamServer();
-        streamServer.setId(new StreamServerId(stream.getId(), server.getId()));
-        streamServer.setSelectedSource(0);
-
-        Set<StreamServer> streamServers = new HashSet<>();
-        streamServers.add(streamServer);
-        stream.setStreamServers(streamServers);
-
         ReflectionTestUtils.setField(streamService, "serverAddress" , "localhost");
         ReflectionTestUtils.setField(streamService, "serverPort" , "8081");
 
-        assertTrue(streamService.startStream(server.getId(), stream));
+        assertTrue(streamService.startStream(stream));
 
     }
 }

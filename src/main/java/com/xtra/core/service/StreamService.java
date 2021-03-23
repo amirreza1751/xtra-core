@@ -37,7 +37,6 @@ public class StreamService {
     private final LineService lineService;
     private final LineActivityService lineActivityService;
     private final MainServerApiService mainServerApiService;
-    private final ServerService serverService;
 
     @Value("${main.apiPath}")
     private String mainApiPath;
@@ -52,7 +51,7 @@ public class StreamService {
     private String nginxPort;
 
     @Autowired
-    public StreamService(ProcessRepository processRepository, ProcessService processService, StreamInfoRepository streamInfoRepository, ProgressInfoRepository progressInfoRepository, LineService lineService, LineActivityService lineActivityService, MainServerApiService mainServerApiService, ServerService serverService) {
+    public StreamService(ProcessRepository processRepository, ProcessService processService, StreamInfoRepository streamInfoRepository, ProgressInfoRepository progressInfoRepository, LineService lineService, LineActivityService lineActivityService, MainServerApiService mainServerApiService) {
         this.processRepository = processRepository;
         this.processService = processService;
         this.streamInfoRepository = streamInfoRepository;
@@ -60,10 +59,9 @@ public class StreamService {
         this.lineService = lineService;
         this.lineActivityService = lineActivityService;
         this.mainServerApiService = mainServerApiService;
-        this.serverService = serverService;
     }
 
-    public boolean startStream(Long serverId, Stream stream) {
+    public boolean startStream(Stream stream) {
         if (stream == null) {
             System.out.println("Stream is null");
             return false;
@@ -86,17 +84,7 @@ public class StreamService {
             }
         }
 
-
-        int selectedSource = 0;
-        StreamServer streamServer = new StreamServer(new StreamServerId(streamId, serverId));
-        Set<StreamServer> streamServers = stream.getStreamServers();
-        for (StreamServer item : streamServers) {
-            if (item.equals(streamServer)) {
-                selectedSource = item.getSelectedSource();
-                break;
-            }
-        }
-        String currentInput = stream.getStreamInputs().get(selectedSource).getUrl();
+        String currentInput = stream.getStreamInputs().get(stream.getSelectedSource()).getUrl();
 
         String[] args = new String[]{
                 "ffmpeg",
@@ -152,20 +140,20 @@ public class StreamService {
         return true;
     }
 
-    public boolean startStream(Long serverId, Long streamId) { //Overload start stream for starting single stream
+    public boolean startStream(Long streamId) { //Overload start stream for starting single stream
         Stream stream = getStream(streamId);
         if (stream == null) {
             System.out.println("Stream is null");
             return false;
         }
-        return startStream(serverId, stream);
+        return startStream(stream);
     }
 
-    public boolean startStream(Long serverId, List<Long> streamIds) { //Overload start stream for batch start streams
+    public boolean startStream(List<Long> streamIds) { //Overload start stream for batch start streams
         List<Stream> streams = getBatchStreams(streamIds).getChannelList();
 
         for (Stream stream : streams) {
-            startStream(serverId, stream);
+            startStream(stream);
         }
         return true;
     }
@@ -199,15 +187,15 @@ public class StreamService {
         return true;
     }
 
-    public boolean restartStream(Long serverId, Long streamId) {
+    public boolean restartStream(Long streamId) {
         this.stopStream(streamId);
-        this.startStream(serverId, streamId);
+        this.startStream(streamId);
         return true;
     }
 
-    public boolean restartStream(Long serverId, List<Long> streamIds) {
+    public boolean restartStream(List<Long> streamIds) {
         this.stopStream(streamIds);
-        this.startStream(serverId, streamIds);
+        this.startStream(streamIds);
         return true;
     }
 

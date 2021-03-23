@@ -4,14 +4,15 @@ import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import lombok.Data;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import javax.persistence.Entity;
 import javax.persistence.Id;
 
 @Entity
-@Getter
-@Setter
+@Data
+@NoArgsConstructor
 @JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy.class)
 public class StreamInfo {
     @Id
@@ -21,9 +22,6 @@ public class StreamInfo {
     private String resolution;
     private String videoCodec;
     private String audioCodec;
-
-    public StreamInfo() {
-    }
 
     public StreamInfo(Long streamId) {
         this.streamId = streamId;

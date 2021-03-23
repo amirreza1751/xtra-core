@@ -1,4 +1,4 @@
-package com.xtra.core.service.stream;
+package com.xtra.core.unit.stream;
 
 import com.xtra.core.model.*;
 import com.xtra.core.model.Process;
@@ -6,8 +6,6 @@ import com.xtra.core.repository.ProcessRepository;
 import com.xtra.core.repository.ProgressInfoRepository;
 import com.xtra.core.repository.StreamInfoRepository;
 import com.xtra.core.service.*;
-import org.json.JSONObject;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -58,8 +56,6 @@ class StreamServiceTest {
 
     @Test
     void startStream() {
-        Server server = new Server();
-        server.setId(12L);
 
         Stream stream = new Stream();
         stream.setId(6L);
@@ -69,14 +65,6 @@ class StreamServiceTest {
         List<StreamInput> streamInputs = new ArrayList<>();
         streamInputs.add(streamInput);
         stream.setStreamInputs(streamInputs);
-
-        StreamServer streamServer = new StreamServer();
-        streamServer.setId(new StreamServerId(stream.getId(), server.getId()));
-        streamServer.setSelectedSource(0);
-
-        Set<StreamServer> streamServers = new HashSet<>();
-        streamServers.add(streamServer);
-        stream.setStreamServers(streamServers);
 
         ReflectionTestUtils.setField(streamService, "serverAddress" , "localhost");
         ReflectionTestUtils.setField(streamService, "serverPort" , "8081");
@@ -90,7 +78,7 @@ class StreamServiceTest {
 
         Mockito.doReturn(streamInfo).when(streamInfoRepository).save(Mockito.any(StreamInfo.class));
 
-        assertTrue(streamService.startStream(12L, stream));
+        assertTrue(streamService.startStream(stream));
     }
 
     @Test
