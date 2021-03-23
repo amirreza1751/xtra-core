@@ -17,19 +17,19 @@ public class StreamOpController {
         this.streamService = streamService;
     }
 
-    @GetMapping("/start/{streamId}")
-    public boolean startStream(@PathVariable Long streamId) {
-        return streamService.startStream(streamId);
+    @GetMapping("{id}/start")
+    public boolean startStream(@PathVariable Long id) {
+        return streamService.startStream(id);
     }
 
-    @GetMapping("/stop/{streamId}")
-    public boolean stopStream(@PathVariable Long streamId) {
-        return streamService.stopStream(streamId);
+    @GetMapping("{id}/stop")
+    public boolean stopStream(@PathVariable Long id) {
+        return streamService.stopStream(id);
     }
 
-    @GetMapping("/restart/{streamId}")
-    public boolean restartStream(@PathVariable Long streamId) {
-        return streamService.restartStream(streamId);
+    @GetMapping("{id}/restart")
+    public boolean restartStream(@PathVariable Long id) {
+        return streamService.restartStream(id);
     }
 
     @GetMapping("/streams/batch-start/")
