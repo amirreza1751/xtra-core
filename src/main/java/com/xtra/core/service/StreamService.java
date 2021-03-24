@@ -143,15 +143,6 @@ public class StreamService {
         return startStream(stream);
     }
 
-    public boolean startStream(List<Long> streamIds) { //Overload start stream for batch start streams
-        List<Stream> streams = getBatchStreams(streamIds).getChannelList();
-
-        for (Stream stream : streams) {
-            startStream(stream);
-        }
-        return true;
-    }
-
     public boolean stopStream(Long streamId) {
         Optional<Process> process = processRepository.findByProcessIdStreamId(streamId);
         if (process.isPresent()) {
@@ -174,28 +165,38 @@ public class StreamService {
         return true;
     }
 
-    public boolean stopStream(List<Long> streamIds) {
-        for (Long streamId : streamIds) {
-            stopStream(streamId);
-        }
-        return true;
-    }
-
     public boolean restartStream(Long streamId) {
         this.stopStream(streamId);
         this.startStream(streamId);
         return true;
     }
 
-    public boolean restartStream(List<Long> streamIds) {
-        this.stopStream(streamIds);
-        this.startStream(streamIds);
+    public boolean startAllStreams() { //Overload start stream for batch start streams
+        List<Stream> streams = getBatchStreams().getChannelList();
+        for (Stream stream : streams) {
+            startStream(stream);
+        }
         return true;
     }
 
+    public boolean stopAllStreams() {
+        var processes = processRepository.findAll();
+        processes.forEach(process -> {
+            processService.stopProcess(process.getPid());
+        });
+        return true;
+    }
+
+    public boolean restartAllStreams() {
+        this.stopAllStreams();
+        this.startAllStreams();
+        return true;
+    }
+
+
     public Stream getStream(Long streamId) {
         try {
-            return apiService.sendGetRequest("/channels/" + streamId + "/to-start", Stream.class);
+            return apiService.sendGetRequest("/servers/current/channels/" + streamId, Stream.class);
         } catch (RestClientException e) {
             //@todo log exception
             System.out.println(e.getMessage());
@@ -203,13 +204,9 @@ public class StreamService {
         }
     }
 
-    public ChannelList getBatchStreams(List<Long> streamIds) {
-        StringJoiner joiner = new StringJoiner(",");
-        for (Long streamId : streamIds) {
-            joiner.add(streamId.toString());
-        }
+    public ChannelList getBatchStreams() {
         try {
-            return apiService.sendGetRequest("/channels/batch-get?streamIds=" + joiner.toString(), ChannelList.class);
+            return apiService.sendGetRequest("/servers/current/channels", ChannelList.class);
         } catch (RestClientException e) {
             System.out.println(e.getMessage());
             return null;

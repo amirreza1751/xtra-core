@@ -32,18 +32,18 @@ public class StreamOpController {
         return streamService.restartStream(id);
     }
 
-    @GetMapping("/streams/batch-start/")
-    public boolean startStream(@RequestParam List<Long> streamIds) {
-        return streamService.startStream(streamIds);
+    @GetMapping("/start")
+    public boolean startAllStream() {
+        return streamService.startAllStreams();
     }
 
-    @GetMapping("/streams/batch-stop/")
-    public boolean stopStream(@RequestParam List<Long> streamIds) {
-        return streamService.stopStream(streamIds);
+    @GetMapping("/stop")
+    public boolean stopAllStreams() {
+        return streamService.stopAllStreams();
     }
 
-    @GetMapping("/streams/batch-restart/")
-    public boolean restartStream(@RequestParam List<Long> streamIds) {
-        return streamService.restartStream(streamIds);
+    @GetMapping("/restart")
+    public boolean restartAllStreams() {
+        return streamService.restartAllStreams();
     }
 }
