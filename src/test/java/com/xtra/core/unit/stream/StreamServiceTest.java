@@ -64,7 +64,7 @@ class StreamServiceTest {
         streamInput.setUrl("http://tivix.eu:8000/iptenjoyim/3GaALqqI2tcL/62748");
         List<StreamInput> streamInputs = new ArrayList<>();
         streamInputs.add(streamInput);
-        stream.setStreamInputs(streamInputs);
+//        stream.setStreamInputs(streamInputs);
 
         ReflectionTestUtils.setField(streamService, "serverAddress" , "localhost");
         ReflectionTestUtils.setField(streamService, "serverPort" , "8081");

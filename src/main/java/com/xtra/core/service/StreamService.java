@@ -78,7 +78,7 @@ public class StreamService {
             }
         }
 
-        String currentInput = stream.getStreamInputs().get(stream.getSelectedSource()).getUrl();
+        String currentInput = stream.getStreamInputs().get(stream.getSelectedSource());
 
         String[] args = new String[]{
                 "ffmpeg",
@@ -196,7 +196,7 @@ public class StreamService {
 
     public Stream getStream(Long streamId) {
         try {
-            return apiService.sendGetRequest("/servers/current/channels/" + streamId, Stream.class);
+            return apiService.sendGetRequest("/servers/current/channels/" + streamId + "?port=" + serverPort, Stream.class);
         } catch (RestClientException e) {
             //@todo log exception
             System.out.println(e.getMessage());
