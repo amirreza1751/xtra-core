@@ -21,11 +21,12 @@ public class Stream {
     private boolean genTimestamps = false;
     private boolean rtmpOutput = false;
     private String userAgent;
+    private String streamToken;
 
     private TranscodeProfile transcodeProfile;
     private String customFFMPEG;
 
-    private List<StreamInput> streamInputs;
+    private List<String> streamInputs;
 
     private StreamInput currentInput;
 }
