@@ -64,7 +64,7 @@ public class CoreTaskScheduler {
             while(repeat < 3 && info.getVideoCodec() == null){
                 repeat++;
                 try {
-                    Thread.sleep(10000L);
+                    Thread.sleep(3000L);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
@@ -85,7 +85,7 @@ public class CoreTaskScheduler {
 
     @Scheduled(fixedDelay = 1000)
     public void autoDeleteOldFiles(){
-        fileSystemService.deleteOldSegments(35000,"_.m3u8", System.getProperty("user.home") + File.separator + "streams");
+        fileSystemService.deleteOldSegments(40000,"_.m3u8", System.getProperty("user.home") + File.separator + "streams");
     }
 
     public void restartStreamIfStopped(Long streamId) {
@@ -103,7 +103,6 @@ public class CoreTaskScheduler {
         ProcessOutput processOutput = processService.analyzeStream(streamUrl, "codec_name,width,height,bit_rate");
         if (processOutput.getExitValue() == 1){
             restartStreamIfStopped(process.getStreamId());
-//            autoDeleteOldFiles();
         }
         ObjectMapper objectMapper = new ObjectMapper();
         try {
