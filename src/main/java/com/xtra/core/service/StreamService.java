@@ -118,8 +118,8 @@ public class StreamService {
                 "-hls_flags",
                 "delete_segments",
                 "-segment_list",
-                streamsDirectory.getAbsolutePath() + "/" + stream.getId() + "_%d.ts",
-                streamsDirectory.getAbsolutePath() + "/" + stream.getId() + "_.m3u8"
+                streamsDirectory.getAbsolutePath() + "/" + stream.getId() + "_" + serverPort + "_%d.ts",
+                streamsDirectory.getAbsolutePath() + "/" + stream.getId() + "_" + serverPort + "_.m3u8"
         };
         Long pid = processService.runProcess(args);
         if (pid == -1L) {

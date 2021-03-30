@@ -60,37 +60,10 @@ public class CoreTaskScheduler {
             StreamInfo info = infoRecord.orElseGet(() -> new StreamInfo(process.getStreamId()));
                 info = updateStreamUptime(process, info);
                 info = updateStreamFFProbeData(process, info);
-            int repeat = 0;
-            while(repeat < 3 && info.getVideoCodec() == null){
-                repeat++;
-                try {
-                    Thread.sleep(3000L);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-            if (info.getVideoCodec() == null){
-                File streamsDirectory = new File(
-                        System.getProperty("user.home") + File.separator + "streams"
-                );
-                for (File f : streamsDirectory.listFiles()) {
-                    if (f.getName().startsWith(process.getStreamId()+ "_")) {
-                        f.delete();
-                    }
-                }
-            }
                 streamInfoRepository.save(info);
         }));
     }
 
-    @Scheduled(fixedDelay = 1000)
-    public void autoDeleteOldFiles(){
-        fileSystemService.deleteOldSegments(40000,"_.m3u8", System.getProperty("user.home") + File.separator + "streams");
-    }
-
-    public void restartStreamIfStopped(Long streamId) {
-        apiService.sendGetRequest("/channels/" + streamId + "/change-source/?portNumber=" + portNumber, Integer.class);
-    }
 
     public StreamInfo updateStreamUptime(Process process, StreamInfo info) {
         var uptime = processService.getProcessEtime(process.getPid());
@@ -101,9 +74,6 @@ public class CoreTaskScheduler {
     public StreamInfo updateStreamFFProbeData(Process process, StreamInfo info) {
         String streamUrl = System.getProperty("user.home") + File.separator + "streams" + File.separator + process.getStreamId() + "_.m3u8";
         ProcessOutput processOutput = processService.analyzeStream(streamUrl, "codec_name,width,height,bit_rate");
-        if (processOutput.getExitValue() == 1){
-            restartStreamIfStopped(process.getStreamId());
-        }
         ObjectMapper objectMapper = new ObjectMapper();
         try {
             var root = objectMapper.readTree(processOutput.getOutput());
