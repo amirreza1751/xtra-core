@@ -5,15 +5,15 @@ import com.xtra.core.repository.ProcessRepository;
 import com.xtra.core.repository.StreamInfoRepository;
 import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.springframework.stereotype.Service;
-
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.sql.SQLOutput;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import static com.sun.jna.Platform.isWindows;
 
 @Service
 public class ProcessService {
@@ -26,9 +26,19 @@ public class ProcessService {
     }
 
     public Long runProcess(String... args) {
+        File bitbucket;
+
+        if (isWindows()) {
+            bitbucket = new File("NUL");
+        } else {
+            bitbucket = new File("/dev/null");
+        }
         Process proc;
         try {
-            proc = new ProcessBuilder(args).start();
+            proc = new ProcessBuilder(args)
+                    .redirectOutput(ProcessBuilder.Redirect.appendTo(bitbucket))
+                    .redirectError(ProcessBuilder.Redirect.appendTo(bitbucket))
+                    .start();
         } catch (IOException e) {
             //@todo log
             System.out.println(e.getMessage());
