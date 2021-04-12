@@ -1,11 +1,14 @@
 package com.xtra.core.service;
 
+import com.google.common.collect.ImmutableList;
 import com.xtra.core.model.*;
 import com.xtra.core.model.Process;
 import com.xtra.core.projection.LineAuth;
 import com.xtra.core.repository.ProcessRepository;
 import com.xtra.core.repository.ProgressInfoRepository;
 import com.xtra.core.repository.StreamInfoRepository;
+import net.bramp.ffmpeg.FFmpeg;
+import net.bramp.ffmpeg.builder.FFmpegBuilder;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +20,7 @@ import org.springframework.web.client.RestClientException;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 import java.nio.file.Files;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -80,48 +84,24 @@ public class StreamService {
 
         String currentInput = stream.getStreamInputs().get(stream.getSelectedSource());
 
-        String[] args = new String[]{
-                "ffmpeg",
-                "-re",
-                "-i",
-                currentInput,
-                "-vcodec",
-                "copy",
-                "-acodec",
-                "copy",
-                "-loop",
-                "-1",
-                "-c:a",
-                "aac",
-                "-b:a",
-                "160k",
-                "-ar",
-                "44100",
-                "-strict",
-                "-2",
-                "-fflags",
-                "+genpts",
-                "-f",
-                "hls",
-                "-segment_format",
-                "mpegts",
-                "-segment_time",
-                "10",
-                "-segment_list_size",
-                "6",
-                "-segment_format_options",
-                "mpegts_flags=+initial_discontinuity:mpegts_copyts=1",
-                "-segment_list_type",
-                "m3u8",
-                "-progress",
-                "http://" + serverAddress + ":" + serverPort + "/update?stream_id=" + streamId,
-                "-hls_flags",
-                "delete_segments",
-                "-segment_list",
-                streamsDirectory.getAbsolutePath() + "/" + stream.getId() + "_" + serverPort + "_%d.ts",
-                streamsDirectory.getAbsolutePath() + "/" + stream.getId() + "_" + serverPort + "_.m3u8"
-        };
-        Long pid = processService.runProcess(args);
+        FFmpegBuilder builder = new FFmpegBuilder()
+                .addExtraArgs("-re")
+                .setInput(currentInput)
+                .addOutput(streamsDirectory.getAbsolutePath() + "/" + stream.getId() + "_" + serverPort + "_.m3u8")
+                .addExtraArgs("-acodec", "copy")
+                .addExtraArgs("-vcodec", "copy")
+                .addExtraArgs("-f", "hls")
+                .addExtraArgs("-safe", "0")
+                .addExtraArgs("-segment_time", "10")
+                .addExtraArgs("-hls_flags", "delete_segments+append_list")
+                .done()
+                .addProgress(URI.create("http://" + serverAddress + ":" + serverPort + "/update?stream_id=" + streamId));
+        List<String> args = builder.build();
+
+        List<String> newArgs =
+                ImmutableList.<String>builder().add(FFmpeg.DEFAULT_PATH).addAll(args).build();
+
+        Long pid = processService.runProcess(newArgs.toArray(new String[0]));
         if (pid == -1L) {
             return false;
         } else {
