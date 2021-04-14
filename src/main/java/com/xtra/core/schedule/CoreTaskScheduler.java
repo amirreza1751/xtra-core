@@ -1,16 +1,16 @@
 package com.xtra.core.schedule;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.xtra.core.model.*;
 import com.xtra.core.model.Process;
+import com.xtra.core.model.*;
+import com.xtra.core.projection.StreamDetailsView;
 import com.xtra.core.repository.LineActivityRepository;
 import com.xtra.core.repository.ProcessRepository;
 import com.xtra.core.repository.ProgressInfoRepository;
 import com.xtra.core.repository.StreamInfoRepository;
-import com.xtra.core.service.FileSystemService;
 import com.xtra.core.service.ApiService;
+import com.xtra.core.service.MessagingService;
 import com.xtra.core.service.ProcessService;
-import com.xtra.core.service.StreamService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -20,7 +20,9 @@ import org.springframework.web.client.RestTemplate;
 import javax.transaction.Transactional;
 import java.io.File;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 import static com.xtra.core.utility.Util.removeQuotations;
 
@@ -31,22 +33,20 @@ public class CoreTaskScheduler {
     private final StreamInfoRepository streamInfoRepository;
     private final ProgressInfoRepository progressInfoRepository;
     private final LineActivityRepository lineActivityRepository;
+    private final MessagingService messagingService;
     private final ApiService apiService;
-    private final StreamService streamService;
-    private final FileSystemService fileSystemService;
 
     @Autowired
     public CoreTaskScheduler(ProcessRepository processRepository, ProcessService processService,
                              StreamInfoRepository streamInfoRepository, ProgressInfoRepository progressInfoRepository,
-                             LineActivityRepository lineActivityRepository, ApiService apiService, StreamService streamService, FileSystemService fileSystemService) {
+                             LineActivityRepository lineActivityRepository, MessagingService messagingService, ApiService apiService) {
         this.processRepository = processRepository;
         this.processService = processService;
         this.streamInfoRepository = streamInfoRepository;
         this.progressInfoRepository = progressInfoRepository;
         this.lineActivityRepository = lineActivityRepository;
+        this.messagingService = messagingService;
         this.apiService = apiService;
-        this.streamService = streamService;
-        this.fileSystemService = fileSystemService;
     }
 
     @Value("${server.port}")
@@ -58,9 +58,9 @@ public class CoreTaskScheduler {
         processes.parallelStream().forEach((process -> {
             Optional<StreamInfo> infoRecord = streamInfoRepository.findByStreamId(process.getStreamId());
             StreamInfo info = infoRecord.orElseGet(() -> new StreamInfo(process.getStreamId()));
-                info = updateStreamUptime(process, info);
-                info = updateStreamFFProbeData(process, info);
-                streamInfoRepository.save(info);
+            info = updateStreamUptime(process, info);
+            info = updateStreamFFProbeData(process, info);
+            streamInfoRepository.save(info);
         }));
     }
 
@@ -94,14 +94,16 @@ public class CoreTaskScheduler {
     public void sendStreamsInfo() {
         List<StreamInfo> streamInfoList = streamInfoRepository.findAll();
         List<ProgressInfo> progressInfoList = progressInfoRepository.findAll();
-
-        if (streamInfoList.isEmpty() && progressInfoList.isEmpty())
-            return;
-        Map<String, Object> infos = new HashMap<>();
-        infos.put("streamInfoList", streamInfoList);
-        infos.put("progressInfoList", progressInfoList);
-        apiService.sendPostRequest("/channels/stream_info/batch/?portNumber=" + portNumber, String.class, infos);
-
+        List<StreamDetailsView> streamDetailsViews = new ArrayList<>();
+        if (!streamInfoList.isEmpty()) {
+            for (var info : streamInfoList) {
+                StreamDetailsView status = new StreamDetailsView();
+                status.updateStreamInfo(info);
+                status.updateProgressInfo(progressInfoList.stream().filter(progressInfo -> progressInfo.getStreamId().equals(info.getStreamId())).findFirst().orElseGet(ProgressInfo::new));
+                streamDetailsViews.add(status);
+            }
+            messagingService.sendStreamStatus(streamDetailsViews);
+        }
     }
 
     @Scheduled(fixedDelay = 10000)
@@ -129,10 +131,10 @@ public class CoreTaskScheduler {
     }
 
     @Scheduled(fixedDelay = 5000)
-    public void  sendStreamActivity() {
+    public void sendStreamActivity() {
         List<Connection> lineActivities = lineActivityRepository.findAll();
-        if (!lineActivities.isEmpty()){
-            apiService.sendPostRequest("/line_activities/batch/?portNumber=" +  portNumber, String.class, lineActivities);
+        if (!lineActivities.isEmpty()) {
+            apiService.sendPostRequest("/line_activities/batch/?portNumber=" + portNumber, String.class, lineActivities);
         }
     }
 
