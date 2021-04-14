@@ -33,16 +33,6 @@ public class CoreApplication {
         SpringApplication.run(CoreApplication.class, args);
     }
 
-    @Bean
-    public WebMvcConfigurer corsConfigurer() {
-        return new WebMvcConfigurer() {
-            @Override
-            public void addCorsMappings(CorsRegistry registry) {
-                registry.addMapping("/**").allowedMethods("GET", "PATCH", "POST", "DELETE");
-            }
-        };
-    }
-
     @PostConstruct
     private void init() {
         processRepository.deleteAll();

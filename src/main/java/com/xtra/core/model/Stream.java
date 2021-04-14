@@ -9,7 +9,6 @@ import java.util.List;
 @Data
 @JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy.class)
 public class Stream {
-
     private Long id;
     private String name;
     private StreamType streamType;
