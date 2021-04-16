@@ -30,9 +30,5 @@ public class Stream {
     private List<String> streamInputs;
 
     private StreamInput currentInput;
-
-    private Map<String, String> inputKeyValues;
-    private Map<String, String> outputKeyValues;
-    private Set<String> inputFlags;
-    private Set<String> outputFlags;
+    private AdvancedStreamOptions advancedStreamOptions;
 }

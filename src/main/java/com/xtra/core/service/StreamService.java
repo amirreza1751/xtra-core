@@ -1,8 +1,10 @@
 package com.xtra.core.service;
 
 import com.google.common.collect.ImmutableList;
+import com.xtra.core.mapper.AdvancedStreamOptionsMapper;
 import com.xtra.core.model.*;
 import com.xtra.core.model.Process;
+import com.xtra.core.projection.ClassifiedStreamOptions;
 import com.xtra.core.projection.LineAuth;
 import com.xtra.core.repository.ProcessRepository;
 import com.xtra.core.repository.ProgressInfoRepository;
@@ -37,6 +39,7 @@ public class StreamService {
     private final LineService lineService;
     private final LineActivityService lineActivityService;
     private final ApiService apiService;
+    private final AdvancedStreamOptionsMapper advancedStreamOptionsMapper;
 
     @Value("${main.apiPath}")
     private String mainApiPath;
@@ -51,7 +54,7 @@ public class StreamService {
     private String nginxPort;
 
     @Autowired
-    public StreamService(ProcessRepository processRepository, ProcessService processService, StreamInfoRepository streamInfoRepository, ProgressInfoRepository progressInfoRepository, LineService lineService, LineActivityService lineActivityService, ApiService apiService) {
+    public StreamService(ProcessRepository processRepository, ProcessService processService, StreamInfoRepository streamInfoRepository, ProgressInfoRepository progressInfoRepository, LineService lineService, LineActivityService lineActivityService, ApiService apiService, AdvancedStreamOptionsMapper advancedStreamOptionsMapper) {
         this.processRepository = processRepository;
         this.processService = processService;
         this.streamInfoRepository = streamInfoRepository;
@@ -59,6 +62,7 @@ public class StreamService {
         this.lineService = lineService;
         this.lineActivityService = lineActivityService;
         this.apiService = apiService;
+        this.advancedStreamOptionsMapper = advancedStreamOptionsMapper;
     }
 
     public boolean startStream(Stream stream) {
@@ -86,11 +90,13 @@ public class StreamService {
 
         String currentInput = stream.getStreamInputs().get(stream.getSelectedSource());
 
+        ClassifiedStreamOptions classifiedStreamOptions = advancedStreamOptionsMapper.convertToClassified(stream.getAdvancedStreamOptions());
+
         FFmpegBuilder builder = new FFmpegBuilder();
-        if (stream.getInputFlags() != null)
-                builder.addExtraArgs(Util.additionalArguments(stream.getInputFlags()));
-        if (stream.getInputKeyValues() != null)
-                builder.addExtraArgs(Util.additionalArguments(stream.getInputKeyValues()));
+        if (classifiedStreamOptions.getInputFlags() != null)
+                builder.addExtraArgs(classifiedStreamOptions.getInputFlags());
+        if (classifiedStreamOptions.getInputKeyValues() != null)
+                builder.addExtraArgs(classifiedStreamOptions.getInputKeyValues());
 
        FFmpegOutputBuilder fFmpegOutputBuilder = builder.setInput(currentInput)
                 .addOutput(streamsDirectory.getAbsolutePath() + "/" + stream.getId() + "_" + serverPort + "_.m3u8")
@@ -100,10 +106,10 @@ public class StreamService {
                 .addExtraArgs("-safe", "0")
                 .addExtraArgs("-segment_time", "10")
                 .addExtraArgs("-hls_flags", "delete_segments+append_list");
-        if (stream.getOutputFlags() != null)
-                fFmpegOutputBuilder.addExtraArgs(Util.additionalArguments(stream.getOutputFlags()));
-        if (stream.getOutputKeyValues() != null)
-                fFmpegOutputBuilder.addExtraArgs(Util.additionalArguments(stream.getOutputKeyValues()));
+        if (classifiedStreamOptions.getOutputFlags() != null)
+                fFmpegOutputBuilder.addExtraArgs(classifiedStreamOptions.getOutputFlags());
+        if (classifiedStreamOptions.getOutputKeyValues() != null)
+                fFmpegOutputBuilder.addExtraArgs(classifiedStreamOptions.getOutputKeyValues());
         builder = fFmpegOutputBuilder.done();
         builder.addProgress(URI.create("http://" + serverAddress + ":" + serverPort + "/update?stream_id=" + streamId));
         List<String> args = builder.build();

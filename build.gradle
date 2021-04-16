@@ -33,10 +33,12 @@ dependencies {
 	implementation 'org.apache.httpcomponents:httpclient:4.5.13'
 	implementation group: 'net.bramp.ffmpeg', name: 'ffmpeg', version: '0.6.2'
 	implementation 'io.projectreactor:reactor-core'
+	implementation 'org.mapstruct:mapstruct:1.4.0.Final'
 
 	compileOnly 'org.projectlombok:lombok'
 	compileOnly 'org.springframework.boot:spring-boot-devtools'
 	annotationProcessor 'org.projectlombok:lombok'
+	annotationProcessor 'org.mapstruct:mapstruct-processor:1.4.0.Final'
 	testImplementation('org.springframework.boot:spring-boot-starter-test') {
 		exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
 	}
