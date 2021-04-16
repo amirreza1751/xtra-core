@@ -7,8 +7,10 @@ import com.xtra.core.projection.LineAuth;
 import com.xtra.core.repository.ProcessRepository;
 import com.xtra.core.repository.ProgressInfoRepository;
 import com.xtra.core.repository.StreamInfoRepository;
+import com.xtra.core.utility.Util;
 import net.bramp.ffmpeg.FFmpeg;
 import net.bramp.ffmpeg.builder.FFmpegBuilder;
+import net.bramp.ffmpeg.builder.FFmpegOutputBuilder;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -84,18 +86,26 @@ public class StreamService {
 
         String currentInput = stream.getStreamInputs().get(stream.getSelectedSource());
 
-        FFmpegBuilder builder = new FFmpegBuilder()
-                .addExtraArgs("-re")
-                .setInput(currentInput)
+        FFmpegBuilder builder = new FFmpegBuilder();
+        if (stream.getInputFlags() != null)
+                builder.addExtraArgs(Util.additionalArguments(stream.getInputFlags()));
+        if (stream.getInputKeyValues() != null)
+                builder.addExtraArgs(Util.additionalArguments(stream.getInputKeyValues()));
+
+       FFmpegOutputBuilder fFmpegOutputBuilder = builder.setInput(currentInput)
                 .addOutput(streamsDirectory.getAbsolutePath() + "/" + stream.getId() + "_" + serverPort + "_.m3u8")
                 .addExtraArgs("-acodec", "copy")
                 .addExtraArgs("-vcodec", "copy")
                 .addExtraArgs("-f", "hls")
                 .addExtraArgs("-safe", "0")
                 .addExtraArgs("-segment_time", "10")
-                .addExtraArgs("-hls_flags", "delete_segments+append_list")
-                .done()
-                .addProgress(URI.create("http://" + serverAddress + ":" + serverPort + "/update?stream_id=" + streamId));
+                .addExtraArgs("-hls_flags", "delete_segments+append_list");
+        if (stream.getOutputFlags() != null)
+                fFmpegOutputBuilder.addExtraArgs(Util.additionalArguments(stream.getOutputFlags()));
+        if (stream.getOutputKeyValues() != null)
+                fFmpegOutputBuilder.addExtraArgs(Util.additionalArguments(stream.getOutputKeyValues()));
+        builder = fFmpegOutputBuilder.done();
+        builder.addProgress(URI.create("http://" + serverAddress + ":" + serverPort + "/update?stream_id=" + streamId));
         List<String> args = builder.build();
 
         List<String> newArgs =

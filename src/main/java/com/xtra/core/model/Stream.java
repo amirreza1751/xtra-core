@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import lombok.Data;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @Data
 @JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy.class)
@@ -28,4 +30,9 @@ public class Stream {
     private List<String> streamInputs;
 
     private StreamInput currentInput;
+
+    private Map<String, String> inputKeyValues;
+    private Map<String, String> outputKeyValues;
+    private Set<String> inputFlags;
+    private Set<String> outputFlags;
 }
