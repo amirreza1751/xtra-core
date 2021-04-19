@@ -93,9 +93,9 @@ public class StreamService {
         ClassifiedStreamOptions classifiedStreamOptions = advancedStreamOptionsMapper.convertToClassified(stream.getAdvancedStreamOptions());
 
         FFmpegBuilder builder = new FFmpegBuilder();
-        if (classifiedStreamOptions.getInputFlags() != null)
+        if (classifiedStreamOptions != null && classifiedStreamOptions.getInputFlags() != null)
                 builder.addExtraArgs(classifiedStreamOptions.getInputFlags());
-        if (classifiedStreamOptions.getInputKeyValues() != null)
+        if (classifiedStreamOptions != null && classifiedStreamOptions.getInputKeyValues() != null)
                 builder.addExtraArgs(classifiedStreamOptions.getInputKeyValues());
 
        FFmpegOutputBuilder fFmpegOutputBuilder = builder.setInput(currentInput)
@@ -106,9 +106,9 @@ public class StreamService {
                 .addExtraArgs("-safe", "0")
                 .addExtraArgs("-segment_time", "10")
                 .addExtraArgs("-hls_flags", "delete_segments+append_list");
-        if (classifiedStreamOptions.getOutputFlags() != null)
+        if (classifiedStreamOptions != null && classifiedStreamOptions.getOutputFlags() != null)
                 fFmpegOutputBuilder.addExtraArgs(classifiedStreamOptions.getOutputFlags());
-        if (classifiedStreamOptions.getOutputKeyValues() != null)
+        if (classifiedStreamOptions != null && classifiedStreamOptions.getOutputKeyValues() != null)
                 fFmpegOutputBuilder.addExtraArgs(classifiedStreamOptions.getOutputKeyValues());
         builder = fFmpegOutputBuilder.done();
         builder.addProgress(URI.create("http://" + serverAddress + ":" + serverPort + "/update?stream_id=" + streamId));
