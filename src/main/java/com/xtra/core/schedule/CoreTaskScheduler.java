@@ -84,8 +84,7 @@ public class CoreTaskScheduler {
             var audio = root.get("streams").get(1);
             if (audio.has("codec_name"))
                 info.setAudioCodec(removeQuotations(audio.get("codec_name").toPrettyString()));
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
+        } catch (Exception ignored) {
         }
         return info;
     }

@@ -24,20 +24,24 @@ public abstract class AdvancedStreamOptionsMapper {
 
         //input key values
         Map<String, String> inputKeyValues = new HashMap<>();
-//        if (advancedStreamOptions.getHeaders() != null && !advancedStreamOptions.getHeaders().equals(""))
-//            inputKeyValues.put("-headers", advancedStreamOptions.getHeaders());
-//        if (advancedStreamOptions.getCookie() != null && !advancedStreamOptions.getCookie().equals(""))
-//            inputKeyValues.put("-cookie", advancedStreamOptions.getCookie());
+        if (advancedStreamOptions.getOnDemandProbeSize() != null && !advancedStreamOptions.getOnDemandProbeSize().equals(""))
+            inputKeyValues.put("-probesize", advancedStreamOptions.getOnDemandProbeSize());
+        if (advancedStreamOptions.getHttpProxy() != null && !advancedStreamOptions.getHttpProxy().equals(""))
+            inputKeyValues.put("-http_proxy", "http://" + advancedStreamOptions.getHttpProxy());
+        if (advancedStreamOptions.getGeneratePts() != null && advancedStreamOptions.getGeneratePts())
+            inputKeyValues.put("-fflags", "+genpts");
+        if (advancedStreamOptions.getHeaders() != null && !advancedStreamOptions.getHeaders().equals(""))
+            inputKeyValues.put("-headers", advancedStreamOptions.getHeaders());
 
         if (!inputKeyValues.isEmpty())
             classifiedStreamOptions.setInputKeyValues(Util.additionalArguments(inputKeyValues));
 
         //input flags
         Set<String> inputFlags = new HashSet<>();
-//        if (advancedStreamOptions.getGeneratePts() != null && advancedStreamOptions.getGeneratePts())
-//            inputFlags.add("-genpts");
-//        if (advancedStreamOptions.getStreamAllCodecs() != null && advancedStreamOptions.getStreamAllCodecs())
-//            inputFlags.add("-streamAll");
+        if (advancedStreamOptions.getNativeFrames() != null && advancedStreamOptions.getNativeFrames())
+            inputFlags.add("-re");
+
+
 
         if (!inputFlags.isEmpty())
             classifiedStreamOptions.setInputFlags(Util.additionalArguments(inputFlags));
@@ -45,8 +49,8 @@ public abstract class AdvancedStreamOptionsMapper {
 
         //output key values
         Map<String, String> outputKeyValues = new HashMap<>();
-//        if (advancedStreamOptions.getHeaders() != null && !advancedStreamOptions.getHeaders().equals(""))
-//            outputKeyValues.put("-headersOutput", advancedStreamOptions.getHeaders());
+        if (advancedStreamOptions.getMinuteDelay() != null && !advancedStreamOptions.getMinuteDelay().equals(""))
+            outputKeyValues.put("-delay", advancedStreamOptions.getMinuteDelay());
 //        if (advancedStreamOptions.getCookie() != null && !advancedStreamOptions.getCookie().equals(""))
 //            outputKeyValues.put("-cookieOutput", advancedStreamOptions.getCookie());
 
