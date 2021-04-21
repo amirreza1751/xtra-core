@@ -1,5 +1,7 @@
 package com.xtra.core.service;
 
+import com.google.common.base.Predicates;
+import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableList;
 import com.xtra.core.mapper.AdvancedStreamOptionsMapper;
 import com.xtra.core.model.*;
@@ -93,9 +95,9 @@ public class StreamService {
         ClassifiedStreamOptions classifiedStreamOptions = advancedStreamOptionsMapper.convertToClassified(stream.getAdvancedStreamOptions());
 
         FFmpegBuilder builder = new FFmpegBuilder();
-        if (classifiedStreamOptions.getInputFlags() != null)
+        if (classifiedStreamOptions != null && classifiedStreamOptions.getInputFlags() != null)
                 builder.addExtraArgs(classifiedStreamOptions.getInputFlags());
-        if (classifiedStreamOptions.getInputKeyValues() != null)
+        if (classifiedStreamOptions != null && classifiedStreamOptions.getInputKeyValues() != null)
                 builder.addExtraArgs(classifiedStreamOptions.getInputKeyValues());
 
        FFmpegOutputBuilder fFmpegOutputBuilder = builder.setInput(currentInput)
@@ -106,16 +108,21 @@ public class StreamService {
                 .addExtraArgs("-safe", "0")
                 .addExtraArgs("-segment_time", "10")
                 .addExtraArgs("-hls_flags", "delete_segments+append_list");
-        if (classifiedStreamOptions.getOutputFlags() != null)
+        if (classifiedStreamOptions != null && classifiedStreamOptions.getOutputFlags() != null)
                 fFmpegOutputBuilder.addExtraArgs(classifiedStreamOptions.getOutputFlags());
-        if (classifiedStreamOptions.getOutputKeyValues() != null)
+        if (classifiedStreamOptions != null && classifiedStreamOptions.getOutputKeyValues() != null)
                 fFmpegOutputBuilder.addExtraArgs(classifiedStreamOptions.getOutputKeyValues());
         builder = fFmpegOutputBuilder.done();
         builder.addProgress(URI.create("http://" + serverAddress + ":" + serverPort + "/update?stream_id=" + streamId));
         List<String> args = builder.build();
-
         List<String> newArgs =
                 ImmutableList.<String>builder().add(FFmpeg.DEFAULT_PATH).addAll(args).build();
+        //print the command
+        for (String item : newArgs){
+            System.out.print(item + " ");
+        }
+        System.out.println("");
+        //print the command
 
         Long pid = processService.runProcess(newArgs.toArray(new String[0]));
         if (pid == -1L) {
@@ -246,7 +253,7 @@ public class StreamService {
                 throw new RuntimeException("Unknown Error " + HttpStatus.FORBIDDEN);
             }
             ConnectionId connectionId = new ConnectionId(lineId, streamId, ipAddress);
-            System.out.println("line id:" + connectionId.getLineId() + " stream id:" + connectionId.getStreamId() + " user Ip" + connectionId.getUserIp());
+//            System.out.println("line id:" + connectionId.getLineId() + " stream id:" + connectionId.getStreamId() + " user Ip" + connectionId.getUserIp());
 
             var result = lineActivityService.updateLineActivity(connectionId, userAgent);
 
