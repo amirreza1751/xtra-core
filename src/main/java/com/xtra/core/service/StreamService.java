@@ -8,10 +8,10 @@ import com.xtra.core.model.*;
 import com.xtra.core.model.Process;
 import com.xtra.core.projection.ClassifiedStreamOptions;
 import com.xtra.core.projection.LineAuth;
+import com.xtra.core.repository.ConfigurationRepository;
 import com.xtra.core.repository.ProcessRepository;
 import com.xtra.core.repository.ProgressInfoRepository;
 import com.xtra.core.repository.StreamInfoRepository;
-import com.xtra.core.utility.Util;
 import net.bramp.ffmpeg.FFmpeg;
 import net.bramp.ffmpeg.builder.FFmpegBuilder;
 import net.bramp.ffmpeg.builder.FFmpegOutputBuilder;
@@ -23,6 +23,7 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ResourceUtils;
 import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestTemplate;
 
 import java.io.File;
 import java.io.IOException;
@@ -42,6 +43,7 @@ public class StreamService {
     private final LineActivityService lineActivityService;
     private final ApiService apiService;
     private final AdvancedStreamOptionsMapper advancedStreamOptionsMapper;
+    private final ConfigurationRepository configurationRepository;
 
     @Value("${main.apiPath}")
     private String mainApiPath;
@@ -56,7 +58,7 @@ public class StreamService {
     private String nginxPort;
 
     @Autowired
-    public StreamService(ProcessRepository processRepository, ProcessService processService, StreamInfoRepository streamInfoRepository, ProgressInfoRepository progressInfoRepository, LineService lineService, LineActivityService lineActivityService, ApiService apiService, AdvancedStreamOptionsMapper advancedStreamOptionsMapper) {
+    public StreamService(ProcessRepository processRepository, ProcessService processService, StreamInfoRepository streamInfoRepository, ProgressInfoRepository progressInfoRepository, LineService lineService, LineActivityService lineActivityService, ApiService apiService, AdvancedStreamOptionsMapper advancedStreamOptionsMapper, ConfigurationRepository configurationRepository) {
         this.processRepository = processRepository;
         this.processService = processService;
         this.streamInfoRepository = streamInfoRepository;
@@ -65,6 +67,7 @@ public class StreamService {
         this.lineActivityService = lineActivityService;
         this.apiService = apiService;
         this.advancedStreamOptionsMapper = advancedStreamOptionsMapper;
+        this.configurationRepository = configurationRepository;
     }
 
     public boolean startStream(Stream stream) {
@@ -199,7 +202,13 @@ public class StreamService {
 
     public Stream getStream(Long streamId) {
         try {
-            return apiService.sendGetRequest("/servers/current/channels/" + streamId + "?port=" + serverPort, Stream.class);
+            var token = configurationRepository.findById("token").orElseThrow();
+            //@// TODO: 4/22/21 write general api calling with headers
+            RestTemplate restTemplate = new RestTemplate();
+            HttpHeaders httpHeaders = new HttpHeaders();
+            httpHeaders.set("token", token.getValue());
+            HttpEntity<String> entity = new HttpEntity<>(null, httpHeaders);
+            return restTemplate.exchange(mainApiPath + "/servers/current/channels/" + streamId + "?port=" + serverPort, HttpMethod.GET, entity, Stream.class).getBody();
         } catch (RestClientException e) {
             //@todo log exception
             System.out.println(e.getMessage());
