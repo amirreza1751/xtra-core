@@ -25,6 +25,7 @@ import java.nio.file.Files;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @Service
 public class StreamService {
@@ -162,7 +163,7 @@ public class StreamService {
     public boolean stopAllStreams() {
         var processes = processRepository.findAll();
         processes.forEach(process -> {
-            processService.stopProcess(process.getPid());
+            stopStream(process.getStreamId());
         });
         return true;
     }
@@ -170,6 +171,16 @@ public class StreamService {
     public boolean restartAllStreams() {
         this.stopAllStreams();
         this.startAllStreams();
+        return true;
+    }
+
+    public boolean batchStopStreams(List<Long> streamIds){
+        var processes = processRepository.findByProcessIdStreamIdIn(streamIds);
+        if (processes.size() > 0){
+            processes.forEach(process -> {
+                this.stopStream(process.getStreamId());
+            });
+        }
         return true;
     }
 
