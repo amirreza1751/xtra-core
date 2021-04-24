@@ -1,7 +1,5 @@
 package com.xtra.core.service;
 
-import com.google.common.base.Predicates;
-import com.google.common.collect.Collections2;
 import com.google.common.collect.ImmutableList;
 import com.xtra.core.mapper.AdvancedStreamOptionsMapper;
 import com.xtra.core.model.*;
@@ -40,7 +38,7 @@ public class StreamService {
     private final StreamInfoRepository streamInfoRepository;
     private final ProgressInfoRepository progressInfoRepository;
     private final LineService lineService;
-    private final LineActivityService lineActivityService;
+    private final ConnectionService connectionService;
     private final ApiService apiService;
     private final AdvancedStreamOptionsMapper advancedStreamOptionsMapper;
     private final ConfigurationRepository configurationRepository;
@@ -58,13 +56,13 @@ public class StreamService {
     private String nginxPort;
 
     @Autowired
-    public StreamService(ProcessRepository processRepository, ProcessService processService, StreamInfoRepository streamInfoRepository, ProgressInfoRepository progressInfoRepository, LineService lineService, LineActivityService lineActivityService, ApiService apiService, AdvancedStreamOptionsMapper advancedStreamOptionsMapper, ConfigurationRepository configurationRepository) {
+    public StreamService(ProcessRepository processRepository, ProcessService processService, StreamInfoRepository streamInfoRepository, ProgressInfoRepository progressInfoRepository, LineService lineService, ConnectionService connectionService, ApiService apiService, AdvancedStreamOptionsMapper advancedStreamOptionsMapper, ConfigurationRepository configurationRepository) {
         this.processRepository = processRepository;
         this.processService = processService;
         this.streamInfoRepository = streamInfoRepository;
         this.progressInfoRepository = progressInfoRepository;
         this.lineService = lineService;
-        this.lineActivityService = lineActivityService;
+        this.connectionService = connectionService;
         this.apiService = apiService;
         this.advancedStreamOptionsMapper = advancedStreamOptionsMapper;
         this.configurationRepository = configurationRepository;
@@ -99,11 +97,11 @@ public class StreamService {
 
         FFmpegBuilder builder = new FFmpegBuilder();
         if (classifiedStreamOptions != null && classifiedStreamOptions.getInputFlags() != null)
-                builder.addExtraArgs(classifiedStreamOptions.getInputFlags());
+            builder.addExtraArgs(classifiedStreamOptions.getInputFlags());
         if (classifiedStreamOptions != null && classifiedStreamOptions.getInputKeyValues() != null)
-                builder.addExtraArgs(classifiedStreamOptions.getInputKeyValues());
+            builder.addExtraArgs(classifiedStreamOptions.getInputKeyValues());
 
-       FFmpegOutputBuilder fFmpegOutputBuilder = builder.setInput(currentInput)
+        FFmpegOutputBuilder fFmpegOutputBuilder = builder.setInput(currentInput)
                 .addOutput(streamsDirectory.getAbsolutePath() + "/" + stream.getId() + "_" + serverPort + "_.m3u8")
                 .addExtraArgs("-acodec", "copy")
                 .addExtraArgs("-vcodec", "copy")
@@ -112,16 +110,16 @@ public class StreamService {
                 .addExtraArgs("-segment_time", "10")
                 .addExtraArgs("-hls_flags", "delete_segments+append_list");
         if (classifiedStreamOptions != null && classifiedStreamOptions.getOutputFlags() != null)
-                fFmpegOutputBuilder.addExtraArgs(classifiedStreamOptions.getOutputFlags());
+            fFmpegOutputBuilder.addExtraArgs(classifiedStreamOptions.getOutputFlags());
         if (classifiedStreamOptions != null && classifiedStreamOptions.getOutputKeyValues() != null)
-                fFmpegOutputBuilder.addExtraArgs(classifiedStreamOptions.getOutputKeyValues());
+            fFmpegOutputBuilder.addExtraArgs(classifiedStreamOptions.getOutputKeyValues());
         builder = fFmpegOutputBuilder.done();
         builder.addProgress(URI.create("http://" + serverAddress + ":" + serverPort + "/update?stream_id=" + streamId));
         List<String> args = builder.build();
         List<String> newArgs =
                 ImmutableList.<String>builder().add(FFmpeg.DEFAULT_PATH).addAll(args).build();
         //print the command
-        for (String item : newArgs){
+        for (String item : newArgs) {
             System.out.print(item + " ");
         }
         System.out.println("");
@@ -261,10 +259,8 @@ public class StreamService {
 //                return new ResponseEntity<>("Unknown Error", HttpStatus.FORBIDDEN);
                 throw new RuntimeException("Unknown Error " + HttpStatus.FORBIDDEN);
             }
-            ConnectionId connectionId = new ConnectionId(lineId, streamId, ipAddress);
-//            System.out.println("line id:" + connectionId.getLineId() + " stream id:" + connectionId.getStreamId() + " user Ip" + connectionId.getUserIp());
 
-            var result = lineActivityService.updateLineActivity(connectionId, userAgent);
+            var result = connectionService.updateConnection(lineId, streamId, ipAddress, userAgent);
 
             if (!result) {
                 throw new RuntimeException("Forbidden " + HttpStatus.FORBIDDEN);
@@ -293,10 +289,8 @@ public class StreamService {
         LineStatus status = lineService.authorizeLineForStream(new LineAuth(lineToken, streamToken, ipAddress, userAgent));
         Long streamId = this.getStreamId(streamToken);
         Long lineId = lineService.getLineId(lineToken);
-        ConnectionId connectionId = new ConnectionId(lineId, streamId, ipAddress);
         if (status == LineStatus.OK) {
-            System.out.println("line id:" + connectionId.getLineId() + " stream id:" + connectionId.getStreamId() + " user Ip" + connectionId.getUserIp());
-            var result = lineActivityService.updateLineActivity(connectionId, userAgent);
+            var result = connectionService.updateConnection(lineId, streamId, ipAddress, userAgent);
             if (!result) {
 //                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
                 throw new RuntimeException("Forbidden " + HttpStatus.FORBIDDEN);

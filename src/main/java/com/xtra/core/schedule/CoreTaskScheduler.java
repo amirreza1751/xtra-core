@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xtra.core.model.Process;
 import com.xtra.core.model.*;
 import com.xtra.core.projection.StreamDetailsView;
-import com.xtra.core.repository.LineActivityRepository;
+import com.xtra.core.repository.ConnectionRepository;
 import com.xtra.core.repository.ProcessRepository;
 import com.xtra.core.repository.ProgressInfoRepository;
 import com.xtra.core.repository.StreamInfoRepository;
@@ -32,19 +32,19 @@ public class CoreTaskScheduler {
     private final ProcessService processService;
     private final StreamInfoRepository streamInfoRepository;
     private final ProgressInfoRepository progressInfoRepository;
-    private final LineActivityRepository lineActivityRepository;
+    private final ConnectionRepository connectionRepository;
     private final MessagingService messagingService;
     private final ApiService apiService;
 
     @Autowired
     public CoreTaskScheduler(ProcessRepository processRepository, ProcessService processService,
                              StreamInfoRepository streamInfoRepository, ProgressInfoRepository progressInfoRepository,
-                             LineActivityRepository lineActivityRepository, MessagingService messagingService, ApiService apiService) {
+                             ConnectionRepository connectionRepository, MessagingService messagingService, ApiService apiService) {
         this.processRepository = processRepository;
         this.processService = processService;
         this.streamInfoRepository = streamInfoRepository;
         this.progressInfoRepository = progressInfoRepository;
-        this.lineActivityRepository = lineActivityRepository;
+        this.connectionRepository = connectionRepository;
         this.messagingService = messagingService;
         this.apiService = apiService;
     }
@@ -105,36 +105,36 @@ public class CoreTaskScheduler {
         }
     }
 
+    @Scheduled(fixedDelay = 2000)
+    public void sendConnectionsInfo() {
+        List<Connection> connections = connectionRepository.findAll();
+        if (!connections.isEmpty()) {
+            messagingService.SendConnectionInfo(connections);
+        }
+    }
+
     @Scheduled(fixedDelay = 10000)
     @Transactional
     public void removeOldConnections() {
-        List<Connection> lineActivities = lineActivityRepository.findAllByLastReadIsLessThanEqual(LocalDateTime.now().minusMinutes(1));
+        List<Connection> lineActivities = connectionRepository.findAllByLastReadIsLessThanEqual(LocalDateTime.now().minusMinutes(1));
         if (lineActivities.isEmpty())
             return;
         for (Connection activity : lineActivities) {
-            lineActivityRepository.deleteById(activity.getId());
+            connectionRepository.deleteById(activity.getId());
         }
         apiService.sendPostRequest("/line_activities/batch_delete", String.class, lineActivities);
     }
 
     @Scheduled(fixedDelay = 5000)
     public void removeHlsEndedConnections() {
-        List<Connection> lineActivities = lineActivityRepository.findAllByHlsEndedAndEndDateBefore(true, LocalDateTime.now().minusMinutes(1));
+        List<Connection> lineActivities = connectionRepository.findAllByHlsEndedAndEndDateBefore(true, LocalDateTime.now().minusMinutes(1));
         if (lineActivities.isEmpty())
             return;
         for (Connection activity : lineActivities) {
-            lineActivityRepository.deleteById(activity.getId());
+            connectionRepository.deleteById(activity.getId());
         }
         new RestTemplate().delete("/line_activities/batch_delete", lineActivities);
 
-    }
-
-    @Scheduled(fixedDelay = 5000)
-    public void sendStreamActivity() {
-        List<Connection> lineActivities = lineActivityRepository.findAll();
-        if (!lineActivities.isEmpty()) {
-            apiService.sendPostRequest("/line_activities/batch/?portNumber=" + portNumber, String.class, lineActivities);
-        }
     }
 
 }

@@ -3,7 +3,7 @@ package com.xtra.core.service;
 import com.xtra.core.model.Connection;
 import com.xtra.core.model.LineStatus;
 import com.xtra.core.projection.LineAuth;
-import com.xtra.core.repository.LineActivityRepository;
+import com.xtra.core.repository.ConnectionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -12,12 +12,12 @@ import java.util.List;
 
 @Service
 public class LineService {
-    private final LineActivityRepository lineActivityRepository;
+    private final ConnectionRepository connectionRepository;
     private final ApiService apiService;
 
     @Autowired
-    public LineService(LineActivityRepository lineActivityRepository, ApiService apiService) {
-        this.lineActivityRepository = lineActivityRepository;
+    public LineService(ConnectionRepository connectionRepository, ApiService apiService) {
+        this.connectionRepository = connectionRepository;
         this.apiService = apiService;
     }
 
@@ -35,12 +35,12 @@ public class LineService {
     }
 
     public boolean killAllConnections(Long lineId) {
-        List<Connection> lineActivities = lineActivityRepository.findAllByIdLineId(lineId);
+        List<Connection> lineActivities = connectionRepository.findAllByLineId(lineId);
         if (!lineActivities.isEmpty()) {
             lineActivities.forEach((activity) -> {
                 activity.setHlsEnded(true);
                 activity.setEndDate(LocalDateTime.now());
-                lineActivityRepository.save(activity);
+                connectionRepository.save(activity);
             });
             return true;
         } else return false;
