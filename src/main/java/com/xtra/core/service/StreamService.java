@@ -274,7 +274,7 @@ public class StreamService {
 
             while (match.find()) {
                 String link = match.group(0);
-                playlist = playlist.replace(match.group(0), String.format(nginxAddress + ":" + nginxPort + "/hls/%s/%s/%s", lineToken, streamToken, link.split("_")[1]));
+                playlist = playlist.replace(match.group(0), String.format(serverAddress + ":" + serverPort + "/hls/%s/%s/%s", lineToken, streamToken, link.split("_")[1]));
             }
 
             data.put("fileName", file.getName());

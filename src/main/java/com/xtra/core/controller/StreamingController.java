@@ -48,10 +48,10 @@ public class StreamingController {
 
     }
 
-    @GetMapping("segment")
+    @GetMapping("segment/{line_token}/{stream_token}/{segment}/{extension}")
     public @ResponseBody
-    ResponseEntity<byte[]> getSegment(@RequestParam("line_token") String lineToken, @RequestParam("stream_token") String streamToken
-            , @RequestParam String extension, @RequestParam String segment, @RequestHeader(value = "HTTP_USER_AGENT", defaultValue = "") String userAgent, HttpServletRequest request) throws IOException {
+    ResponseEntity<byte[]> getSegment(@PathVariable("line_token") String lineToken, @PathVariable("stream_token") String streamToken
+            , @PathVariable String extension, @PathVariable String segment, @RequestHeader(value = "User-Agent", defaultValue = "") String userAgent, HttpServletRequest request) throws IOException {
         byte[] movie_segment = streamService.getSegment(lineToken, streamToken, extension, segment, userAgent, request.getRemoteAddr());
         HttpHeaders responseHeaders = new HttpHeaders();
         return ResponseEntity.ok()
