@@ -1,7 +1,6 @@
 package com.xtra.core.repository;
 
 import com.xtra.core.model.Connection;
-import com.xtra.core.model.ConnectionId;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.time.LocalDateTime;
@@ -9,11 +8,11 @@ import java.util.List;
 import java.util.Optional;
 
 public interface ConnectionRepository extends JpaRepository<Connection, Long> {
-    Optional<Connection> findByLineId(Long lineId);
+    Optional<Connection> findByLineToken(String lineToken);
 
-    List<Connection> findAllByLineId(Long lineId);
+    List<Connection> findAllByLineToken(String lineToken);
 
-    Optional<Connection> findByLineIdAndUserIpAndStreamId(Long lineId, String userIp, Long streamId);
+    Optional<Connection> findByLineTokenAndStreamTokenAndUserIp(String lineToken, String streamId, String userIp);
 
     List<Connection> findAllByLastReadIsLessThanEqual(LocalDateTime lastReadBefore);
 

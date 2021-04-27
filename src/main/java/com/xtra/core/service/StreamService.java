@@ -102,7 +102,7 @@ public class StreamService {
             builder.addExtraArgs(classifiedStreamOptions.getInputKeyValues());
 
         FFmpegOutputBuilder fFmpegOutputBuilder = builder.setInput(currentInput)
-                .addOutput(streamsDirectory.getAbsolutePath() + "/" + stream.getId() + "_" + serverPort + "_.m3u8")
+                .addOutput(streamsDirectory.getAbsolutePath() + "/" + stream.getStreamToken() + "_.m3u8")
                 .addExtraArgs("-acodec", "copy")
                 .addExtraArgs("-vcodec", "copy")
                 .addExtraArgs("-f", "hls")
@@ -253,20 +253,13 @@ public class StreamService {
             else
                 throw new RuntimeException("Unknown Error " + HttpStatus.FORBIDDEN);
         } else {
-            Long lineId = lineService.getLineId(lineToken);
-            Long streamId = this.getStreamId(streamToken);
-            if (lineId == null || streamId == null) {
-//                return new ResponseEntity<>("Unknown Error", HttpStatus.FORBIDDEN);
-                throw new RuntimeException("Unknown Error " + HttpStatus.FORBIDDEN);
-            }
-
-            var result = connectionService.updateConnection(lineId, streamId, ipAddress, userAgent);
+            var result = connectionService.updateConnection(lineToken, streamToken, ipAddress, userAgent);
 
             if (!result) {
                 throw new RuntimeException("Forbidden " + HttpStatus.FORBIDDEN);
             }
 
-            File file = ResourceUtils.getFile(System.getProperty("user.home") + "/streams/" + streamId + "_." + extension);
+            File file = ResourceUtils.getFile(System.getProperty("user.home") + "/streams/" + streamToken + "_." + extension);
             String playlist = new String(Files.readAllBytes(file.toPath()));
 
             Pattern pattern = Pattern.compile("(.*)\\.ts");
@@ -274,7 +267,7 @@ public class StreamService {
 
             while (match.find()) {
                 String link = match.group(0);
-                playlist = playlist.replace(match.group(0), String.format(serverAddress + ":" + serverPort + "/hls/%s/%s/%s", lineToken, streamToken, link.split("_")[1]));
+                playlist = playlist.replace(match.group(0), String.format("http://" + serverAddress + ":" + serverPort + "/hls/%s/%s/%s", lineToken, streamToken, link.split("_")[1]));
             }
 
             data.put("fileName", file.getName());
@@ -287,15 +280,14 @@ public class StreamService {
     public byte[] getSegment(String lineToken, String streamToken
             , String extension, String segment, String userAgent, String ipAddress) throws IOException {
         LineStatus status = lineService.authorizeLineForStream(new LineAuth(lineToken, streamToken, ipAddress, userAgent));
-        Long streamId = this.getStreamId(streamToken);
         Long lineId = lineService.getLineId(lineToken);
         if (status == LineStatus.OK) {
-            var result = connectionService.updateConnection(lineId, streamId, ipAddress, userAgent);
+            var result = connectionService.updateConnection(lineToken, streamToken, ipAddress, userAgent);
             if (!result) {
 //                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
                 throw new RuntimeException("Forbidden " + HttpStatus.FORBIDDEN);
             }
-            return IOUtils.toByteArray(FileUtils.openInputStream(new File(System.getProperty("user.home") + "/streams/" + streamId + "_" + segment + "." + extension)));
+            return IOUtils.toByteArray(FileUtils.openInputStream(new File(System.getProperty("user.home") + "/streams/" + streamToken + "_" + segment + "." + extension)));
         } else {
             throw new RuntimeException("Forbidden " + HttpStatus.FORBIDDEN);
         }

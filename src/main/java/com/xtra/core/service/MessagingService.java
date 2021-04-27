@@ -2,6 +2,7 @@ package com.xtra.core.service;
 
 import com.xtra.core.config.DynamicConfig;
 import com.xtra.core.model.Connection;
+import com.xtra.core.projection.ConnectionDetails;
 import com.xtra.core.projection.StreamDetailsView;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -39,7 +40,7 @@ public class MessagingService {
         });
     }
 
-    public void SendConnectionInfo(List<Connection> connections){
+    public void SendConnectionInfo(List<ConnectionDetails> connections){
         template.convertAndSend(connectionsQueue.getName(), connections, message -> {
             message.getMessageProperties().getHeaders().put("token", config.getToken());
             return message;

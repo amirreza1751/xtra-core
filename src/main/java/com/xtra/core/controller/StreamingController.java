@@ -31,10 +31,10 @@ public class StreamingController {
     }
 
 
-    @GetMapping("/streams")
+    @GetMapping("live/{line_token}/{stream_token}/{extension}")
     public @ResponseBody
-    ResponseEntity<String> getPlaylist(@RequestParam("line_token") String lineToken, @RequestParam("stream_token") String streamToken
-            , @RequestParam String extension, @RequestHeader(value = "HTTP_USER_AGENT", defaultValue = "") String userAgent, HttpServletRequest request) throws IOException {
+    ResponseEntity<String> getPlaylist(@PathVariable("line_token") String lineToken, @PathVariable("stream_token") String streamToken
+            , @PathVariable String extension, @RequestHeader(value = "User-Agent", defaultValue = "") String userAgent, HttpServletRequest request) throws IOException {
         //@todo decrypt stream_id and user_id
         Map<String, String> data = streamService.getPlaylist(lineToken, streamToken, extension, userAgent, request.getRemoteAddr());
         HttpHeaders responseHeaders = new HttpHeaders();
@@ -48,7 +48,7 @@ public class StreamingController {
 
     }
 
-    @GetMapping("segment/{line_token}/{stream_token}/{segment}/{extension}")
+    @GetMapping("hls/{line_token}/{stream_token}/{segment}.{extension}")
     public @ResponseBody
     ResponseEntity<byte[]> getSegment(@PathVariable("line_token") String lineToken, @PathVariable("stream_token") String streamToken
             , @PathVariable String extension, @PathVariable String segment, @RequestHeader(value = "User-Agent", defaultValue = "") String userAgent, HttpServletRequest request) throws IOException {

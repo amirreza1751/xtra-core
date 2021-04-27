@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import com.sun.istack.NotNull;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
@@ -13,20 +14,21 @@ import java.time.LocalDateTime;
 @JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy.class)
 @Table(
         uniqueConstraints =
-        @UniqueConstraint(columnNames = {"line_id", "stream_id", "user_ip"})
+        @UniqueConstraint(columnNames = {"line_token", "stream_token", "user_ip"})
 )
+@NoArgsConstructor
 public class Connection {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @NotNull
-    @Column(name = "line_id")
-    private Long lineId;
+    @Column(name = "line_token")
+    private String lineToken;
 
     @NotNull
-    @Column(name = "stream_id")
-    private Long streamId;
+    @Column(name = "stream_token")
+    private String streamToken;
 
     @NotNull
     @Column(name = "user_ip")
@@ -38,8 +40,11 @@ public class Connection {
 
     private boolean hlsEnded;
     private String userAgent;
-    private String isp;
-    private String country;
-    private String city;
 
+    public Connection(String lineToken, String streamToken, String userIp) {
+        this.lineToken = lineToken;
+        this.streamToken = streamToken;
+        this.userIp = userIp;
+        this.startDate = LocalDateTime.now();
+    }
 }

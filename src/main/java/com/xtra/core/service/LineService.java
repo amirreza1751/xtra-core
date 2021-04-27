@@ -34,13 +34,13 @@ public class LineService {
 
     }
 
-    public boolean killAllConnections(Long lineId) {
-        List<Connection> lineActivities = connectionRepository.findAllByLineId(lineId);
-        if (!lineActivities.isEmpty()) {
-            lineActivities.forEach((activity) -> {
-                activity.setHlsEnded(true);
-                activity.setEndDate(LocalDateTime.now());
-                connectionRepository.save(activity);
+    public boolean killAllConnections(String lineToken) {
+        List<Connection> connections = connectionRepository.findAllByLineToken(lineToken);
+        if (!connections.isEmpty()) {
+            connections.forEach((connection) -> {
+                connection.setHlsEnded(true);
+                connection.setEndDate(LocalDateTime.now());
+                connectionRepository.save(connection);
             });
             return true;
         } else return false;

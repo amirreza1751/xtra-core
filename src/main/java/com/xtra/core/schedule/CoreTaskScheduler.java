@@ -1,6 +1,7 @@
 package com.xtra.core.schedule;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.xtra.core.mapper.ConnectionMapper;
 import com.xtra.core.model.Process;
 import com.xtra.core.model.*;
 import com.xtra.core.projection.StreamDetailsView;
@@ -8,14 +9,12 @@ import com.xtra.core.repository.ConnectionRepository;
 import com.xtra.core.repository.ProcessRepository;
 import com.xtra.core.repository.ProgressInfoRepository;
 import com.xtra.core.repository.StreamInfoRepository;
-import com.xtra.core.service.ApiService;
 import com.xtra.core.service.MessagingService;
 import com.xtra.core.service.ProcessService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestTemplate;
 
 import javax.transaction.Transactional;
 import java.io.File;
@@ -23,6 +22,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static com.xtra.core.utility.Util.removeQuotations;
 
@@ -34,19 +34,19 @@ public class CoreTaskScheduler {
     private final ProgressInfoRepository progressInfoRepository;
     private final ConnectionRepository connectionRepository;
     private final MessagingService messagingService;
-    private final ApiService apiService;
+    private final ConnectionMapper connectionMapper;
 
     @Autowired
     public CoreTaskScheduler(ProcessRepository processRepository, ProcessService processService,
                              StreamInfoRepository streamInfoRepository, ProgressInfoRepository progressInfoRepository,
-                             ConnectionRepository connectionRepository, MessagingService messagingService, ApiService apiService) {
+                             ConnectionRepository connectionRepository, MessagingService messagingService, ConnectionMapper connectionMapper) {
         this.processRepository = processRepository;
         this.processService = processService;
         this.streamInfoRepository = streamInfoRepository;
         this.progressInfoRepository = progressInfoRepository;
         this.connectionRepository = connectionRepository;
         this.messagingService = messagingService;
-        this.apiService = apiService;
+        this.connectionMapper = connectionMapper;
     }
 
     @Value("${server.port}")
@@ -108,33 +108,31 @@ public class CoreTaskScheduler {
     @Scheduled(fixedDelay = 2000)
     public void sendConnectionsInfo() {
         List<Connection> connections = connectionRepository.findAll();
+        var connectionDetails = connections.stream().map(connectionMapper::convertToDetails).collect(Collectors.toList());
         if (!connections.isEmpty()) {
-            messagingService.SendConnectionInfo(connections);
+            messagingService.SendConnectionInfo(connectionDetails);
         }
     }
 
     @Scheduled(fixedDelay = 10000)
     @Transactional
     public void removeOldConnections() {
-        List<Connection> lineActivities = connectionRepository.findAllByLastReadIsLessThanEqual(LocalDateTime.now().minusMinutes(1));
-        if (lineActivities.isEmpty())
+        List<Connection> connections = connectionRepository.findAllByLastReadIsLessThanEqual(LocalDateTime.now().minusMinutes(1));
+        if (connections.isEmpty())
             return;
-        for (Connection activity : lineActivities) {
-            connectionRepository.deleteById(activity.getId());
+        for (Connection connection : connections) {
+            connectionRepository.deleteById(connection.getId());
         }
-        apiService.sendPostRequest("/line_activities/batch_delete", String.class, lineActivities);
     }
 
     @Scheduled(fixedDelay = 5000)
-    public void removeHlsEndedConnections() {
-        List<Connection> lineActivities = connectionRepository.findAllByHlsEndedAndEndDateBefore(true, LocalDateTime.now().minusMinutes(1));
-        if (lineActivities.isEmpty())
+    public void removeDeadConnections() {
+        List<Connection> connections = connectionRepository.findAllByHlsEndedAndEndDateBefore(true, LocalDateTime.now().minusMinutes(1));
+        if (connections.isEmpty())
             return;
-        for (Connection activity : lineActivities) {
+        for (Connection activity : connections) {
             connectionRepository.deleteById(activity.getId());
         }
-        new RestTemplate().delete("/line_activities/batch_delete", lineActivities);
-
     }
 
 }

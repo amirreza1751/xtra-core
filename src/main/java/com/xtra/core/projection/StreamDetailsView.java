@@ -1,5 +1,7 @@
 package com.xtra.core.projection;
 
+import com.fasterxml.jackson.databind.PropertyNamingStrategy;
+import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import com.xtra.core.model.ProgressInfo;
 import com.xtra.core.model.StreamInfo;
 import lombok.Data;
@@ -7,6 +9,7 @@ import lombok.Data;
 import java.io.Serializable;
 
 @Data
+@JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy.class)
 public class StreamDetailsView {
     private Long streamId;
     private String uptime;
