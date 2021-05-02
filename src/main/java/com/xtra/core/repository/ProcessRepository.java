@@ -15,4 +15,6 @@ public interface ProcessRepository extends JpaRepository<Process, Long> {
     Long deleteByProcessIdStreamId(Long streamId);
 
     Optional<Process> findByProcessIdPid(Long pid);
+
+    List<Process> findByProcessIdStreamIdIn(List<Long> streamIds);
 }

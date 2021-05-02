@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import com.xtra.core.model.ProgressInfo;
 import com.xtra.core.model.StreamInfo;
+import com.xtra.core.model.StreamStatus;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -20,6 +21,7 @@ public class StreamDetailsView {
     private String speed;
     private String frameRate;
     private String bitrate;
+    private StreamStatus streamStatus;
 
     public void updateStreamInfo(StreamInfo streamInfo){
         streamId = streamInfo.getStreamId();

@@ -46,4 +46,9 @@ public class StreamOpController {
     public boolean restartAllStreams() {
         return streamService.restartAllStreams();
     }
+
+    @PostMapping("/batch-stop")
+    public boolean batchStopStreams(@RequestBody List<Long> streamIds){
+        return streamService.batchStopStreams(streamIds);
+    }
 }

@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.xtra.core.utility.Util.removeQuotations;
 
@@ -93,12 +94,20 @@ public class CoreTaskScheduler {
     public void sendStreamsInfo() {
         List<StreamInfo> streamInfoList = streamInfoRepository.findAll();
         List<ProgressInfo> progressInfoList = progressInfoRepository.findAll();
+        List<Process> processes = processRepository.findAll();
         List<StreamDetailsView> streamDetailsViews = new ArrayList<>();
         if (!streamInfoList.isEmpty()) {
             for (var info : streamInfoList) {
                 StreamDetailsView status = new StreamDetailsView();
                 status.updateStreamInfo(info);
                 status.updateProgressInfo(progressInfoList.stream().filter(progressInfo -> progressInfo.getStreamId().equals(info.getStreamId())).findFirst().orElseGet(ProgressInfo::new));
+                //add stream status
+                status.setStreamStatus(StreamStatus.OFFLINE);
+                processes.forEach(process -> {
+                    if (process.getStreamId().equals(info.getStreamId())){
+                        status.setStreamStatus(StreamStatus.ONLINE);
+                    }
+                });
                 streamDetailsViews.add(status);
             }
             messagingService.sendStreamStatus(streamDetailsViews);
