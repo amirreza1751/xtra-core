@@ -6,6 +6,7 @@ import com.xtra.core.model.*;
 import com.xtra.core.model.Process;
 import com.xtra.core.projection.ClassifiedStreamOptions;
 import com.xtra.core.projection.LineAuth;
+import com.xtra.core.projection.catchup.CatchupRecordView;
 import com.xtra.core.repository.ConfigurationRepository;
 import com.xtra.core.repository.ProcessRepository;
 import com.xtra.core.repository.ProgressInfoRepository;
@@ -27,7 +28,10 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -198,9 +202,9 @@ public class StreamService {
         return true;
     }
 
-    public boolean batchStopStreams(List<Long> streamIds){
+    public boolean batchStopStreams(List<Long> streamIds) {
         var processes = processRepository.findByProcessIdStreamIdIn(streamIds);
-        if (processes.size() > 0){
+        if (processes.size() > 0) {
             processes.forEach(process -> {
                 this.stopStream(process.getStreamId());
             });
@@ -304,5 +308,53 @@ public class StreamService {
         }
     }
 
+    //catch-up
+    public Boolean record(Long streamId, CatchupRecordView catchupRecordView) {
+        File catchUpDirectory = new File(
+                System.getProperty("user.home") + File.separator + "tv_archive" + File.separator + streamId
+        );
+        if (!catchUpDirectory.exists()) {
+            var result = catchUpDirectory.mkdirs();
+            if (!result) {
+                throw new RuntimeException("Could not create directory");
+            }
+        }
+        var programLength = ChronoUnit.SECONDS.between(catchupRecordView.getStart(), catchupRecordView.getStop());
+        FFmpegBuilder builder = new FFmpegBuilder();
+        builder.setInput(catchupRecordView.getStreamInput())
+                .addOutput(catchUpDirectory.getAbsolutePath() + "/" + catchupRecordView.getStart() + "_" + catchupRecordView.getStop() + "_" + catchupRecordView.getTitle() + ".ts")
+                .addExtraArgs("-acodec", "copy")
+                .addExtraArgs("-vcodec", "copy")
+                .addExtraArgs("-t", Long.toString(programLength))
+                .done();
+//                .addProgress(URI.create("http://" + serverAddress + ":" + serverPort + "/update?stream_id=" + streamId));
+        List<String> args = builder.build();
+        List<String> newArgs =
+                ImmutableList.<String>builder().add(FFmpeg.DEFAULT_PATH).addAll(args).build();
+        //print the command
+        for (String item : newArgs) {
+            System.out.print(item + " ");
+        }
+        System.out.println("");
+        //print the command
+
+        ExecutorService executor = Executors.newFixedThreadPool(1);
+        executor.execute(() -> {
+            java.lang.Process proc;
+            try {
+                proc = new ProcessBuilder(newArgs).start();
+                proc.waitFor();
+                if (proc.exitValue() == 1) {
+                    throw new RuntimeException("Recording failed.");
+                }
+                apiService.sendGetRequest("/catch-up/streams/" + streamId + "/recording/false", String.class);
+            } catch (IOException | InterruptedException e) {
+                System.out.println(e.getMessage());
+            } finally {
+                executor.shutdown();
+            }
+        });
+        return true;
+    }
 
 }
