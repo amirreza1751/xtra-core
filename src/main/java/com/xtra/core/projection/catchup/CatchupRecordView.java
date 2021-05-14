@@ -10,4 +10,5 @@ public class CatchupRecordView {
     private ZonedDateTime start;
     private ZonedDateTime stop;
     private String streamInput;
+    private int catchUpDays = 0;
 }

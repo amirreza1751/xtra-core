@@ -7,10 +7,7 @@ import com.xtra.core.model.Process;
 import com.xtra.core.projection.ClassifiedStreamOptions;
 import com.xtra.core.projection.LineAuth;
 import com.xtra.core.projection.catchup.CatchupRecordView;
-import com.xtra.core.repository.ConfigurationRepository;
-import com.xtra.core.repository.ProcessRepository;
-import com.xtra.core.repository.ProgressInfoRepository;
-import com.xtra.core.repository.StreamInfoRepository;
+import com.xtra.core.repository.*;
 import net.bramp.ffmpeg.FFmpeg;
 import net.bramp.ffmpeg.builder.FFmpegBuilder;
 import net.bramp.ffmpeg.builder.FFmpegOutputBuilder;
@@ -47,6 +44,7 @@ public class StreamService {
     private final ApiService apiService;
     private final AdvancedStreamOptionsMapper advancedStreamOptionsMapper;
     private final ConfigurationRepository configurationRepository;
+    private final CatchUpInfoRepository catchUpInfoRepository;
 
     @Value("${main.apiPath}")
     private String mainApiPath;
@@ -61,7 +59,7 @@ public class StreamService {
     private String nginxPort;
 
     @Autowired
-    public StreamService(ProcessRepository processRepository, ProcessService processService, StreamInfoRepository streamInfoRepository, ProgressInfoRepository progressInfoRepository, LineService lineService, ConnectionService connectionService, ApiService apiService, AdvancedStreamOptionsMapper advancedStreamOptionsMapper, ConfigurationRepository configurationRepository) {
+    public StreamService(ProcessRepository processRepository, ProcessService processService, StreamInfoRepository streamInfoRepository, ProgressInfoRepository progressInfoRepository, LineService lineService, ConnectionService connectionService, ApiService apiService, AdvancedStreamOptionsMapper advancedStreamOptionsMapper, ConfigurationRepository configurationRepository, CatchUpInfoRepository catchUpInfoRepository) {
         this.processRepository = processRepository;
         this.processService = processService;
         this.streamInfoRepository = streamInfoRepository;
@@ -71,6 +69,7 @@ public class StreamService {
         this.apiService = apiService;
         this.advancedStreamOptionsMapper = advancedStreamOptionsMapper;
         this.configurationRepository = configurationRepository;
+        this.catchUpInfoRepository = catchUpInfoRepository;
     }
 
     public boolean startStream(Stream stream) {
@@ -310,6 +309,15 @@ public class StreamService {
 
     //catch-up
     public Boolean record(Long streamId, CatchupRecordView catchupRecordView) {
+        var catchUpInfo = catchUpInfoRepository.findByStreamId(streamId);
+        if (catchUpInfo.isPresent()){
+            var result = catchUpInfo.get();
+            result.setCatchUpDays(catchupRecordView.getCatchUpDays());
+            catchUpInfoRepository.save(result);
+        } else {
+            CatchUpInfo newCatchUp = new CatchUpInfo(streamId, catchupRecordView.getCatchUpDays());
+            catchUpInfoRepository.save(newCatchUp);
+        }
         File catchUpDirectory = new File(
                 System.getProperty("user.home") + File.separator + "tv_archive" + File.separator + streamId
         );
