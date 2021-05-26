@@ -38,7 +38,7 @@ public class FileSystemService {
         return result;
     }
 
-    public void deleteOldSegments(long afterMilliSeconds, String fileExtension, String dirPath) {
+    public void deleteOldFilesAfterDays(long days, String fileExtension, String dirPath) {
 
         java.io.File folder = new java.io.File(dirPath);
 
@@ -46,8 +46,7 @@ public class FileSystemService {
 
             java.io.File[] listFiles = folder.listFiles();
 
-            long eligibleForDeletion = System.currentTimeMillis() - afterMilliSeconds;
-//                    (days * 24 * 60 * 60 * 1000L);
+            long eligibleForDeletion = System.currentTimeMillis() - (days * 24 * 60 * 60 * 1000L);
 
             for (java.io.File listFile : listFiles) {
 

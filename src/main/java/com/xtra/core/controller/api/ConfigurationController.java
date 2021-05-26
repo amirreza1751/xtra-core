@@ -15,7 +15,7 @@ public class ConfigurationController {
     }
 
     @PostMapping("")
-    public ResponseEntity<Boolean> startStream(@RequestBody Configuration configuration) {
+    public ResponseEntity<Boolean> saveConfig(@RequestBody Configuration configuration) {
         return ResponseEntity.ok(configurationService.saveConfig(configuration));
     }
 }

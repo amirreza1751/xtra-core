@@ -1,8 +1,9 @@
 package com.xtra.core.service;
 
+import com.xtra.core.model.Stream;
+import com.xtra.core.repository.ConfigurationRepository;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
@@ -17,18 +18,25 @@ import java.util.List;
 @Service
 public class ApiService {
     private final RestTemplate restTemplate;
+    private final ConfigurationRepository configurationRepository;
     @Value("${main.apiPath}")
     private String mainApiPath;
 
-    public ApiService() {
+    public ApiService(ConfigurationRepository configurationRepository) {
+        this.configurationRepository = configurationRepository;
         this.restTemplate = new RestTemplate();
     }
 
     public <T> T sendGetRequest(String path, Class<T> tClass) {
+        var token = configurationRepository.findById("token").orElseThrow();
+        RestTemplate restTemplate = new RestTemplate();
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.set("token", token.getValue());
+        HttpEntity<String> entity = new HttpEntity<>(null, httpHeaders);
         String uri = mainApiPath + path;
         ResponseEntity<T> result;
         try {
-            result = restTemplate.getForEntity(uri, tClass);
+            result = restTemplate.exchange(uri, HttpMethod.GET, entity, tClass);
         } catch (HttpClientErrorException | NullPointerException exception) {
             System.out.println(exception.getMessage());
             return null;

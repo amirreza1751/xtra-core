@@ -5,15 +5,14 @@ import com.xtra.core.mapper.ConnectionMapper;
 import com.xtra.core.model.Process;
 import com.xtra.core.model.*;
 import com.xtra.core.projection.StreamDetailsView;
-import com.xtra.core.repository.ConnectionRepository;
-import com.xtra.core.repository.ProcessRepository;
-import com.xtra.core.repository.ProgressInfoRepository;
-import com.xtra.core.repository.StreamInfoRepository;
+import com.xtra.core.repository.*;
+import com.xtra.core.service.FileSystemService;
 import com.xtra.core.service.MessagingService;
 import com.xtra.core.service.ProcessService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.scheduling.annotation.Schedules;
 import org.springframework.stereotype.Component;
 
 import javax.transaction.Transactional;
@@ -36,11 +35,13 @@ public class CoreTaskScheduler {
     private final ConnectionRepository connectionRepository;
     private final MessagingService messagingService;
     private final ConnectionMapper connectionMapper;
+    private final CatchUpInfoRepository catchUpInfoRepository;
+    private final FileSystemService fileSystemService;
 
     @Autowired
     public CoreTaskScheduler(ProcessRepository processRepository, ProcessService processService,
                              StreamInfoRepository streamInfoRepository, ProgressInfoRepository progressInfoRepository,
-                             ConnectionRepository connectionRepository, MessagingService messagingService, ConnectionMapper connectionMapper) {
+                             ConnectionRepository connectionRepository, MessagingService messagingService, ConnectionMapper connectionMapper, CatchUpInfoRepository catchUpInfoRepository, FileSystemService fileSystemService) {
         this.processRepository = processRepository;
         this.processService = processService;
         this.streamInfoRepository = streamInfoRepository;
@@ -48,6 +49,8 @@ public class CoreTaskScheduler {
         this.connectionRepository = connectionRepository;
         this.messagingService = messagingService;
         this.connectionMapper = connectionMapper;
+        this.catchUpInfoRepository = catchUpInfoRepository;
+        this.fileSystemService = fileSystemService;
     }
 
     @Value("${server.port}")
@@ -104,7 +107,7 @@ public class CoreTaskScheduler {
                 //add stream status
                 status.setStreamStatus(StreamStatus.OFFLINE);
                 processes.forEach(process -> {
-                    if (process.getStreamId().equals(info.getStreamId())){
+                    if (process.getStreamId().equals(info.getStreamId())) {
                         status.setStreamStatus(StreamStatus.ONLINE);
                     }
                 });
@@ -144,4 +147,13 @@ public class CoreTaskScheduler {
         }
     }
 
+    @Scheduled(cron = "0 0 */1 * * *") // Hourly
+    public void removeOldRecordings() {
+        var infos = catchUpInfoRepository.findAll();
+        if (infos.size() > 0) {
+            for (CatchUpInfo catchUpInfo : infos) {
+                fileSystemService.deleteOldFilesAfterDays(catchUpInfo.getCatchUpDays(), ".ts", System.getProperty("user.home") + File.separator + "tv_archive" + File.separator + catchUpInfo.getStreamId());
+            }
+        }
+    }
 }
