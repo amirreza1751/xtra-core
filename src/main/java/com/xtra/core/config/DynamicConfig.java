@@ -15,7 +15,7 @@ public class DynamicConfig {
     }
 
     @Bean
-    public String getToken() {
+    public String getServerToken() {
         var token = repository.findById("token");
         return token.map(com.xtra.core.model.Configuration::getValue).orElse(null);
     }

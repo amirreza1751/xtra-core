@@ -2,6 +2,7 @@ package com.xtra.core.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.xtra.core.config.DynamicConfig;
 import com.xtra.core.model.*;
 import com.xtra.core.projection.LineAuth;
 import org.apache.commons.io.FilenameUtils;
@@ -39,11 +40,13 @@ public class VodService {
     private final ProcessService processService;
     private final LineService lineService;
     private final ApiService apiService;
+    private final DynamicConfig config;
 
-    public VodService(ProcessService processService, LineService lineService, ApiService apiService) {
+    public VodService(ProcessService processService, LineService lineService, ApiService apiService, DynamicConfig config) {
         this.processService = processService;
         this.lineService = lineService;
         this.apiService = apiService;
+        this.config = config;
     }
 
     public void encode(Vod vod) {
@@ -162,7 +165,7 @@ public class VodService {
 
 
     public String getVodPlaylist(String lineToken, String vodToken, String ipAddress, String userAgent) throws IOException {
-        LineStatus lineStatus = lineService.authorizeLineForVod(new LineAuth(lineToken, vodToken, ipAddress, userAgent));
+        LineStatus lineStatus = lineService.authorizeLineForVod(new LineAuth(lineToken, vodToken, ipAddress, userAgent, config.getServerToken()));
         if (lineStatus != LineStatus.OK)
             throw new RuntimeException("Forbidden " + HttpStatus.FORBIDDEN);
         else {

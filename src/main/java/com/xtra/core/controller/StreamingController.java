@@ -1,5 +1,6 @@
 package com.xtra.core.controller;
 
+import com.xtra.core.config.DynamicConfig;
 import com.xtra.core.model.LineStatus;
 import com.xtra.core.projection.LineAuth;
 import com.xtra.core.service.LineService;
@@ -21,13 +22,15 @@ public class StreamingController {
     private final StreamService streamService;
     private final ProgressInfoService progressInfoService;
     private final VodService vodService;
+    private final DynamicConfig config;
 
     @Autowired
-    public StreamingController(LineService lineService, StreamService streamService, ProgressInfoService progressInfoService, VodService vodService) {
+    public StreamingController(LineService lineService, StreamService streamService, ProgressInfoService progressInfoService, VodService vodService, DynamicConfig config) {
         this.lineService = lineService;
         this.streamService = streamService;
         this.progressInfoService = progressInfoService;
         this.vodService = vodService;
+        this.config = config;
     }
 
 
@@ -93,7 +96,7 @@ public class StreamingController {
 
     @GetMapping("vod/auth")
     public ResponseEntity<String> vodAuth(@RequestParam String lineToken, @RequestParam String vodToken, @RequestHeader(value = "HTTP_USER_AGENT", defaultValue = "") String userAgent, HttpServletRequest request) {
-        LineStatus lineStatus = lineService.authorizeLineForVod(new LineAuth(lineToken, vodToken, request.getRemoteAddr(), userAgent));
+        LineStatus lineStatus = lineService.authorizeLineForVod(new LineAuth(lineToken, vodToken, request.getRemoteAddr(), userAgent, config.getServerToken()));
         if (lineStatus != LineStatus.OK)
             return new ResponseEntity<>("forbidden", HttpStatus.FORBIDDEN);
         else {

@@ -1,7 +1,6 @@
 package com.xtra.core.service;
 
 import com.xtra.core.config.DynamicConfig;
-import com.xtra.core.model.Connection;
 import com.xtra.core.projection.ConnectionDetails;
 import com.xtra.core.projection.StreamDetailsView;
 import org.springframework.amqp.core.Queue;
@@ -35,14 +34,14 @@ public class MessagingService {
 
     public void sendStreamStatus(List<StreamDetailsView> statuses) {
         template.convertAndSend(streamStatusQueue.getName(), statuses, message -> {
-            message.getMessageProperties().getHeaders().put("token", config.getToken());
+            message.getMessageProperties().getHeaders().put("token", config.getServerToken());
             return message;
         });
     }
 
     public void SendConnectionInfo(List<ConnectionDetails> connections){
         template.convertAndSend(connectionsQueue.getName(), connections, message -> {
-            message.getMessageProperties().getHeaders().put("token", config.getToken());
+            message.getMessageProperties().getHeaders().put("token", config.getServerToken());
             return message;
         });
     }

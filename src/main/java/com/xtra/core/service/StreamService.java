@@ -1,6 +1,7 @@
 package com.xtra.core.service;
 
 import com.google.common.collect.ImmutableList;
+import com.xtra.core.config.DynamicConfig;
 import com.xtra.core.mapper.AdvancedStreamOptionsMapper;
 import com.xtra.core.model.*;
 import com.xtra.core.model.Process;
@@ -31,7 +32,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 @Service
 public class StreamService {
@@ -45,6 +45,7 @@ public class StreamService {
     private final AdvancedStreamOptionsMapper advancedStreamOptionsMapper;
     private final ConfigurationRepository configurationRepository;
     private final CatchUpInfoRepository catchUpInfoRepository;
+    private final DynamicConfig config;
 
     @Value("${main.apiPath}")
     private String mainApiPath;
@@ -59,7 +60,7 @@ public class StreamService {
     private String nginxPort;
 
     @Autowired
-    public StreamService(ProcessRepository processRepository, ProcessService processService, StreamInfoRepository streamInfoRepository, ProgressInfoRepository progressInfoRepository, LineService lineService, ConnectionService connectionService, ApiService apiService, AdvancedStreamOptionsMapper advancedStreamOptionsMapper, ConfigurationRepository configurationRepository, CatchUpInfoRepository catchUpInfoRepository) {
+    public StreamService(ProcessRepository processRepository, ProcessService processService, StreamInfoRepository streamInfoRepository, ProgressInfoRepository progressInfoRepository, LineService lineService, ConnectionService connectionService, ApiService apiService, AdvancedStreamOptionsMapper advancedStreamOptionsMapper, ConfigurationRepository configurationRepository, CatchUpInfoRepository catchUpInfoRepository, DynamicConfig config) {
         this.processRepository = processRepository;
         this.processService = processService;
         this.streamInfoRepository = streamInfoRepository;
@@ -70,6 +71,7 @@ public class StreamService {
         this.advancedStreamOptionsMapper = advancedStreamOptionsMapper;
         this.configurationRepository = configurationRepository;
         this.catchUpInfoRepository = catchUpInfoRepository;
+        this.config = config;
     }
 
     public boolean startStream(Stream stream) {
@@ -250,7 +252,7 @@ public class StreamService {
 
     public Map<String, String> getPlaylist(String lineToken, String streamToken, String extension, String userAgent, String ipAddress) throws IOException {
         Map<String, String> data = new HashMap<>();
-        LineStatus status = lineService.authorizeLineForStream(new LineAuth(lineToken, streamToken, ipAddress, userAgent));
+        LineStatus status = lineService.authorizeLineForStream(new LineAuth(lineToken, streamToken, ipAddress, userAgent, config.getServerToken()));
         if (status != LineStatus.OK) {
             if (status == LineStatus.NOT_FOUND)
                 throw new RuntimeException("Line Not found " + HttpStatus.NOT_FOUND);
@@ -293,7 +295,7 @@ public class StreamService {
 
     public byte[] getSegment(String lineToken, String streamToken
             , String extension, String segment, String userAgent, String ipAddress) throws IOException {
-        LineStatus status = lineService.authorizeLineForStream(new LineAuth(lineToken, streamToken, ipAddress, userAgent));
+        LineStatus status = lineService.authorizeLineForStream(new LineAuth(lineToken, streamToken, ipAddress, userAgent, config.getServerToken()));
         Long lineId = lineService.getLineId(lineToken);
         if (status == LineStatus.OK) {
             var result = connectionService.updateConnection(lineToken, streamToken, ipAddress, userAgent);
@@ -310,7 +312,7 @@ public class StreamService {
     //catch-up
     public Boolean record(Long streamId, CatchupRecordView catchupRecordView) {
         var catchUpInfo = catchUpInfoRepository.findByStreamId(streamId);
-        if (catchUpInfo.isPresent()){
+        if (catchUpInfo.isPresent()) {
             var result = catchUpInfo.get();
             result.setCatchUpDays(catchupRecordView.getCatchUpDays());
             catchUpInfoRepository.save(result);

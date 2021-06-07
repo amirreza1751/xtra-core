@@ -2,21 +2,18 @@ package com.xtra.core.projection;
 
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
 @JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy.class)
+@NoArgsConstructor
+@AllArgsConstructor
 public class LineAuth {
     private String lineToken;
     private String mediaToken;
     private String ipAddress;
     private String userAgent;
-
-    public LineAuth(String lineToken, String mediaToken, String ipAddress, String userAgent) {
-        this.lineToken = lineToken;
-        this.mediaToken = mediaToken;
-        this.ipAddress = ipAddress;
-        this.userAgent = userAgent;
-    }
-
+    private String serverToken;
 }
