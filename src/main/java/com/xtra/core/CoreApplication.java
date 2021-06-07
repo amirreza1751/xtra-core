@@ -1,6 +1,5 @@
 package com.xtra.core;
 
-import com.xtra.core.repository.ConnectionRepository;
 import com.xtra.core.repository.ProcessRepository;
 import com.xtra.core.repository.ProgressInfoRepository;
 import com.xtra.core.repository.StreamInfoRepository;
@@ -16,13 +15,11 @@ public class CoreApplication {
     final ProcessRepository processRepository;
     final ProgressInfoRepository progressInfoRepository;
     final StreamInfoRepository streamInfoRepository;
-    final ConnectionRepository connectionRepository;
 
-    public CoreApplication(ProcessRepository processRepository, ProgressInfoRepository progressInfoRepository, StreamInfoRepository streamInfoRepository, ConnectionRepository connectionRepository) {
+    public CoreApplication(ProcessRepository processRepository, ProgressInfoRepository progressInfoRepository, StreamInfoRepository streamInfoRepository) {
         this.processRepository = processRepository;
         this.streamInfoRepository = streamInfoRepository;
         this.progressInfoRepository = progressInfoRepository;
-        this.connectionRepository = connectionRepository;
     }
 
     public static void main(String[] args) {
@@ -34,6 +31,5 @@ public class CoreApplication {
         processRepository.deleteAll();
         progressInfoRepository.deleteAll();
         streamInfoRepository.deleteAll();
-        connectionRepository.deleteAll();
     }
 }

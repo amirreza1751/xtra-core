@@ -40,7 +40,6 @@ public class StreamService {
     private final StreamInfoRepository streamInfoRepository;
     private final ProgressInfoRepository progressInfoRepository;
     private final LineService lineService;
-    private final ConnectionService connectionService;
     private final ApiService apiService;
     private final AdvancedStreamOptionsMapper advancedStreamOptionsMapper;
     private final ConfigurationRepository configurationRepository;
@@ -60,13 +59,12 @@ public class StreamService {
     private String nginxPort;
 
     @Autowired
-    public StreamService(ProcessRepository processRepository, ProcessService processService, StreamInfoRepository streamInfoRepository, ProgressInfoRepository progressInfoRepository, LineService lineService, ConnectionService connectionService, ApiService apiService, AdvancedStreamOptionsMapper advancedStreamOptionsMapper, ConfigurationRepository configurationRepository, CatchUpInfoRepository catchUpInfoRepository, DynamicConfig config) {
+    public StreamService(ProcessRepository processRepository, ProcessService processService, StreamInfoRepository streamInfoRepository, ProgressInfoRepository progressInfoRepository, LineService lineService, ApiService apiService, AdvancedStreamOptionsMapper advancedStreamOptionsMapper, ConfigurationRepository configurationRepository, CatchUpInfoRepository catchUpInfoRepository, DynamicConfig config) {
         this.processRepository = processRepository;
         this.processService = processService;
         this.streamInfoRepository = streamInfoRepository;
         this.progressInfoRepository = progressInfoRepository;
         this.lineService = lineService;
-        this.connectionService = connectionService;
         this.apiService = apiService;
         this.advancedStreamOptionsMapper = advancedStreamOptionsMapper;
         this.configurationRepository = configurationRepository;
@@ -269,12 +267,6 @@ public class StreamService {
             else
                 throw new RuntimeException("Unknown Error " + HttpStatus.FORBIDDEN);
         } else {
-            var result = connectionService.updateConnection(lineToken, streamToken, ipAddress, userAgent);
-
-            if (!result) {
-                throw new RuntimeException("Forbidden " + HttpStatus.FORBIDDEN);
-            }
-
             File file = ResourceUtils.getFile(System.getProperty("user.home") + "/streams/" + streamToken + "_." + extension);
             String playlist = new String(Files.readAllBytes(file.toPath()));
 
@@ -296,13 +288,7 @@ public class StreamService {
     public byte[] getSegment(String lineToken, String streamToken
             , String extension, String segment, String userAgent, String ipAddress) throws IOException {
         LineStatus status = lineService.authorizeLineForStream(new LineAuth(lineToken, streamToken, ipAddress, userAgent, config.getServerToken()));
-        Long lineId = lineService.getLineId(lineToken);
         if (status == LineStatus.OK) {
-            var result = connectionService.updateConnection(lineToken, streamToken, ipAddress, userAgent);
-            if (!result) {
-//                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
-                throw new RuntimeException("Forbidden " + HttpStatus.FORBIDDEN);
-            }
             return IOUtils.toByteArray(FileUtils.openInputStream(new File(System.getProperty("user.home") + "/streams/" + streamToken + "_" + segment + "." + extension)));
         } else {
             throw new RuntimeException("Forbidden " + HttpStatus.FORBIDDEN);

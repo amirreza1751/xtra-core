@@ -15,11 +15,6 @@ public class MessagingConfig {
     }
 
     @Bean
-    public Queue connectionsQueue() {
-        return new Queue("connections", false);
-    }
-
-    @Bean
     public MessageConverter jsonMessageConverter() {
         ObjectMapper mapper = new ObjectMapper().findAndRegisterModules();
         return new Jackson2JsonMessageConverter(mapper);

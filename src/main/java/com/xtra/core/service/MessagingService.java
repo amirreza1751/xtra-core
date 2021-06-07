@@ -19,16 +19,12 @@ public class MessagingService {
     @Qualifier("streamStatusQueue")
     private final Queue streamStatusQueue;
 
-    @Qualifier("connectionsQueue")
-    private final Queue connectionsQueue;
-
     private final DynamicConfig config;
 
     @Autowired
-    public MessagingService(RabbitTemplate template, Queue streamStatusQueue, Queue connectionsQueue, DynamicConfig config) {
+    public MessagingService(RabbitTemplate template, Queue streamStatusQueue, DynamicConfig config) {
         this.template = template;
         this.streamStatusQueue = streamStatusQueue;
-        this.connectionsQueue = connectionsQueue;
         this.config = config;
     }
 
@@ -39,10 +35,4 @@ public class MessagingService {
         });
     }
 
-    public void SendConnectionInfo(List<ConnectionDetails> connections){
-        template.convertAndSend(connectionsQueue.getName(), connections, message -> {
-            message.getMessageProperties().getHeaders().put("token", config.getServerToken());
-            return message;
-        });
-    }
 }

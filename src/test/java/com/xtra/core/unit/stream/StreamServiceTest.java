@@ -44,8 +44,6 @@ class StreamServiceTest {
     @Mock
     private  LineService lineService;
     @Mock
-    private ConnectionService connectionService;
-    @Mock
     private ApiService apiService;
     @Mock
     private  ServerService serverService;

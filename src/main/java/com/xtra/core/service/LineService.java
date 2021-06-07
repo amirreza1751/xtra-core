@@ -1,9 +1,7 @@
 package com.xtra.core.service;
 
-import com.xtra.core.model.Connection;
 import com.xtra.core.model.LineStatus;
 import com.xtra.core.projection.LineAuth;
-import com.xtra.core.repository.ConnectionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -12,12 +10,10 @@ import java.util.List;
 
 @Service
 public class LineService {
-    private final ConnectionRepository connectionRepository;
     private final ApiService apiService;
 
     @Autowired
-    public LineService(ConnectionRepository connectionRepository, ApiService apiService) {
-        this.connectionRepository = connectionRepository;
+    public LineService(ApiService apiService) {
         this.apiService = apiService;
     }
 
@@ -32,17 +28,5 @@ public class LineService {
     public LineStatus authorizeLineForVod(LineAuth lineAuth) {
         return apiService.sendPostRequest("/lines/vod_auth/", LineStatus.class, lineAuth);
 
-    }
-
-    public boolean killAllConnections(String lineToken) {
-        List<Connection> connections = connectionRepository.findAllByLineToken(lineToken);
-        if (!connections.isEmpty()) {
-            connections.forEach((connection) -> {
-                connection.setHlsEnded(true);
-                connection.setEndDate(LocalDateTime.now());
-                connectionRepository.save(connection);
-            });
-            return true;
-        } else return false;
     }
 }
