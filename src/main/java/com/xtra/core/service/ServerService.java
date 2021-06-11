@@ -8,7 +8,6 @@ import oshi.hardware.CentralProcessor;
 import oshi.hardware.GlobalMemory;
 import oshi.hardware.HardwareAbstractionLayer;
 import oshi.hardware.NetworkIF;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -21,7 +20,6 @@ public class ServerService {
         SystemInfo si = new SystemInfo();
         HardwareAbstractionLayer hal = si.getHardware();
         CentralProcessor cpu = hal.getProcessor();
-
         long[][] oldProcTicks;
         oldProcTicks = new long[cpu.getLogicalProcessorCount()][CentralProcessor.TickType.values().length];
         double[] p = new double[cpu.getLogicalProcessorCount()];
@@ -52,7 +50,7 @@ public class ServerService {
                 networkInterface.getName(),
                 networkInterface.getBytesSent(),
                 networkInterface.getBytesRecv(),
-                si.getOperatingSystem().getSystemUptime()
+                si.getOperatingSystem().getProcess((int) ProcessHandle.current().pid()).getUpTime()/1000
                 );
     }
 
@@ -60,6 +58,7 @@ public class ServerService {
         List<NetworkIF> networks =  hal.getNetworkIFs();
         NetworkInterface ntf = new NetworkInterface();
         networks.stream().filter(networkIF -> networkIF.getName().equals(interfaceName)).forEach(networkIF -> {
+            networkIF.updateAttributes();
             ntf.setName(interfaceName);
             ntf.setBytesRecv(networkIF.getBytesRecv());
             ntf.setBytesSent(networkIF.getBytesSent());
