@@ -4,31 +4,27 @@ import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import lombok.Data;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import javax.persistence.CascadeType;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.OneToOne;
 
 @Data
+@Entity
 @JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy.class)
 public class Stream {
+    @Id
     private Long id;
-    private String name;
-    private StreamType streamType;
-    private ProgressInfo progressInfo;
-    private int selectedSource;
-    private boolean readNative = false;
-    private boolean streamAll = false;
-    private boolean directSource = false;
-    private boolean genTimestamps = false;
-    private boolean rtmpOutput = false;
-    private String userAgent;
     private String streamToken;
+    private String streamInput;
+    private Long pid;
 
-    private TranscodeProfile transcodeProfile;
-    private String customFFMPEG;
-
-    private List<String> streamInputs;
-
-    private StreamInput currentInput;
+    @OneToOne
     private AdvancedStreamOptions advancedStreamOptions;
+
+    @OneToOne(cascade = CascadeType.REMOVE)
+    private ProgressInfo progressInfo;
+
+    @OneToOne(cascade = CascadeType.REMOVE)
+    private StreamInfo streamInfo;
 }

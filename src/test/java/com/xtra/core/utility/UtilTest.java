@@ -1,9 +1,6 @@
 package com.xtra.core.utility;
 
-import com.xtra.core.model.AdvancedStreamOptions;
 import org.junit.jupiter.api.Test;
-
-import java.util.*;
 
 class UtilTest {
 

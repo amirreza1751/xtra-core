@@ -25,7 +25,7 @@ class StreamServiceIntegrationTest {
     @Autowired
     StreamService streamService;
 
-    @Test
+    /*@Test
     void startStream() {
 
         Stream stream = new Stream();
@@ -42,5 +42,5 @@ class StreamServiceIntegrationTest {
 
         assertTrue(streamService.startStream(stream));
 
-    }
+    }*/
 }

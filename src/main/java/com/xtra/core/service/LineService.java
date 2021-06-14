@@ -1,12 +1,9 @@
 package com.xtra.core.service;
 
 import com.xtra.core.model.LineStatus;
-import com.xtra.core.projection.LineAuth;
+import com.xtra.core.dto.LineAuth;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import java.time.LocalDateTime;
-import java.util.List;
 
 @Service
 public class LineService {

@@ -2,7 +2,7 @@ package com.xtra.core.controller;
 
 import com.xtra.core.config.DynamicConfig;
 import com.xtra.core.model.LineStatus;
-import com.xtra.core.projection.LineAuth;
+import com.xtra.core.dto.LineAuth;
 import com.xtra.core.service.LineService;
 import com.xtra.core.service.ProgressInfoService;
 import com.xtra.core.service.StreamService;

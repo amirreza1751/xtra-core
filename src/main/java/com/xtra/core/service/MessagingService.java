@@ -1,8 +1,7 @@
 package com.xtra.core.service;
 
 import com.xtra.core.config.DynamicConfig;
-import com.xtra.core.projection.ConnectionDetails;
-import com.xtra.core.projection.StreamDetailsView;
+import com.xtra.core.dto.StreamDetailsView;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
