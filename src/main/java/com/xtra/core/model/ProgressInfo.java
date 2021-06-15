@@ -14,7 +14,7 @@ public class ProgressInfo {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @OneToOne
+    @OneToOne(mappedBy = "progressInfo")
     private Stream stream;
 
     private String speed;

@@ -20,51 +20,59 @@ public class StreamOpController {
         this.streamService = streamService;
     }
 
+    //Start a new Stream
     @PostMapping("start")
     public ResponseEntity<?> startStream(@RequestBody ChannelStart channelStart) {
         streamService.startStream(channelStart, false);
         return ResponseEntity.ok().build();
     }
 
+    // Restart A stream with new Args
     @PostMapping("restart")
     public ResponseEntity<?> restartStream(@RequestBody ChannelStart channelStart) {
         streamService.startStream(channelStart, true);
         return ResponseEntity.ok().build();
     }
 
-    @GetMapping("{id}/stop")
-    public ResponseEntity<?> stopStream(@PathVariable Long id) {
-        streamService.stopStream(id);
-        return ResponseEntity.ok().build();
-    }
-
+    // Restart with Existing Args
     @GetMapping("{id}/restart")
     public ResponseEntity<?> restartStream(@PathVariable Long id) {
         streamService.restartStream(id);
         return ResponseEntity.ok().build();
     }
 
-    @GetMapping("/start")
+    // Stop a Stream
+    @GetMapping("{id}/stop")
+    public ResponseEntity<?> stopStream(@PathVariable Long id) {
+        streamService.stopStream(id);
+        return ResponseEntity.ok().build();
+    }
+
+    // Start multiple new Streams
+    @PostMapping("batch-start")
     public ResponseEntity<?> startAllStream(List<ChannelStart> channelStarts) {
         streamService.startAllStreams(channelStarts);
         return ResponseEntity.ok().build();
     }
 
-    @GetMapping("/stop")
+    // Stop multiple Streams
+    @PostMapping("batch-stop")
+    public ResponseEntity<?> batchStopStreams(@RequestBody List<Long> streamIds) {
+        streamService.batchStopStreams(streamIds);
+        return ResponseEntity.ok().build();
+    }
+
+    // Stop All Streams
+    @GetMapping("stop")
     public ResponseEntity<?> stopAllStreams() {
         streamService.stopAllStreams();
         return ResponseEntity.ok().build();
     }
 
-    @GetMapping("/restart")
+    // Restart All Streams
+    @GetMapping("restart")
     public ResponseEntity<?> restartAllStreams() {
         streamService.restartAllStreams();
-        return ResponseEntity.ok().build();
-    }
-
-    @PostMapping("/batch-stop")
-    public ResponseEntity<?> batchStopStreams(@RequestBody List<Long> streamIds) {
-        streamService.batchStopStreams(streamIds);
         return ResponseEntity.ok().build();
     }
 

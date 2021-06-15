@@ -29,7 +29,7 @@ public class CoreTaskScheduler {
         this.fileSystemService = fileSystemService;
     }
 
-    @Scheduled(fixedDelay = 10000)
+    @Scheduled(fixedDelay = 5000)
     public void StreamChecker() {
         streamService.updateStreamInfo();
     }

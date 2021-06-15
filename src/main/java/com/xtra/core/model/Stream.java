@@ -19,12 +19,12 @@ public class Stream {
     private String streamInput;
     private Long pid;
 
-    @OneToOne
+    @OneToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     private AdvancedStreamOptions advancedStreamOptions;
 
-    @OneToOne(cascade = CascadeType.REMOVE)
+    @OneToOne(cascade = {CascadeType.REMOVE, CascadeType.PERSIST, CascadeType.MERGE})
     private ProgressInfo progressInfo;
 
-    @OneToOne(cascade = CascadeType.REMOVE)
+    @OneToOne(cascade = {CascadeType.REMOVE, CascadeType.PERSIST, CascadeType.MERGE})
     private StreamInfo streamInfo;
 }

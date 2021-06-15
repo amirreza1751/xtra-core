@@ -324,6 +324,7 @@ public class StreamService {
         ProcessOutput processOutput = processService.analyzeStream(streamUrl, "codec_name,width,height,bit_rate");
         ObjectMapper objectMapper = new ObjectMapper();
         try {
+            System.out.println(processOutput.getOutput());
             var root = objectMapper.readTree(processOutput.getOutput());
             var video = root.get("streams").get(0);
             info.setVideoCodec(removeQuotations(video.get("codec_name").toPrettyString()));
