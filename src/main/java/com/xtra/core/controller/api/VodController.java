@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
+import java.util.List;
 
 
 @RestController
@@ -29,7 +30,7 @@ public class VodController {
     }
 
     @PostMapping("/info")
-    public MediaInfo getMediaInfo(@RequestBody Vod vod) {
-        return vodService.getMediaInfo(vod);
+    public ResponseEntity<List<MediaInfo>> getMediaInfo(@RequestBody List<Vod> vodList) {
+        return ResponseEntity.ok(vodService.getMediaInfo(vodList));
     }
 }

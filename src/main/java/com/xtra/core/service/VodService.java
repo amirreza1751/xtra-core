@@ -142,25 +142,30 @@ public class VodService {
         }
     }
 
-    public MediaInfo getMediaInfo(Vod vod) {
-        String result = processService.getMediaInfo(vod.getLocation());
-        MediaInfo info = new MediaInfo();
-        ObjectMapper objectMapper = new ObjectMapper();
-        try {
-            var root = objectMapper.readTree(result);
-            var video = root.get("streams").get(0);
-            info.setVideoCodec(removeQuotations(video.get("codec_name").toString()));
-            info.setResolution(video.get("width") + "x" + video.get("height"));
+    public List<MediaInfo> getMediaInfo(List<Vod> vodList) {
+        List<MediaInfo> mediaInfoList = new ArrayList<>();
+        for (Vod vod : vodList){
+            String result = processService.getMediaInfo(vod.getLocation());
+            MediaInfo info = new MediaInfo();
+            ObjectMapper objectMapper = new ObjectMapper();
+            try {
+                var root = objectMapper.readTree(result);
+                var video = root.get("streams").get(0);
+                info.setVideoCodec(removeQuotations(video.get("codec_name").toString()));
+                info.setResolution(video.get("width") + "x" + video.get("height"));
 
-            var audio = root.get("streams").get(1);
-            info.setAudioCodec(removeQuotations(audio.get("codec_name").toString()));
+                var audio = root.get("streams").get(1);
+                info.setAudioCodec(removeQuotations(audio.get("codec_name").toString()));
 
-            var duration = root.get("format").get("duration").toString();
-            info.setDuration(Duration.ofSeconds((int) Float.parseFloat(removeQuotations(duration))));
-        } catch (JsonProcessingException e) {
-            return null;
+                var duration = root.get("format").get("duration").toString();
+                info.setDuration(Duration.ofSeconds((int) Float.parseFloat(removeQuotations(duration))));
+            } catch (JsonProcessingException | NullPointerException e) {
+                mediaInfoList.add(new MediaInfo("", "", "", Duration.ZERO));
+                continue;
+            }
+            mediaInfoList.add(info);
         }
-        return info;
+        return mediaInfoList;
     }
 
 
