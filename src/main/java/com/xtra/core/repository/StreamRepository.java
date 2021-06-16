@@ -11,7 +11,7 @@ import java.util.Optional;
 public interface StreamRepository extends JpaRepository<Stream, Long> {
     List<PidOnly> findAllBy();
 
-    Optional<IdOnly> findByStreamToken(String streamToken);
+    Optional<Stream> findByStreamToken(String streamToken);
 
     List<Stream> findAllByIdIn(List<Long> ids);
 }

@@ -220,8 +220,8 @@ public class StreamService {
             else
                 throw new RuntimeException("Unknown Error " + HttpStatus.FORBIDDEN);
         } else {
-            var streamId = streamRepository.findByStreamToken(streamToken).orElseThrow();
-            File file = ResourceUtils.getFile(System.getProperty("user.home") + "/streams/" + streamId + "_." + extension);
+            var stream = streamRepository.findByStreamToken(streamToken).orElseThrow();
+            File file = ResourceUtils.getFile(System.getProperty("user.home") + "/streams/" + stream.getId() + "_." + extension);
             String playlist = new String(Files.readAllBytes(file.toPath()));
 
             Pattern pattern = Pattern.compile("(.*)\\.ts");
@@ -244,7 +244,7 @@ public class StreamService {
         LineStatus status = lineService.authorizeLineForStream(new LineAuth(lineToken, streamToken, ipAddress, userAgent, config.getServerToken()));
         if (status == LineStatus.OK) {
             var streamId = streamRepository.findByStreamToken(streamToken).orElseThrow();
-            return IOUtils.toByteArray(FileUtils.openInputStream(new File(System.getProperty("user.home") + "/streams/" + streamId + "_" + segment + "." + extension)));
+            return IOUtils.toByteArray(FileUtils.openInputStream(new File(System.getProperty("user.home") + "/streams/" + streamId.getId() + "_" + segment + "." + extension)));
         } else {
             throw new RuntimeException("Forbidden " + HttpStatus.FORBIDDEN);
         }

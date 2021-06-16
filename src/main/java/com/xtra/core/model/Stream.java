@@ -3,6 +3,7 @@ package com.xtra.core.model;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import lombok.Data;
+import lombok.ToString;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
@@ -12,6 +13,7 @@ import javax.persistence.OneToOne;
 @Data
 @Entity
 @JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy.class)
+@ToString(exclude = {"advancedStreamOptions", "progressInfo", "streamInfo"})
 public class Stream {
     @Id
     private Long id;
