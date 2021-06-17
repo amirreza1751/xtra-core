@@ -23,15 +23,20 @@ public class ServerService {
         long[][] oldProcTicks;
         oldProcTicks = new long[cpu.getLogicalProcessorCount()][CentralProcessor.TickType.values().length];
         double[] p = new double[cpu.getLogicalProcessorCount()];
+        NetworkInterface newNetworkInterface = new NetworkInterface();
         int i = 0;
         while (i< 2){
             p = cpu.getProcessorCpuLoadBetweenTicks(oldProcTicks);
             oldProcTicks = cpu.getProcessorCpuLoadTicks();
+            var oldNetworkInterface = getNetworkInterfaceDetails(interfaceName, hal);
             try {
                 Thread.sleep(400L);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
+            newNetworkInterface = getNetworkInterfaceDetails(interfaceName, hal);
+            newNetworkInterface.setBytesRecv((newNetworkInterface.getBytesRecv() - oldNetworkInterface.getBytesRecv()) * 1000/ 400);
+            newNetworkInterface.setBytesSent((newNetworkInterface.getBytesSent() - oldNetworkInterface.getBytesSent()) * 1000 / 400);
             i++;
         }
         List<Float> currentUsage = new ArrayList<>();
@@ -40,18 +45,17 @@ public class ServerService {
         }
 
         GlobalMemory mem = hal.getMemory();
-        NetworkInterface networkInterface = this.getNetworkInterfaceDetails(interfaceName, hal);
 
         return new Resource(
                 cpu.getMaxFreq()/1000000000000.0,
                 currentUsage,
                 mem.getTotal()/1000000000.0,
                 mem.getAvailable()/1000000000.0,
-                networkInterface.getName(),
-                networkInterface.getBytesSent(),
-                networkInterface.getBytesRecv(),
+                newNetworkInterface.getName(),
+                newNetworkInterface.getBytesSent(),
+                newNetworkInterface.getBytesRecv(),
                 si.getOperatingSystem().getProcess((int) ProcessHandle.current().pid()).getUpTime()/1000
-                );
+        );
     }
 
     public NetworkInterface getNetworkInterfaceDetails(String interfaceName, HardwareAbstractionLayer hal){
