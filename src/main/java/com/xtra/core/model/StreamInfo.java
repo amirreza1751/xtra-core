@@ -8,6 +8,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
 import javax.persistence.Id;
 
 @Entity
@@ -16,15 +18,11 @@ import javax.persistence.Id;
 @JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy.class)
 public class StreamInfo {
     @Id
-    private Long streamId;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
     private String uptime;
     private String currentInput;
     private String resolution;
     private String videoCodec;
     private String audioCodec;
-
-    public StreamInfo(Long streamId) {
-        this.streamId = streamId;
-    }
-
 }

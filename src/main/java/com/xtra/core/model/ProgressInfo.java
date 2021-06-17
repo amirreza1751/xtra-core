@@ -4,24 +4,20 @@ import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import lombok.Data;
 
-import javax.persistence.Entity;
-import javax.persistence.Id;
+import javax.persistence.*;
 
 @Entity
 @Data
 @JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy.class)
 public class ProgressInfo {
     @Id
-    private Long streamId;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @OneToOne(mappedBy = "progressInfo")
+    private Stream stream;
+
     private String speed;
     private String frameRate;
     private String bitrate;
-
-    public ProgressInfo() {
-
-    }
-
-    public ProgressInfo(Long streamId) {
-        this.streamId = streamId;
-    }
 }

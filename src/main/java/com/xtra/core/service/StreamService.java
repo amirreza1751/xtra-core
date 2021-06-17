@@ -1,49 +1,59 @@
 package com.xtra.core.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
 import com.xtra.core.config.DynamicConfig;
-import com.xtra.core.mapper.AdvancedStreamOptionsMapper;
+import com.xtra.core.dto.ChannelStart;
+import com.xtra.core.dto.LineAuth;
+import com.xtra.core.dto.StreamDetailsView;
+import com.xtra.core.dto.catchup.CatchupRecordView;
+import com.xtra.core.mapper.ChannelStartMapper;
+import com.xtra.core.mapper.StreamMapper;
 import com.xtra.core.model.*;
-import com.xtra.core.model.Process;
-import com.xtra.core.projection.ClassifiedStreamOptions;
-import com.xtra.core.projection.LineAuth;
-import com.xtra.core.projection.catchup.CatchupRecordView;
-import com.xtra.core.repository.*;
+import com.xtra.core.model.exception.EntityNotFoundException;
+import com.xtra.core.repository.CatchUpInfoRepository;
+import com.xtra.core.repository.StreamInfoRepository;
+import com.xtra.core.repository.StreamRepository;
+import lombok.extern.log4j.Log4j2;
 import net.bramp.ffmpeg.FFmpeg;
 import net.bramp.ffmpeg.builder.FFmpegBuilder;
 import net.bramp.ffmpeg.builder.FFmpegOutputBuilder;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.*;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ResourceUtils;
-import org.springframework.web.client.RestClientException;
-import org.springframework.web.client.RestTemplate;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static com.xtra.core.utility.Util.removeQuotations;
+
 @Service
+@Log4j2
 public class StreamService {
-    private final ProcessRepository processRepository;
     private final ProcessService processService;
-    private final StreamInfoRepository streamInfoRepository;
-    private final ProgressInfoRepository progressInfoRepository;
     private final LineService lineService;
     private final ApiService apiService;
-    private final AdvancedStreamOptionsMapper advancedStreamOptionsMapper;
-    private final ConfigurationRepository configurationRepository;
     private final CatchUpInfoRepository catchUpInfoRepository;
+    private final StreamRepository streamRepository;
+    private final StreamInfoRepository streamInfoRepository;
+    private final ChannelStartMapper channelStartMapper;
+    private final StreamMapper streamMapper;
     private final DynamicConfig config;
 
     @Value("${main.apiPath}")
@@ -53,39 +63,27 @@ public class StreamService {
     @Value("${server.port}")
     private String serverPort;
 
+    File streamsDirectory;
+
     @Value("${nginx.address}")
     private String nginxAddress;
     @Value("${nginx.port}")
     private String nginxPort;
 
     @Autowired
-    public StreamService(ProcessRepository processRepository, ProcessService processService, StreamInfoRepository streamInfoRepository, ProgressInfoRepository progressInfoRepository, LineService lineService, ApiService apiService, AdvancedStreamOptionsMapper advancedStreamOptionsMapper, ConfigurationRepository configurationRepository, CatchUpInfoRepository catchUpInfoRepository, DynamicConfig config) {
-        this.processRepository = processRepository;
+    public StreamService(ProcessService processService, LineService lineService, ApiService apiService,
+                         CatchUpInfoRepository catchUpInfoRepository, StreamRepository streamRepository,
+                         StreamInfoRepository streamInfoRepository, ChannelStartMapper channelStartMapper, StreamMapper streamMapper, DynamicConfig config) {
         this.processService = processService;
-        this.streamInfoRepository = streamInfoRepository;
-        this.progressInfoRepository = progressInfoRepository;
         this.lineService = lineService;
         this.apiService = apiService;
-        this.advancedStreamOptionsMapper = advancedStreamOptionsMapper;
-        this.configurationRepository = configurationRepository;
         this.catchUpInfoRepository = catchUpInfoRepository;
+        this.streamRepository = streamRepository;
+        this.streamInfoRepository = streamInfoRepository;
+        this.channelStartMapper = channelStartMapper;
+        this.streamMapper = streamMapper;
         this.config = config;
-    }
-
-    public boolean startStream(Stream stream) {
-        if (stream == null) {
-            System.out.println("Stream is null");
-            return false;
-        }
-        Long streamId = stream.getId();
-
-        Optional<Process> process = processRepository.findByProcessIdStreamId(streamId);
-        if (process.isPresent()) {
-            System.out.println("Stream is Already started");
-            return false;
-        }
-
-        File streamsDirectory = new File(
+        streamsDirectory = new File(
                 System.getProperty("user.home") + File.separator + "streams"
         );
         if (!streamsDirectory.exists()) {
@@ -94,157 +92,103 @@ public class StreamService {
                 throw new RuntimeException("Could not create directory");
             }
         }
+    }
 
-        String currentInput = stream.getStreamInputs().get(stream.getSelectedSource());
+    public void startStream(ChannelStart channelStart) {
+        Stream stream = streamRepository.findById(channelStart.getId()).orElse(new Stream());
+        stream = channelStartMapper.updateStreamFields(channelStart, stream);
+        Long pid = processService.runProcess(getProcessArgsForStream(stream).toArray(new String[0]));
+        if (pid != -1L) {
+            stream.setPid(pid);
+            stream.setStreamInfo(new StreamInfo());
+            stream.setProgressInfo(new ProgressInfo());
+            streamRepository.save(stream);
+        }
+    }
 
-        ClassifiedStreamOptions classifiedStreamOptions = advancedStreamOptionsMapper.convertToClassified(stream.getAdvancedStreamOptions());
+
+    public void stopStream(Long streamId) {
+        var stream = streamRepository.findById(streamId).orElseThrow(() -> new EntityNotFoundException("Stream", streamId));
+        processService.stopProcess(stream.getPid());
+        streamRepository.delete(stream);
+    }
+
+    public boolean restartStream(Long streamId) {
+        var stream = streamRepository.findById(streamId).orElseThrow(() -> new EntityNotFoundException("Stream", streamId));
+        processService.stopProcess(stream.getPid());
+        Long pid = processService.runProcess(getProcessArgsForStream(stream).toArray(new String[0]));
+        stream.setPid(pid);
+        streamRepository.save(stream);
+        return true;
+    }
+
+    public void startAllStreams(List<ChannelStart> channelStarts) {
+        for (var channelStart : channelStarts) {
+            startStream(channelStart);
+        }
+    }
+
+    public void stopAllStreams() {
+        killAllStreamProcesses();
+        streamRepository.deleteAll();
+    }
+
+    public boolean restartAllStreams() {
+        List<Stream> streams = streamRepository.findAll();
+        killAllStreamProcesses();
+        for (var stream : streams) {
+            Long pid = processService.runProcess(getProcessArgsForStream(stream).toArray(new String[0]));
+            stream.setPid(pid);
+        }
+        streamRepository.saveAll(streams);
+        return true;
+    }
+
+    private void killAllStreamProcesses() {
+        var processIds = streamRepository.findAllBy();
+        for (var pid : processIds) {
+            processService.stopProcess(pid.getPid());
+        }
+    }
+
+    private List<String> getProcessArgsForStream(Stream stream) {
+        var advancedOptions = stream.getAdvancedStreamOptions();
 
         FFmpegBuilder builder = new FFmpegBuilder();
-        if (classifiedStreamOptions != null && classifiedStreamOptions.getInputFlags() != null)
-            builder.addExtraArgs(classifiedStreamOptions.getInputFlags());
-        if (classifiedStreamOptions != null && classifiedStreamOptions.getInputKeyValues() != null)
-            builder.addExtraArgs(classifiedStreamOptions.getInputKeyValues());
+        if (advancedOptions.isNativeFrames())
+            builder.addExtraArgs("-re");
+        if (advancedOptions.getProbeSize() > 32)
+            builder.addExtraArgs("-probesize", String.valueOf(advancedOptions.getProbeSize()));
+        if (!StringUtils.isEmpty(advancedOptions.getHttpProxy()))
+            builder.addExtraArgs("-http_proxy", "http://" + advancedOptions.getHttpProxy());
+        if (!StringUtils.isEmpty(advancedOptions.getHeaders()))
+            builder.addExtraArgs("-headers", advancedOptions.getHeaders());
+        if (advancedOptions.isGeneratePts())
+            builder.addExtraArgs("-fflags", "+genpts");
 
-        FFmpegOutputBuilder fFmpegOutputBuilder = builder.setInput(currentInput)
-                .addOutput(streamsDirectory.getAbsolutePath() + "/" + stream.getStreamToken() + "_.m3u8")
+        FFmpegOutputBuilder fFmpegOutputBuilder = builder
+                .addProgress(URI.create("http://" + serverAddress + ":" + serverPort + "/update?stream_id=" + stream.getId()))
+                .setInput(stream.getStreamInput())
+                .addOutput(streamsDirectory.getAbsolutePath() + "/" + stream.getId() + "_.m3u8")
                 .addExtraArgs("-acodec", "copy")
                 .addExtraArgs("-vcodec", "copy")
                 .addExtraArgs("-f", "hls")
                 .addExtraArgs("-safe", "0")
                 .addExtraArgs("-segment_time", "10")
                 .addExtraArgs("-hls_flags", "delete_segments+append_list");
-        if (classifiedStreamOptions != null && classifiedStreamOptions.getOutputFlags() != null)
-            fFmpegOutputBuilder.addExtraArgs(classifiedStreamOptions.getOutputFlags());
-        if (classifiedStreamOptions != null && classifiedStreamOptions.getOutputKeyValues() != null)
-            fFmpegOutputBuilder.addExtraArgs(classifiedStreamOptions.getOutputKeyValues());
+
         builder = fFmpegOutputBuilder.done();
-        builder.addProgress(URI.create("http://" + serverAddress + ":" + serverPort + "/update?stream_id=" + streamId));
-        List<String> args = builder.build();
-        List<String> newArgs =
-                ImmutableList.<String>builder().add(FFmpeg.DEFAULT_PATH).addAll(args).build();
-        //print the command
-        for (String item : newArgs) {
-            System.out.print(item + " ");
-        }
-        System.out.println("");
-        //print the command
-
-        Long pid = processService.runProcess(newArgs.toArray(new String[0]));
-        if (pid == -1L) {
-            return false;
-        } else {
-            processRepository.save(new Process(stream.getId(), pid));
-            Optional<StreamInfo> streamInfoRecord = streamInfoRepository.findByStreamId(streamId);
-            StreamInfo streamInfo = streamInfoRecord.orElseGet(() -> new StreamInfo(streamId));
-            streamInfo.setCurrentInput(currentInput);
-            streamInfoRepository.save(streamInfo);
-        }
-        return true;
+        return ImmutableList.<String>builder().add(FFmpeg.DEFAULT_PATH).addAll(builder.build()).build();
     }
 
-    public boolean startStream(Long streamId) { //Overload start stream for starting single stream
-        Stream stream = getStream(streamId);
-        if (stream == null) {
-            System.out.println("Stream is null");
-            return false;
-        }
-        return startStream(stream);
-    }
-
-    public boolean stopStream(Long streamId) {
-        Optional<Process> process = processRepository.findByProcessIdStreamId(streamId);
-        if (process.isPresent()) {
-            var pid = process.get().getProcessId().getPid();
-            processService.stopProcess(pid);
-            processRepository.deleteByProcessIdStreamId(streamId);
-
-            Optional<ProgressInfo> progressInfo = progressInfoRepository.findByStreamId(streamId);
-            if (progressInfo.isPresent()) {
-                progressInfoRepository.deleteById(streamId);
-            }
-            Optional<StreamInfo> streamInfo = streamInfoRepository.findByStreamId(streamId);
-            if (streamInfo.isPresent()) {
-                streamInfoRepository.deleteById(streamId);
-            }
-
-        } else {
-            return false;
-        }
-        return true;
-    }
-
-    public boolean restartStream(Long streamId) {
-        this.stopStream(streamId);
-        this.startStream(streamId);
-        return true;
-    }
-
-    public boolean startAllStreams() { //Overload start stream for batch start streams
-        List<Stream> streams = getBatchStreams().getChannelList();
-        for (Stream stream : streams) {
-            startStream(stream);
-        }
-        return true;
-    }
-
-    public boolean stopAllStreams() {
-        var processes = processRepository.findAll();
-        processes.forEach(process -> {
-            stopStream(process.getStreamId());
-        });
-        return true;
-    }
-
-    public boolean restartAllStreams() {
-        this.stopAllStreams();
-        this.startAllStreams();
-        return true;
-    }
 
     public boolean batchStopStreams(List<Long> streamIds) {
-        var processes = processRepository.findByProcessIdStreamIdIn(streamIds);
-        if (processes.size() > 0) {
-            processes.forEach(process -> {
-                this.stopStream(process.getStreamId());
-            });
+        var streams = streamRepository.findAllByIdIn(streamIds);
+        for (var stream : streams) {
+            processService.stopProcess(stream.getPid());
         }
+        streamRepository.deleteInBatch(streams);
         return true;
-    }
-
-
-    public Stream getStream(Long streamId) {
-        try {
-            var token = configurationRepository.findById("token").orElseThrow();
-            //@// TODO: 4/22/21 write general api calling with headers
-            RestTemplate restTemplate = new RestTemplate();
-            HttpHeaders httpHeaders = new HttpHeaders();
-            httpHeaders.set("token", token.getValue());
-            HttpEntity<String> entity = new HttpEntity<>(null, httpHeaders);
-            return restTemplate.exchange(mainApiPath + "/servers/current/channels/" + streamId + "?port=" + serverPort, HttpMethod.GET, entity, Stream.class).getBody();
-        } catch (RestClientException e) {
-            //@todo log exception
-            System.out.println(e.getMessage());
-            return null;
-        }
-    }
-
-    public ChannelList getBatchStreams() {
-        try {
-            return apiService.sendGetRequest("/servers/current/channels", ChannelList.class);
-        } catch (RestClientException e) {
-            System.out.println(e.getMessage());
-            return null;
-        }
-    }
-
-    public Long getStreamId(String streamToken) {
-        try {
-            return apiService.sendGetRequest("/channels/get_id/" + streamToken, Long.class);
-        } catch (RestClientException e) {
-            //@todo log exception
-            System.out.println(e.getMessage());
-            return null;
-        }
     }
 
 
@@ -267,7 +211,8 @@ public class StreamService {
             else
                 throw new RuntimeException("Unknown Error " + HttpStatus.FORBIDDEN);
         } else {
-            File file = ResourceUtils.getFile(System.getProperty("user.home") + "/streams/" + streamToken + "_." + extension);
+            var stream = streamRepository.findByStreamToken(streamToken).orElseThrow();
+            File file = ResourceUtils.getFile(System.getProperty("user.home") + "/streams/" + stream.getId() + "_." + extension);
             String playlist = new String(Files.readAllBytes(file.toPath()));
 
             Pattern pattern = Pattern.compile("(.*)\\.ts");
@@ -289,7 +234,8 @@ public class StreamService {
             , String extension, String segment, String userAgent, String ipAddress) throws IOException {
         LineStatus status = lineService.authorizeLineForStream(new LineAuth(lineToken, streamToken, ipAddress, userAgent, config.getServerToken()));
         if (status == LineStatus.OK) {
-            return IOUtils.toByteArray(FileUtils.openInputStream(new File(System.getProperty("user.home") + "/streams/" + streamToken + "_" + segment + "." + extension)));
+            var stream = streamRepository.findByStreamToken(streamToken).orElseThrow();
+            return IOUtils.toByteArray(FileUtils.openInputStream(new File(System.getProperty("user.home") + "/streams/" + stream.getId() + "_" + segment + "." + extension)));
         } else {
             throw new RuntimeException("Forbidden " + HttpStatus.FORBIDDEN);
         }
@@ -353,4 +299,44 @@ public class StreamService {
         return true;
     }
 
+
+    public void updateStreamInfo() {
+        var streams = streamRepository.findAll();
+        streams.forEach((stream -> {
+            var uptime = processService.getProcessEtime(stream.getPid());
+            var info = updateStreamFFProbeData(stream, stream.getStreamInfo());
+            info.setUptime(uptime);
+            streamInfoRepository.save(info);
+        }));
+    }
+
+    private StreamInfo updateStreamFFProbeData(Stream stream, StreamInfo info) {
+        String streamUrl = System.getProperty("user.home") + File.separator + "streams" + File.separator + stream.getId() + "_.m3u8";
+        ProcessOutput processOutput = processService.analyzeStream(streamUrl, "codec_name,width,height,bit_rate");
+        ObjectMapper objectMapper = new ObjectMapper();
+        try {
+            var root = objectMapper.readTree(processOutput.getOutput());
+            var video = root.get("streams").get(0);
+            info.setVideoCodec(removeQuotations(video.get("codec_name").toPrettyString()));
+            info.setResolution(video.get("width") + "x" + video.get("height"));
+
+            var audio = root.get("streams").get(1);
+            if (audio.has("codec_name"))
+                info.setAudioCodec(removeQuotations(audio.get("codec_name").toPrettyString()));
+        } catch (Exception ignored) {
+        }
+        return info;
+    }
+
+    public List<StreamDetailsView> getStreamDetails() {
+        List<StreamDetailsView> streamDetailsViews = new ArrayList<>();
+        var streams = streamRepository.findAll();
+        for (var stream : streams) {
+            StreamDetailsView detailsView = new StreamDetailsView(stream.getId());
+            detailsView = streamMapper.copyStreamInfo(stream.getStreamInfo(), detailsView);
+            detailsView = streamMapper.copyProgressInfo(stream.getProgressInfo(), detailsView);
+            streamDetailsViews.add(detailsView);
+        }
+        return streamDetailsViews;
+    }
 }

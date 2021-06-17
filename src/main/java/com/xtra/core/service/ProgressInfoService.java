@@ -1,6 +1,7 @@
 package com.xtra.core.service;
 
 import com.xtra.core.model.ProgressInfo;
+import com.xtra.core.model.exception.EntityNotFoundException;
 import com.xtra.core.repository.ProgressInfoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -19,7 +20,7 @@ public class ProgressInfoService {
 
     public void updateProgressInfo(Long streamId, InputStream dataStream) {
         Scanner s = new Scanner(dataStream).useDelimiter("\\s");
-        ProgressInfo progressInfo = new ProgressInfo(streamId);
+        ProgressInfo progressInfo = progressInfoRepository.findByStreamId(streamId).orElseThrow(() -> new EntityNotFoundException("stream", streamId));
         while (s.hasNextLine()) {
             var property = s.nextLine();
             var splitProps = property.split("=");

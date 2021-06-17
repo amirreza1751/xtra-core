@@ -1,4 +1,4 @@
-package com.xtra.core.projection.catchup;
+package com.xtra.core.dto.catchup;
 
 import lombok.Data;
 

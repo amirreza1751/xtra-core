@@ -4,7 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xtra.core.config.DynamicConfig;
 import com.xtra.core.model.*;
-import com.xtra.core.projection.LineAuth;
+import com.xtra.core.dto.LineAuth;
 import org.apache.commons.io.FilenameUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;

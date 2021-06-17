@@ -1,29 +1,25 @@
 package com.xtra.core.service;
 
 import com.xtra.core.model.ProcessOutput;
-import com.xtra.core.repository.ProcessRepository;
-import com.xtra.core.repository.StreamInfoRepository;
+import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.springframework.stereotype.Service;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
 import static com.sun.jna.Platform.isWindows;
 
 @Service
+@Log4j2
 public class ProcessService {
-    private final StreamInfoRepository streamInfoRepository;
-    private final ProcessRepository processRepository;
-
-    public ProcessService(StreamInfoRepository streamInfoRepository, ProcessRepository processRepository) {
-        this.streamInfoRepository = streamInfoRepository;
-        this.processRepository = processRepository;
-    }
 
     public Long runProcess(String... args) {
         File bitbucket;
@@ -39,26 +35,16 @@ public class ProcessService {
                     .redirectOutput(ProcessBuilder.Redirect.appendTo(bitbucket))
                     .redirectError(ProcessBuilder.Redirect.appendTo(bitbucket))
                     .start();
+            log.info("Starting process with args: " + Arrays.toString(args) + "\r\n pid: " + proc.pid());
         } catch (IOException e) {
-            //@todo log
-            System.out.println(e.getMessage());
+            log.error("Starting process with args: " + Arrays.toString(args) + " failed");
             return -1L;
         }
         return proc.pid();
     }
 
-    public long stopProcess(Long pid) {
-        Process proc;
-        try {
-            proc = new ProcessBuilder("kill", pid.toString()).start();
-            var process = processRepository.findByProcessIdPid(pid).get();
-            var streamInfo = streamInfoRepository.findByStreamId(process.getStreamId()).get();
-            streamInfo.setUptime(DurationFormatUtils.formatDuration(0, "H:mm:ss"));
-            streamInfoRepository.save(streamInfo);
-        } catch (IOException e) {
-            return -1;
-        }
-        return proc.pid();
+    public void stopProcess(Long pid) {
+        ProcessHandle.of(pid).ifPresent(ProcessHandle::destroy);
     }
 
     public String getProcessEtime(Long pid) {
@@ -85,7 +71,7 @@ public class ProcessService {
                     "-i",
                     sourceInput,
                     "-analyzeduration",
-                    "500000"
+                    "2000000"
             ).start();
             BufferedReader in = new BufferedReader(new InputStreamReader(proc.getInputStream()));
             output = in.lines().map(Object::toString).collect(Collectors.joining(" "));
@@ -96,7 +82,7 @@ public class ProcessService {
         return new ProcessOutput(output, proc.exitValue());
     }
 
-    public String getMediaInfo(String sourceInput){
+    public String getMediaInfo(String sourceInput) {
         Process proc;
         String output = "";
         try {

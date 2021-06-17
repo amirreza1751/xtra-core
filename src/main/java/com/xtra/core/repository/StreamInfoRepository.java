@@ -7,5 +7,4 @@ import javax.transaction.Transactional;
 import java.util.Optional;
 
 public interface StreamInfoRepository extends JpaRepository<StreamInfo, Long> {
-    Optional<StreamInfo> findByStreamId(Long streamId);
 }
