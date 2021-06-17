@@ -23,21 +23,7 @@ public class StreamOpController {
     //Start a new Stream
     @PostMapping("start")
     public ResponseEntity<?> startStream(@RequestBody ChannelStart channelStart) {
-        streamService.startStream(channelStart, false);
-        return ResponseEntity.ok().build();
-    }
-
-    // Restart A stream with new Args
-    @PostMapping("restart")
-    public ResponseEntity<?> restartStream(@RequestBody ChannelStart channelStart) {
-        streamService.startStream(channelStart, true);
-        return ResponseEntity.ok().build();
-    }
-
-    // Restart with Existing Args
-    @GetMapping("{id}/restart")
-    public ResponseEntity<?> restartStream(@PathVariable Long id) {
-        streamService.restartStream(id);
+        streamService.startStream(channelStart);
         return ResponseEntity.ok().build();
     }
 
@@ -66,13 +52,6 @@ public class StreamOpController {
     @GetMapping("stop")
     public ResponseEntity<?> stopAllStreams() {
         streamService.stopAllStreams();
-        return ResponseEntity.ok().build();
-    }
-
-    // Restart All Streams
-    @GetMapping("restart")
-    public ResponseEntity<?> restartAllStreams() {
-        streamService.restartAllStreams();
         return ResponseEntity.ok().build();
     }
 

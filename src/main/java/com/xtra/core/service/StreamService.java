@@ -10,7 +10,6 @@ import com.xtra.core.dto.catchup.CatchupRecordView;
 import com.xtra.core.mapper.ChannelStartMapper;
 import com.xtra.core.mapper.StreamMapper;
 import com.xtra.core.model.*;
-import com.xtra.core.model.exception.ActionNotAllowedException;
 import com.xtra.core.model.exception.EntityNotFoundException;
 import com.xtra.core.repository.CatchUpInfoRepository;
 import com.xtra.core.repository.StreamInfoRepository;
@@ -95,17 +94,9 @@ public class StreamService {
         }
     }
 
-    public void startStream(ChannelStart channelStart, boolean restart) {
-        Stream stream;
-        if (restart) {
-            var existingStream = streamRepository.findById(channelStart.getId()).orElseThrow(() -> new EntityNotFoundException("Stream", channelStart.getId()));
-            stream = channelStartMapper.updateStreamFields(channelStart, existingStream);
-        } else {
-            streamRepository.findById(channelStart.getId()).ifPresent(st -> {
-                throw new ActionNotAllowedException("Stream is already started");
-            });
-            stream = channelStartMapper.convertToStream(channelStart);
-        }
+    public void startStream(ChannelStart channelStart) {
+        Stream stream = streamRepository.findById(channelStart.getId()).orElse(new Stream());
+        stream = channelStartMapper.updateStreamFields(channelStart, stream);
         Long pid = processService.runProcess(getProcessArgsForStream(stream).toArray(new String[0]));
         if (pid != -1L) {
             stream.setPid(pid);
@@ -133,7 +124,7 @@ public class StreamService {
 
     public void startAllStreams(List<ChannelStart> channelStarts) {
         for (var channelStart : channelStarts) {
-            startStream(channelStart, false);
+            startStream(channelStart);
         }
     }
 
@@ -220,8 +211,8 @@ public class StreamService {
             else
                 throw new RuntimeException("Unknown Error " + HttpStatus.FORBIDDEN);
         } else {
-            var streamId = streamRepository.findByStreamToken(streamToken).orElseThrow();
-            File file = ResourceUtils.getFile(System.getProperty("user.home") + "/streams/" + streamId + "_." + extension);
+            var stream = streamRepository.findByStreamToken(streamToken).orElseThrow();
+            File file = ResourceUtils.getFile(System.getProperty("user.home") + "/streams/" + stream.getId() + "_." + extension);
             String playlist = new String(Files.readAllBytes(file.toPath()));
 
             Pattern pattern = Pattern.compile("(.*)\\.ts");
@@ -243,8 +234,8 @@ public class StreamService {
             , String extension, String segment, String userAgent, String ipAddress) throws IOException {
         LineStatus status = lineService.authorizeLineForStream(new LineAuth(lineToken, streamToken, ipAddress, userAgent, config.getServerToken()));
         if (status == LineStatus.OK) {
-            var streamId = streamRepository.findByStreamToken(streamToken).orElseThrow();
-            return IOUtils.toByteArray(FileUtils.openInputStream(new File(System.getProperty("user.home") + "/streams/" + streamId + "_" + segment + "." + extension)));
+            var stream = streamRepository.findByStreamToken(streamToken).orElseThrow();
+            return IOUtils.toByteArray(FileUtils.openInputStream(new File(System.getProperty("user.home") + "/streams/" + stream.getId() + "_" + segment + "." + extension)));
         } else {
             throw new RuntimeException("Forbidden " + HttpStatus.FORBIDDEN);
         }
@@ -324,7 +315,6 @@ public class StreamService {
         ProcessOutput processOutput = processService.analyzeStream(streamUrl, "codec_name,width,height,bit_rate");
         ObjectMapper objectMapper = new ObjectMapper();
         try {
-            System.out.println(processOutput.getOutput());
             var root = objectMapper.readTree(processOutput.getOutput());
             var video = root.get("streams").get(0);
             info.setVideoCodec(removeQuotations(video.get("codec_name").toPrettyString()));
