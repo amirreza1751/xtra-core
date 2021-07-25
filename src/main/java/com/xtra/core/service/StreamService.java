@@ -264,7 +264,7 @@ public class StreamService {
         var programLength = ChronoUnit.SECONDS.between(catchupRecordView.getStart(), catchupRecordView.getStop());
         FFmpegBuilder builder = new FFmpegBuilder();
         builder.setInput(catchupRecordView.getStreamInput())
-                .addOutput(catchUpDirectory.getAbsolutePath() + "/" + catchupRecordView.getStart() + "_" + catchupRecordView.getStop() + "_" + catchupRecordView.getTitle() + ".ts")
+                .addOutput(catchUpDirectory.getAbsolutePath() + "/" + catchupRecordView.getStart() + "_" + catchupRecordView.getStop() + "_" + catchupRecordView.getTitle() + ".mp4")
                 .addExtraArgs("-acodec", "copy")
                 .addExtraArgs("-vcodec", "copy")
                 .addExtraArgs("-t", Long.toString(programLength))
@@ -289,7 +289,7 @@ public class StreamService {
                 if (proc.exitValue() == 1) {
                     throw new RuntimeException("Recording failed.");
                 }
-                catchupRecordView.setLocation(catchUpDirectory.getAbsolutePath() + "/" + catchupRecordView.getStart() + "_" + catchupRecordView.getStop() + "_" + catchupRecordView.getTitle() + ".ts");
+                catchupRecordView.setLocation(catchUpDirectory.getAbsolutePath() + "/" + catchupRecordView.getStart() + "_" + catchupRecordView.getStop() + "_" + catchupRecordView.getTitle() + ".mp4");
                 apiService.sendPostRequest("/catch-up/streams/" + streamId + "/recording/false", String.class, catchupRecordView);
             } catch (IOException | InterruptedException e) {
                 System.out.println(e.getMessage());

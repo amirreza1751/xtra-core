@@ -44,7 +44,7 @@ public class CoreTaskScheduler {
         var infos = catchUpInfoRepository.findAll();
         if (infos.size() > 0) {
             for (CatchUpInfo catchUpInfo : infos) {
-                fileSystemService.deleteOldFilesAfterDays(catchUpInfo.getCatchUpDays(), ".ts", System.getProperty("user.home") + File.separator + "tv_archive" + File.separator + catchUpInfo.getStreamId());
+                fileSystemService.deleteOldFilesAfterDays(catchUpInfo.getCatchUpDays(), ".mp4", System.getProperty("user.home") + File.separator + "tv_archive" + File.separator + catchUpInfo.getStreamId());
             }
         }
     }

@@ -45,10 +45,14 @@ public class ApiService {
     }
 
     public <T> T sendPostRequest(String path, Class<T> tClass, Object data) {
+        var token = configurationRepository.findById("token").orElseThrow();
         String uri = mainApiPath + path;
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.set("token", token.getValue());
+        HttpEntity<Object> entity = new HttpEntity<>(data, httpHeaders);
         ResponseEntity<T> result;
         try {
-            result = restTemplate.postForEntity(uri, data, tClass);
+            result = restTemplate.exchange(uri, HttpMethod.POST, entity, tClass);
         } catch (HttpClientErrorException | NullPointerException exception) {
             System.out.println(exception.getMessage());
             return null;
