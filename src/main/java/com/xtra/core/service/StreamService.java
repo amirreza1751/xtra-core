@@ -326,6 +326,7 @@ public class StreamService {
                 info.setAudioCodec(removeQuotations(audio.get("codec_name").toPrettyString()));
         } catch (Exception ignored) {
         }
+        info.setCurrentInput(stream.getStreamInput());
         return info;
     }
 
