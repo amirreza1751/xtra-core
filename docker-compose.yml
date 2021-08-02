@@ -1,7 +1,7 @@
 version: '3'
 services:
   database:
-    image: "mariadb:10.3"
+    image: "mariadb:10.6.3-focal"
     environment:
       - MYSQL_USER=core-user
       - MYSQL_PASSWORD=qweasdzxc
@@ -14,8 +14,14 @@ services:
     networks:
       - spring-network
     restart: always
+  nginx:
+    build: images/nginx-with-vod/.
+    ports:
+      -1234:1324
+    volumes:
+    - ./streams:/home/streams
   spring:
-    build: .
+    image: registry.gitlab.com/xtrapanel/xtra-core
     environment:
       - spring.datasource.url=jdbc:mariadb://database:3306/xtra-core
       - spring.datasource.driver-class-name=org.mariadb.jdbc.Driver
