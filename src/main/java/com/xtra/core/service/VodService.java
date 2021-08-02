@@ -174,7 +174,7 @@ public class VodService {
         if (lineStatus != LineStatus.OK)
             throw new RuntimeException("Forbidden " + HttpStatus.FORBIDDEN);
         else {
-            URL url = new URL(serverAddress + ":1234" + "/hls/" + vodToken + ".json/master.m3u8");
+            URL url = new URL(serverAddress + ":1234" + "/hls/" + lineToken + "_" + vodToken + ".json/master.m3u8");
             HttpURLConnection con = (HttpURLConnection) url.openConnection();
             con.setRequestMethod("GET");
             con.setConnectTimeout(5000);
@@ -197,31 +197,38 @@ public class VodService {
 
     }
 
-
-    public String jsonHandler(String vod_token) {
-        Vod vod = this.getVodByToken(vod_token.replace(".json", ""));
-        JSONArray sequences = new JSONArray();
-        for (Subtitle subtitle : vod.getSubtitles()) {
-            JSONObject clips_object = new JSONObject();
-            clips_object.put("language", subtitle.getLanguage());
-            clips_object.put("clips", new JSONArray()
-                    .put(new JSONObject()
-                            .put("type", "source")
-                            .put("path", subtitle.getLocation())));
-
-            sequences.put(clips_object);
-        }
-        sequences.put(new JSONObject()
-                .put("clips", new JSONArray()
+    public String jsonHandler(String token, String ipAddress, String userAgent) {
+        String[] tokens = token.split("_");
+        //tokens[0] => line token
+        //tokens[1] => vod token
+        LineStatus lineStatus = lineService.authorizeLineForVod(new LineAuth(tokens[0], tokens[1].replace(".json", ""), ipAddress, userAgent, config.getServerToken()));
+        if (lineStatus != LineStatus.OK)
+            throw new RuntimeException("Forbidden " + HttpStatus.FORBIDDEN);
+        else {
+            Vod vod = this.getVodByToken(tokens[1].replace(".json", ""));
+            JSONArray sequences = new JSONArray();
+            for (Subtitle subtitle : vod.getSubtitles()) {
+                JSONObject clips_object = new JSONObject();
+                clips_object.put("language", subtitle.getLanguage());
+                clips_object.put("clips", new JSONArray()
                         .put(new JSONObject()
                                 .put("type", "source")
-                                .put("path", vod.getLocation()))));
-        System.out.println(new JSONObject()
-                .put("sequences", sequences)
-                .toString());
-        return new JSONObject()
-                .put("sequences", sequences)
-                .toString();
+                                .put("path", subtitle.getLocation())));
+
+                sequences.put(clips_object);
+            }
+            sequences.put(new JSONObject()
+                    .put("clips", new JSONArray()
+                            .put(new JSONObject()
+                                    .put("type", "source")
+                                    .put("path", vod.getLocation()))));
+            System.out.println(new JSONObject()
+                    .put("sequences", sequences)
+                    .toString());
+            return new JSONObject()
+                    .put("sequences", sequences)
+                    .toString();
+        }
     }
 
 }
