@@ -13,7 +13,7 @@ package:
   script:
     - export SPRING_PROFILES_ACTIVE=dev
     - ./gradlew assemble -Dhttps.proxyHost=fodev.org -Dhttps.proxyPort=8118
-    - sudo cp build/libs/*.jar /var/xtra/core.jar
+    - sudo cp build/libs/core-0.0.1-SNAPSHOT.jar /var/xtra/core.jar
     - sudo systemctl restart xtra-core
   artifacts:
     paths:
