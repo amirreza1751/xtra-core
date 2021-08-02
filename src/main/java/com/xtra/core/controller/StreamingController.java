@@ -83,9 +83,9 @@ public class StreamingController {
                 .body(content);
     }
 
-    @GetMapping("vod/json_handler/hls/{vod_token}")
-    public ResponseEntity<String> jsonHandler(@PathVariable String vod_token) {
-        String jsonString = vodService.jsonHandler(vod_token);
+    @GetMapping("vod/json_handler/hls/{token}")
+    public ResponseEntity<String> jsonHandler(@PathVariable String token, @RequestHeader(value = "HTTP_USER_AGENT", defaultValue = "") String userAgent, HttpServletRequest request) {
+        String jsonString = vodService.jsonHandler(token, request.getRemoteAddr(), userAgent);
         HttpHeaders responseHeaders = new HttpHeaders();
         return ResponseEntity.ok()
                 .headers(responseHeaders).contentType(MediaType.APPLICATION_JSON)

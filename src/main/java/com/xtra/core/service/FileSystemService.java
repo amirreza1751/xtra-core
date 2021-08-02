@@ -49,7 +49,6 @@ public class FileSystemService {
             long eligibleForDeletion = System.currentTimeMillis() - (days * 24 * 60 * 60 * 1000L);
 
             for (java.io.File listFile : listFiles) {
-
                 if (listFile.getName().endsWith(fileExtension) &&
                         listFile.lastModified() < eligibleForDeletion) {
 
