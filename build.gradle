@@ -57,7 +57,7 @@ configurations {
 
 jib{
 	from{
-		image='alirezadhb/xtra-core-base'
+		image='registry.gitlab.com/xtrapanel/xtra-core/xtra-core-base'
 	}
 	to {
 		image = 'registry.gitlab.com/xtrapanel/xtra-core'

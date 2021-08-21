@@ -2,6 +2,7 @@ version: '3'
 services:
   database:
     image: "mariadb:10.6.3-focal"
+
     environment:
       - MYSQL_USER=core-user
       - MYSQL_PASSWORD=qweasdzxc
@@ -15,11 +16,13 @@ services:
       - spring-network
     restart: always
   nginx:
-    build: images/nginx-with-vod/.
+    image: registry.gitlab.com/xtrapanel/xtra-core/nginx-vod
     ports:
-      -1234:1324
+      - 1234:1324
     volumes:
-    - ./streams:/home/streams
+      - ./streams:/home/streams
+      - ./vod:/home/vod
+      - ./tv_archives:/home/tv_archives
   spring:
     image: registry.gitlab.com/xtrapanel/xtra-core
     environment:
@@ -40,6 +43,10 @@ services:
     networks:
       - spring-network
     restart: on-failure
+    volumes:
+    - ./streams:/home/streams
+    - ./vod:/home/vod
+    - ./tv_archives:/home/tv_archives
 networks:
   spring-network:
     driver: bridge
