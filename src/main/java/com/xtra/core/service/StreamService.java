@@ -58,7 +58,7 @@ public class StreamService {
 
     @Value("${main.apiPath}")
     private String mainApiPath;
-    @Value("${server.address}")
+    @Value("${server.external.address}")
     private String serverAddress;
     @Value("${server.port}")
     private String serverPort;
