@@ -187,7 +187,7 @@ public class StreamService {
         for (var stream : streams) {
             processService.stopProcess(stream.getPid());
         }
-        streamRepository.deleteInBatch(streams);
+        streamRepository.deleteAllInBatch(streams);
         return true;
     }
 
