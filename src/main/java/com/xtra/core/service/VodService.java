@@ -174,7 +174,7 @@ public class VodService {
         if (lineStatus != LineStatus.OK)
             throw new RuntimeException("Forbidden " + HttpStatus.FORBIDDEN);
         else {
-            URL url = new URL(serverAddress + ":1234" + "/hls/" + lineToken + "_" + vodToken + ".json/master.m3u8");
+            URL url = new URL(serverAddress + ":1234" + "/hls/" + lineToken + "_" + vodToken + "_" + ipAddress + ".json/master.m3u8");
             HttpURLConnection con = (HttpURLConnection) url.openConnection();
             con.setRequestMethod("GET");
             con.setConnectTimeout(5000);
@@ -201,7 +201,8 @@ public class VodService {
         String[] tokens = token.split("_");
         //tokens[0] => line token
         //tokens[1] => vod token
-        LineStatus lineStatus = lineService.authorizeLineForVod(new LineAuth(tokens[0], tokens[1].replace(".json", ""), ipAddress, userAgent, config.getServerToken()));
+        //tokens[2] => ip address
+        LineStatus lineStatus = lineService.authorizeLineForVod(new LineAuth(tokens[0], tokens[1], tokens[2].replace(".json", ""), userAgent, config.getServerToken()));
         if (lineStatus != LineStatus.OK)
             throw new RuntimeException("Forbidden " + HttpStatus.FORBIDDEN);
         else {
