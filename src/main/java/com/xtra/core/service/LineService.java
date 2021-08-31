@@ -15,15 +15,11 @@ public class LineService {
     }
 
     public LineStatus authorizeLineForStream(LineAuth lineAuth) {
-        return apiService.sendPostRequest("/lines/stream_auth", LineStatus.class, lineAuth);
-    }
-
-    public Long getLineId(String lineToken) {
-        return apiService.sendGetRequest("/lines/get_id/" + lineToken, Long.class);
+        return apiService.sendPostRequest("/system/stream_auth", LineStatus.class, lineAuth);
     }
 
     public LineStatus authorizeLineForVod(LineAuth lineAuth) {
-        return apiService.sendPostRequest("/lines/vod_auth/", LineStatus.class, lineAuth);
+        return apiService.sendPostRequest("/system/vod_auth/", LineStatus.class, lineAuth);
 
     }
 }

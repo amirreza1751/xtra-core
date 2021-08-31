@@ -103,7 +103,7 @@ public class VodService {
 
     public void updateVodStatus(Long id, Map<String, String> data) {
         try {
-            apiService.sendPatchRequest("/videos/" + id, data);
+            apiService.sendPatchRequest("/system/videos/" + id, data);
         } catch (RestClientException e) {
             System.out.println(e.getMessage());
         }
@@ -134,7 +134,7 @@ public class VodService {
 
     public Vod getVodByToken(String vodToken) {
         try {
-            return apiService.sendGetRequest("/videos/token/" + vodToken, Vod.class);
+            return apiService.sendGetRequest("/system/videos/token/" + vodToken, Vod.class);
         } catch (RestClientException e) {
             //@todo log exception
             System.out.println(e.getMessage());
