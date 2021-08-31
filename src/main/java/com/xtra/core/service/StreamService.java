@@ -290,7 +290,7 @@ public class StreamService {
                     throw new RuntimeException("Recording failed.");
                 }
                 catchupRecordView.setLocation(catchUpDirectory.getAbsolutePath() + "/" + catchupRecordView.getStart() + "_" + catchupRecordView.getStop() + "_" + catchupRecordView.getTitle() + ".mp4");
-                apiService.sendPostRequest("/catch-up/streams/" + streamId + "/recording/false", String.class, catchupRecordView);
+                apiService.sendPostRequest("system/streams/" + streamId + "/recording/false", String.class, catchupRecordView);
             } catch (IOException | InterruptedException e) {
                 System.out.println(e.getMessage());
             } finally {
