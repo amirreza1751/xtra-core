@@ -134,7 +134,7 @@ public class VodService {
 
     public Vod getVodByToken(String vodToken) {
         try {
-            return apiService.sendGetRequest("/system/videos/token/" + vodToken, Vod.class);
+            return apiService.sendGetRequest("/system/videos/" + vodToken, Vod.class);
         } catch (RestClientException e) {
             //@todo log exception
             System.out.println(e.getMessage());
