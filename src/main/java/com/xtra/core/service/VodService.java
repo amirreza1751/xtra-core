@@ -208,15 +208,17 @@ public class VodService {
         else {
             Vod vod = this.getVodByToken(tokens[1].replace(".json", ""));
             JSONArray sequences = new JSONArray();
-            for (Subtitle subtitle : vod.getSubtitles()) {
-                JSONObject clips_object = new JSONObject();
-                clips_object.put("language", subtitle.getLanguage());
-                clips_object.put("clips", new JSONArray()
-                        .put(new JSONObject()
-                                .put("type", "source")
-                                .put("path", subtitle.getLocation())));
+            if (vod.getSubtitles() != null){
+                for (Subtitle subtitle : vod.getSubtitles()) {
+                    JSONObject clips_object = new JSONObject();
+                    clips_object.put("language", subtitle.getLanguage());
+                    clips_object.put("clips", new JSONArray()
+                            .put(new JSONObject()
+                                    .put("type", "source")
+                                    .put("path", subtitle.getLocation())));
 
-                sequences.put(clips_object);
+                    sequences.put(clips_object);
+                }
             }
             sequences.put(new JSONObject()
                     .put("clips", new JSONArray()
