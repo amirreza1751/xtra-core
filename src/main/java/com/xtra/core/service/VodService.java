@@ -3,6 +3,7 @@ package com.xtra.core.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xtra.core.config.DynamicConfig;
+import com.xtra.core.dto.VodStatusView;
 import com.xtra.core.model.*;
 import com.xtra.core.dto.LineAuth;
 import org.apache.commons.io.FilenameUtils;
@@ -57,7 +58,7 @@ public class VodService {
             String file_directory = path.getParent().toString();
             String file_name_without_extension = FilenameUtils.removeExtension(String.valueOf(path.getFileName()));
             String output_video = file_directory + File.separator + file_name_without_extension + System.currentTimeMillis() + ".mp4";
-            Map<String, String> data = new HashMap<>();
+            VodStatusView status = new VodStatusView();
             String[] args = new String[]{
                     "ffmpeg",
                     "-i",
@@ -79,8 +80,8 @@ public class VodService {
                 proc = new ProcessBuilder(args).start();
                 proc.waitFor();
             } catch (IOException | InterruptedException e) {
-                data.put("encodeStatus", EncodeStatus.ENCODING_FAILED.toString());
-                this.updateVodStatus(vod.getId(), data);
+                status.setStatus(EncodeStatus.ENCODING_FAILED);
+                this.updateVodStatus(vod.getId(), status);
             }
             Path mp4_path = Paths.get(file_directory + File.separator + file_name_without_extension + ".mp4");
             try {
@@ -95,15 +96,15 @@ public class VodService {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            data.put("location", mp4_path.toString());
-            data.put("encodeStatus", EncodeStatus.ENCODED.toString());
-            this.updateVodStatus(vod.getId(), data);
+            status.setLocation(mp4_path.toString());
+            status.setStatus(EncodeStatus.ENCODED);
+            this.updateVodStatus(vod.getId(), status);
         });
     }
 
-    public void updateVodStatus(Long id, Map<String, String> data) {
+    public void updateVodStatus(Long id, VodStatusView statusView) {
         try {
-            apiService.sendPatchRequest("/system/videos/" + id, data);
+            apiService.sendPatchRequest("/system/videos/" + id, statusView);
         } catch (RestClientException e) {
             System.out.println(e.getMessage());
         }
@@ -144,7 +145,7 @@ public class VodService {
 
     public List<MediaInfo> getMediaInfo(List<Vod> vodList) {
         List<MediaInfo> mediaInfoList = new ArrayList<>();
-        for (Vod vod : vodList){
+        for (Vod vod : vodList) {
             String result = processService.getMediaInfo(vod.getLocation());
             MediaInfo info = new MediaInfo();
             ObjectMapper objectMapper = new ObjectMapper();
@@ -208,7 +209,7 @@ public class VodService {
         else {
             Vod vod = this.getVodByToken(tokens[1].replace(".json", ""));
             JSONArray sequences = new JSONArray();
-            if (vod.getSubtitles() != null){
+            if (vod.getSubtitles() != null) {
                 for (Subtitle subtitle : vod.getSubtitles()) {
                     JSONObject clips_object = new JSONObject();
                     clips_object.put("language", subtitle.getLanguage());
