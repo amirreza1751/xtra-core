@@ -38,6 +38,8 @@ public class VodService {
     private String mainApiPath;
     @Value("${nginx.address}")
     private String serverAddress;
+    @Value("${vod.root.path}")
+    private String vodRootPath;
     private final ProcessService processService;
     private final LineService lineService;
     private final ApiService apiService;
@@ -212,11 +214,11 @@ public class VodService {
             if (vod.getSubtitles() != null) {
                 for (Subtitle subtitle : vod.getSubtitles()) {
                     JSONObject clips_object = new JSONObject();
-                    clips_object.put("language", subtitle.getLanguage());
+                    clips_object.put("language", subtitle.getLanguage().replace("/home", vodRootPath));
                     clips_object.put("clips", new JSONArray()
                             .put(new JSONObject()
                                     .put("type", "source")
-                                    .put("path", subtitle.getLocation())));
+                                    .put("path", subtitle.getLocation().replace("/home", vodRootPath))));
 
                     sequences.put(clips_object);
                 }
@@ -225,7 +227,7 @@ public class VodService {
                     .put("clips", new JSONArray()
                             .put(new JSONObject()
                                     .put("type", "source")
-                                    .put("path", vod.getLocation()))));
+                                    .put("path", vod.getLocation().replace("/home", vodRootPath)))));
             System.out.println(new JSONObject()
                     .put("sequences", sequences)
                     .toString());
