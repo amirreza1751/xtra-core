@@ -4,6 +4,7 @@ import com.xtra.core.model.File;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -18,10 +19,13 @@ public class FileSystemService {
     public FileSystemService() {
     }
 
+    @Value("${vod.path.prefix}")
+    private String vodPathPrefix;
+
     public List<File> list(String path) {
-        java.io.File directoryPath = new java.io.File("/home/vod" + java.io.File.separator + path);
+        java.io.File directoryPath = new java.io.File(vodPathPrefix + java.io.File.separator + path);
         try {
-            if (!directoryPath.exists() || !directoryPath.getCanonicalPath().startsWith("/home/vod")) {
+            if (!directoryPath.exists() || !directoryPath.getCanonicalPath().startsWith(vodPathPrefix)) {
                 return new ArrayList<>();
             }
         } catch (IOException e) {
