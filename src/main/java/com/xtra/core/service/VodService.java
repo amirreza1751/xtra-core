@@ -214,11 +214,11 @@ public class VodService {
             if (vod.getSubtitles() != null) {
                 for (Subtitle subtitle : vod.getSubtitles()) {
                     JSONObject clips_object = new JSONObject();
-                    clips_object.put("language", subtitle.getLanguage().replace("/home", vodRootPath));
+                    clips_object.put("language", vodRootPath + File.separator + subtitle.getLanguage());
                     clips_object.put("clips", new JSONArray()
                             .put(new JSONObject()
                                     .put("type", "source")
-                                    .put("path", subtitle.getLocation().replace("/home", vodRootPath))));
+                                    .put("path", vodRootPath + File.separator + subtitle.getLocation())));
 
                     sequences.put(clips_object);
                 }
@@ -227,7 +227,7 @@ public class VodService {
                     .put("clips", new JSONArray()
                             .put(new JSONObject()
                                     .put("type", "source")
-                                    .put("path", vod.getLocation().replace("/home", vodRootPath)))));
+                                    .put("path", vodRootPath + File.separator + vod.getLocation()))));
             System.out.println(new JSONObject()
                     .put("sequences", sequences)
                     .toString());
