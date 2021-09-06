@@ -40,6 +40,8 @@ public class VodService {
     private String serverAddress;
     @Value("${vod.root.path}")
     private String vodRootPath;
+    @Value("${vod.path.prefix}")
+    private String vodPathPrefix;
     private final ProcessService processService;
     private final LineService lineService;
     private final ApiService apiService;
@@ -55,7 +57,7 @@ public class VodService {
     public void encode(Vod vod) {
         ExecutorService executor = Executors.newFixedThreadPool(2);
         executor.execute(() -> {
-            String video_path = vod.getLocation();
+            String video_path = vodPathPrefix + vod.getLocation();
             Path path = Paths.get(video_path);
             String file_directory = path.getParent().toString();
             String file_name_without_extension = FilenameUtils.removeExtension(String.valueOf(path.getFileName()));
