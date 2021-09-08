@@ -27,6 +27,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ResourceUtils;
 
+import javax.annotation.PostConstruct;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
@@ -62,7 +63,7 @@ public class StreamService {
     private String serverAddress;
     @Value("${server.port}")
     private String serverPort;
-    @Value("${stream.path}")
+    @Value("${streams.path}")
     private String streamsPath;
     @Value("${telerecord.path}")
     private String teleRecordPath;
@@ -83,6 +84,10 @@ public class StreamService {
         this.channelStartMapper = channelStartMapper;
         this.streamMapper = streamMapper;
         this.config = config;
+    }
+
+    @PostConstruct
+    public void init(){
         streamsDirectory = new File(streamsPath);
         if (!streamsDirectory.exists()) {
             var result = streamsDirectory.mkdirs();
