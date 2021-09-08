@@ -6,6 +6,7 @@ import com.xtra.core.service.FileSystemService;
 import com.xtra.core.service.MessagingService;
 import com.xtra.core.service.StreamService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -18,6 +19,8 @@ public class CoreTaskScheduler {
     private final CatchUpInfoRepository catchUpInfoRepository;
     private final FileSystemService fileSystemService;
 
+    @Value("${telerecord.path}")
+    private String teleRecordPath;
 
     @Autowired
     public CoreTaskScheduler(StreamService streamService, MessagingService messagingService,
@@ -44,7 +47,7 @@ public class CoreTaskScheduler {
         var infos = catchUpInfoRepository.findAll();
         if (infos.size() > 0) {
             for (CatchUpInfo catchUpInfo : infos) {
-                fileSystemService.deleteOldFilesAfterDays(catchUpInfo.getCatchUpDays(), ".mp4", System.getProperty("user.home") + File.separator + "tv_archive" + File.separator + catchUpInfo.getStreamId());
+                fileSystemService.deleteOldFilesAfterDays(catchUpInfo.getCatchUpDays(), ".mp4", teleRecordPath + File.separator + catchUpInfo.getStreamId());
             }
         }
     }

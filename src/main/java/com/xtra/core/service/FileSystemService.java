@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -39,7 +40,7 @@ public class FileSystemService {
                     result.add(
                             new File(
                                     file.getName(),
-                                    file.getAbsolutePath(),
+                                    Paths.get(vodPathPrefix).toFile().toURI().relativize(file.toURI()).getPath(),
                                     (file.isDirectory()) ? FileUtils.sizeOfDirectory(file) : file.length(),
                                     file.isDirectory())
                     );

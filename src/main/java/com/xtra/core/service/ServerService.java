@@ -41,7 +41,7 @@ public class ServerService {
         }
         List<Float> currentUsage = new ArrayList<>();
         for (double item : p) {
-            currentUsage.add( (float) item * 100);
+            currentUsage.add( (float) item * 10);
         }
 
         GlobalMemory mem = hal.getMemory();
