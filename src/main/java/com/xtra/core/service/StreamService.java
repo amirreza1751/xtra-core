@@ -62,13 +62,13 @@ public class StreamService {
     private String serverAddress;
     @Value("${server.port}")
     private String serverPort;
+    @Value("${stream.path}")
+    private String streamsPath;
+    @Value("${telerecord.path}")
+    private String teleRecordPath;
 
     File streamsDirectory;
 
-    @Value("${nginx.address}")
-    private String nginxAddress;
-    @Value("${nginx.port}")
-    private String nginxPort;
 
     @Autowired
     public StreamService(ProcessService processService, LineService lineService, ApiService apiService,
@@ -83,9 +83,7 @@ public class StreamService {
         this.channelStartMapper = channelStartMapper;
         this.streamMapper = streamMapper;
         this.config = config;
-        streamsDirectory = new File(
-                System.getProperty("user.home") + File.separator + "streams"
-        );
+        streamsDirectory = new File(streamsPath);
         if (!streamsDirectory.exists()) {
             var result = streamsDirectory.mkdirs();
             if (!result) {
@@ -169,7 +167,7 @@ public class StreamService {
         FFmpegOutputBuilder fFmpegOutputBuilder = builder
                 .addProgress(URI.create("http://" + serverAddress + ":" + serverPort + "/update?stream_id=" + stream.getId()))
                 .setInput(stream.getStreamInput())
-                .addOutput(streamsDirectory.getAbsolutePath() + "/" + stream.getId() + "_.m3u8")
+                .addOutput(streamsDirectory + "/" + stream.getId() + "_.m3u8")
                 .addExtraArgs("-acodec", "copy")
                 .addExtraArgs("-vcodec", "copy")
                 .addExtraArgs("-f", "hls")
@@ -212,7 +210,7 @@ public class StreamService {
                 throw new RuntimeException("Unknown Error " + HttpStatus.FORBIDDEN);
         } else {
             var stream = streamRepository.findByStreamToken(streamToken).orElseThrow();
-            File file = ResourceUtils.getFile(System.getProperty("user.home") + "/streams/" + stream.getId() + "_." + extension);
+            File file = ResourceUtils.getFile(streamsPath + File.separator + stream.getId() + "_." + extension);
             String playlist = new String(Files.readAllBytes(file.toPath()));
 
             Pattern pattern = Pattern.compile("(.*)\\.ts");
@@ -235,7 +233,7 @@ public class StreamService {
         LineStatus status = lineService.authorizeLineForStream(new LineAuth(lineToken, streamToken, ipAddress, userAgent, config.getServerToken()));
         if (status == LineStatus.OK) {
             var stream = streamRepository.findByStreamToken(streamToken).orElseThrow();
-            return IOUtils.toByteArray(FileUtils.openInputStream(new File(System.getProperty("user.home") + "/streams/" + stream.getId() + "_" + segment + "." + extension)));
+            return IOUtils.toByteArray(FileUtils.openInputStream(new File(streamsPath + File.separator + stream.getId() + "_" + segment + "." + extension)));
         } else {
             throw new RuntimeException("Forbidden " + HttpStatus.FORBIDDEN);
         }
@@ -253,7 +251,7 @@ public class StreamService {
             catchUpInfoRepository.save(newCatchUp);
         }
         File catchUpDirectory = new File(
-                System.getProperty("user.home") + File.separator + "tv_archive" + File.separator + streamId
+                teleRecordPath + File.separator + streamId
         );
         if (!catchUpDirectory.exists()) {
             var result = catchUpDirectory.mkdirs();
@@ -312,7 +310,7 @@ public class StreamService {
     }
 
     private StreamInfo updateStreamFFProbeData(Stream stream, StreamInfo info) {
-        String streamUrl = System.getProperty("user.home") + File.separator + "streams" + File.separator + stream.getId() + "_.m3u8";
+        String streamUrl = streamsPath + File.separator + stream.getId() + "_.m3u8";
         ProcessOutput processOutput = processService.analyzeStream(streamUrl, "codec_name,width,height,bit_rate");
         ObjectMapper objectMapper = new ObjectMapper();
         try {
