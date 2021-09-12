@@ -216,7 +216,7 @@ public class VodService {
             if (vod.getSubtitles() != null) {
                 for (Subtitle subtitle : vod.getSubtitles()) {
                     JSONObject clips_object = new JSONObject();
-                    clips_object.put("language", vodRootPath + File.separator + subtitle.getLanguage());
+                    clips_object.put("language",subtitle.getLanguage());
                     clips_object.put("clips", new JSONArray()
                             .put(new JSONObject()
                                     .put("type", "source")
