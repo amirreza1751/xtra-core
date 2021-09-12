@@ -100,7 +100,7 @@ public class VodService {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            status.setLocation(mp4_path.toString());
+            status.setLocation(mp4_path.toString().replace(vodPathPrefix + File.separator, ""));
             status.setStatus(EncodeStatus.ENCODED);
             this.updateVodStatus(vod.getId(), status);
         });
