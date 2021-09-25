@@ -63,22 +63,35 @@ public class VodService {
             String file_name_without_extension = FilenameUtils.removeExtension(String.valueOf(path.getFileName()));
             String output_video = file_directory + File.separator + file_name_without_extension + System.currentTimeMillis() + ".mp4";
             VodStatusView status = new VodStatusView();
-            String[] args = new String[]{
-                    "ffmpeg",
-                    "-i",
-                    video_path,
-                    "-vcodec",
-                    "copy",
-                    //                "-preset",
-                    //                "veryfast",
-                    //                 "libx264",
-                    "-acodec",
-                    "copy",
-                    //                 "aac",
-                    output_video,
-                    "-y"
-            };
-
+            String[] args;
+            if (encodePreProcessor(video_path)) { // Codecs must be changed.
+                args = new String[]{
+                        "ffmpeg",
+                        "-i",
+                        video_path,
+                        "-vcodec",
+                        "libx264",
+                        "-preset",
+                        "veryfast",
+                        "-acodec",
+                        "aac",
+                        output_video,
+                        "-y"
+                };
+            } else // Default Condition ( No Change )
+            {
+                args = new String[]{
+                        "ffmpeg",
+                        "-i",
+                        video_path,
+                        "-vcodec",
+                        "copy",
+                        "-acodec",
+                        "copy",
+                        output_video,
+                        "-y"
+                };
+            }
             Process proc;
             try {
                 proc = new ProcessBuilder(args).start();
@@ -173,6 +186,21 @@ public class VodService {
         return mediaInfoList;
     }
 
+    public boolean encodePreProcessor(String location) {
+        String result = processService.getMediaInfo(location);
+        ObjectMapper objectMapper = new ObjectMapper();
+        try {
+            var root = objectMapper.readTree(result);
+            var videoCodec = removeQuotations(root.get("streams").get(0).get("codec_name").toString());
+
+            var audioCodec = removeQuotations(root.get("streams").get(1).get("codec_name").toString());
+            return !videoCodec.equals("h264") || !audioCodec.equals("aac");
+
+        } catch (JsonProcessingException | NullPointerException e) {
+            System.out.println(e.getMessage());
+        }
+        return false;
+    }
 
     public String getVodPlaylist(String lineToken, String vodToken, String ipAddress, String userAgent) throws IOException {
         LineStatus lineStatus = lineService.authorizeLineForVod(new LineAuth(lineToken, vodToken, ipAddress, userAgent, config.getServerToken()));
@@ -216,7 +244,7 @@ public class VodService {
             if (vod.getSubtitles() != null) {
                 for (Subtitle subtitle : vod.getSubtitles()) {
                     JSONObject clips_object = new JSONObject();
-                    clips_object.put("language",subtitle.getLanguage());
+                    clips_object.put("language", subtitle.getLanguage());
                     clips_object.put("clips", new JSONArray()
                             .put(new JSONObject()
                                     .put("type", "source")
