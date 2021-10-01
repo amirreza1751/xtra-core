@@ -61,12 +61,14 @@ public class VodService {
             Path path = Paths.get(video_path);
             String file_directory = path.getParent().toString();
             String file_name_without_extension = FilenameUtils.removeExtension(String.valueOf(path.getFileName()));
-            String output_video = file_directory + File.separator + file_name_without_extension + System.currentTimeMillis() + ".mp4";
+            String output_video = file_directory + File.separator + file_name_without_extension + System.currentTimeMillis() +"_ENCODING.mp4";
             VodStatusView status = new VodStatusView();
             String[] args;
             if (encodePreProcessor(video_path)) { // Codecs must be changed.
                 args = new String[]{
                         "ffmpeg",
+                        "-v",
+                        "quiet",
                         "-i",
                         video_path,
                         "-vcodec",
@@ -82,6 +84,8 @@ public class VodService {
             {
                 args = new String[]{
                         "ffmpeg",
+                        "-v",
+                        "quiet",
                         "-i",
                         video_path,
                         "-vcodec",
@@ -102,7 +106,7 @@ public class VodService {
             }
             Path mp4_path = Paths.get(file_directory + File.separator + file_name_without_extension + ".mp4");
             try {
-//                Files.deleteIfExists(mp4_path); //if old files with same name exists
+                Files.deleteIfExists(mp4_path); //if old files with same name exists
                 Files.deleteIfExists(path); //input mkv file must be deleted
             } catch (IOException e) {
                 e.printStackTrace();
@@ -163,7 +167,7 @@ public class VodService {
     public List<MediaInfo> getMediaInfo(List<Vod> vodList) {
         List<MediaInfo> mediaInfoList = new ArrayList<>();
         for (Vod vod : vodList) {
-            String result = processService.getMediaInfo(vodPathPrefix + vod.getLocation());
+            String result = processService.getMediaInfo(vodPathPrefix + File.separator + vod.getLocation());
             MediaInfo info = new MediaInfo();
             ObjectMapper objectMapper = new ObjectMapper();
             try {
