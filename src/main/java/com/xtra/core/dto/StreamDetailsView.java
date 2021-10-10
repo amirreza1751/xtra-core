@@ -7,6 +7,8 @@ import com.xtra.core.model.StreamInfo;
 import com.xtra.core.model.StreamStatus;
 import lombok.Data;
 
+import java.time.LocalDateTime;
+
 @Data
 @JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy.class)
 public class StreamDetailsView {
@@ -20,6 +22,7 @@ public class StreamDetailsView {
     private String frameRate;
     private String bitrate;
     private StreamStatus streamStatus;
+    private LocalDateTime lastUpdated;
 
     public StreamDetailsView(Long streamId) {
         this.streamId = streamId;
