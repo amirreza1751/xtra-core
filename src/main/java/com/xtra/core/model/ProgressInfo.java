@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import lombok.Data;
 
 import javax.persistence.*;
+import java.time.LocalDateTime;
 
 @Entity
 @Data
@@ -20,4 +21,5 @@ public class ProgressInfo {
     private String speed;
     private String frameRate;
     private String bitrate;
+    private LocalDateTime lastUpdated;
 }
