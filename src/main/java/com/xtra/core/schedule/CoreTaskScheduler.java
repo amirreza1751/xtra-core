@@ -39,7 +39,7 @@ public class CoreTaskScheduler {
 
     @Scheduled(fixedDelay = 2000)
     public void sendStreamsInfo() {
-        messagingService.sendStreamStatus(streamService.getStreamDetails());
+        messagingService.sendStreamStatus(streamService.getAllStreamsDetails());
     }
 
     @Scheduled(cron = "0 0 */1 * * *") // Hourly

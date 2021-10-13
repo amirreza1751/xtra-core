@@ -333,7 +333,7 @@ public class StreamService {
         return info;
     }
 
-    public List<StreamDetailsView> getStreamDetails() {
+    public List<StreamDetailsView> getAllStreamsDetails() {
         List<StreamDetailsView> streamDetailsViews = new ArrayList<>();
         var streams = streamRepository.findAll();
         for (var stream : streams) {
