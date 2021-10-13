@@ -15,19 +15,18 @@ import java.util.List;
 @Service
 public class ServerService {
 
+    long[] prevTicks = new long[CentralProcessor.TickType.values().length];
     public Resource getResourceUsage(String interfaceName) {
 
         SystemInfo si = new SystemInfo();
         HardwareAbstractionLayer hal = si.getHardware();
         CentralProcessor cpu = hal.getProcessor();
-        long[][] oldProcTicks;
-        oldProcTicks = new long[cpu.getLogicalProcessorCount()][CentralProcessor.TickType.values().length];
-        double[] p = new double[cpu.getLogicalProcessorCount()];
+        double cpuLoad = cpu.getSystemCpuLoadBetweenTicks( prevTicks ) * 100;
+        prevTicks = cpu.getSystemCpuLoadTicks();
+
         NetworkInterface newNetworkInterface = new NetworkInterface();
         int i = 0;
         while (i< 2){
-            p = cpu.getProcessorCpuLoadBetweenTicks(oldProcTicks);
-            oldProcTicks = cpu.getProcessorCpuLoadTicks();
             var oldNetworkInterface = getNetworkInterfaceDetails(interfaceName, hal);
             try {
                 Thread.sleep(400L);
@@ -39,16 +38,11 @@ public class ServerService {
             newNetworkInterface.setBytesSent((newNetworkInterface.getBytesSent() - oldNetworkInterface.getBytesSent()) * 1000 / 400);
             i++;
         }
-        List<Float> currentUsage = new ArrayList<>();
-        for (double item : p) {
-            currentUsage.add( (float) item * 10);
-        }
-
         GlobalMemory mem = hal.getMemory();
 
         return new Resource(
                 cpu.getMaxFreq()/1000000000000.0,
-                currentUsage,
+                cpuLoad,
                 mem.getTotal()/1000000000.0,
                 mem.getAvailable()/1000000000.0,
                 newNetworkInterface.getName(),

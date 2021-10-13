@@ -32,7 +32,10 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
+import java.time.LocalDateTime;
+import java.time.chrono.ChronoLocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalAccessor;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -170,6 +173,8 @@ public class StreamService {
             builder.addExtraArgs("-fflags", "+genpts");
 
         FFmpegOutputBuilder fFmpegOutputBuilder = builder
+                .addExtraArgs("-nostdin")
+                .addExtraArgs("-hide_banner")
                 .addProgress(URI.create("http://" + serverAddress + ":" + serverPort + "/update?stream_id=" + stream.getId()))
                 .setInput(stream.getStreamInput())
                 .addOutput(streamsDirectory + "/" + stream.getId() + "_.m3u8")
@@ -340,6 +345,9 @@ public class StreamService {
             StreamDetailsView detailsView = new StreamDetailsView(stream.getId());
             detailsView = streamMapper.copyStreamInfo(stream.getStreamInfo(), detailsView);
             detailsView = streamMapper.copyProgressInfo(stream.getProgressInfo(), detailsView);
+            if (detailsView.getLastUpdated() != null && detailsView.getLastUpdated().isBefore(LocalDateTime.now().minusSeconds(5L))){
+                detailsView.setStreamStatus(StreamStatus.OFFLINE);
+            } else detailsView.setStreamStatus(StreamStatus.ONLINE);
             streamDetailsViews.add(detailsView);
         }
         return streamDetailsViews;

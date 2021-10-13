@@ -10,9 +10,7 @@ import java.util.List;
 public class Resource {
 
     private double cpuMaxFreq;
-    @ElementCollection
-    private List<Float> cpuCurrentFreq;
-
+    private double cpuLoad;
     private double memoryTotal;
     private double memoryAvailable;
 
@@ -23,9 +21,9 @@ public class Resource {
     private Long upTime;
 
     private int connections; // no need to use in constructor.
-    public Resource(double cpuMaxFreq, List<Float> cpuCurrentFreq, double memoryTotal, double memoryAvailable, String networkName, Long networkBytesSent, Long networkBytesRecv, Long upTime) {
+    public Resource(double cpuMaxFreq, double cpuLoad, double memoryTotal, double memoryAvailable, String networkName, Long networkBytesSent, Long networkBytesRecv, Long upTime) {
         this.cpuMaxFreq = cpuMaxFreq;
-        this.cpuCurrentFreq = cpuCurrentFreq;
+        this.cpuLoad = cpuLoad;
         this.memoryTotal = memoryTotal;
         this.memoryAvailable = memoryAvailable;
         this.networkName = networkName;
