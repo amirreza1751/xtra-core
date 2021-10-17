@@ -345,7 +345,7 @@ public class StreamService {
             StreamDetailsView detailsView = new StreamDetailsView(stream.getId());
             detailsView = streamMapper.copyStreamInfo(stream.getStreamInfo(), detailsView);
             detailsView = streamMapper.copyProgressInfo(stream.getProgressInfo(), detailsView);
-            if (detailsView.getLastUpdated() != null && detailsView.getLastUpdated().isBefore(LocalDateTime.now().minusSeconds(5L))){
+            if (detailsView.getLastUpdated() != null && detailsView.getLastUpdated().isBefore(LocalDateTime.now().minusSeconds(10L))){
                 detailsView.setStreamStatus(StreamStatus.OFFLINE);
             } else detailsView.setStreamStatus(StreamStatus.ONLINE);
             streamDetailsViews.add(detailsView);
