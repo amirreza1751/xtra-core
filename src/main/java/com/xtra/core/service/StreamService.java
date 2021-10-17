@@ -349,7 +349,6 @@ public class StreamService {
                 detailsView.setStreamStatus(StreamStatus.OFFLINE);
             } else detailsView.setStreamStatus(StreamStatus.ONLINE);
             streamDetailsViews.add(detailsView);
-            System.out.println(detailsView.getStreamStatus());
         }
         return streamDetailsViews;
     }
