@@ -341,7 +341,7 @@ public class StreamService {
     public List<StreamDetailsView> getAllStreamsDetails() {
         List<StreamDetailsView> streamDetailsViews = streamRepository.findAllStreamDetails();
         for (var streamDetails : streamDetailsViews) {
-            if (streamDetails.getLastUpdated() != null && streamDetails.getLastUpdated().isBefore(LocalDateTime.now().minusSeconds(5L))) {
+            if (streamDetails.getLastUpdated() != null && streamDetails.getLastUpdated().isBefore(LocalDateTime.now().minusSeconds(10L))) {
                 streamDetails.setStreamStatus(StreamStatus.OFFLINE);
             } else streamDetails.setStreamStatus(StreamStatus.ONLINE);
         }
