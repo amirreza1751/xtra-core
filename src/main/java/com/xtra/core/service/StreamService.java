@@ -90,7 +90,7 @@ public class StreamService {
     }
 
     @PostConstruct
-    public void init(){
+    public void init() {
         streamsDirectory = new File(streamsPath);
         if (!streamsDirectory.exists()) {
             var result = streamsDirectory.mkdirs();
@@ -339,16 +339,11 @@ public class StreamService {
     }
 
     public List<StreamDetailsView> getAllStreamsDetails() {
-        List<StreamDetailsView> streamDetailsViews = new ArrayList<>();
-        var streams = streamRepository.findAll();
-        for (var stream : streams) {
-            StreamDetailsView detailsView = new StreamDetailsView(stream.getId());
-            detailsView = streamMapper.copyStreamInfo(stream.getStreamInfo(), detailsView);
-            detailsView = streamMapper.copyProgressInfo(stream.getProgressInfo(), detailsView);
-            if (detailsView.getLastUpdated() != null && detailsView.getLastUpdated().isBefore(LocalDateTime.now().minusSeconds(5L))){
-                detailsView.setStreamStatus(StreamStatus.OFFLINE);
-            } else detailsView.setStreamStatus(StreamStatus.ONLINE);
-            streamDetailsViews.add(detailsView);
+        List<StreamDetailsView> streamDetailsViews = streamRepository.findAllStreamDetails();
+        for (var streamDetails : streamDetailsViews) {
+            if (streamDetails.getLastUpdated() != null && streamDetails.getLastUpdated().isBefore(LocalDateTime.now().minusSeconds(5L))) {
+                streamDetails.setStreamStatus(StreamStatus.OFFLINE);
+            } else streamDetails.setStreamStatus(StreamStatus.ONLINE);
         }
         return streamDetailsViews;
     }
