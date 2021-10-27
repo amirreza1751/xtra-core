@@ -32,7 +32,9 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
+import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.chrono.ChronoLocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAccessor;
@@ -345,7 +347,8 @@ public class StreamService {
             StreamDetailsView detailsView = new StreamDetailsView(stream.getId());
             detailsView = streamMapper.copyStreamInfo(stream.getStreamInfo(), detailsView);
             detailsView = streamMapper.copyProgressInfo(stream.getProgressInfo(), detailsView);
-            if (detailsView.getLastUpdated() != null && detailsView.getLastUpdated().isBefore(LocalDateTime.now().minusSeconds(10L))){
+            if (detailsView.getLastUpdated() != null && detailsView.getLastUpdated().isBefore(LocalDateTime.now().minusSeconds(10L)) && processService.getProcessDuration(stream.getPid()).compareTo(Duration.ofSeconds(15L)) > 0){
+                processService.stopProcess(stream.getPid());
                 detailsView.setStreamStatus(StreamStatus.OFFLINE);
             } else detailsView.setStreamStatus(StreamStatus.ONLINE);
             streamDetailsViews.add(detailsView);

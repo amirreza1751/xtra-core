@@ -35,6 +35,7 @@ dependencies {
 	implementation group: 'net.bramp.ffmpeg', name: 'ffmpeg', version: '0.6.2'
 	implementation 'io.projectreactor:reactor-core'
 	implementation 'org.mapstruct:mapstruct:1.4.0.Final'
+	compileOnly "io.dropwizard.metrics:metrics-core:3.1.2"
 
 	compileOnly 'org.projectlombok:lombok'
 	compileOnly 'org.springframework.boot:spring-boot-devtools'

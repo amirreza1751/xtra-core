@@ -54,6 +54,12 @@ public class ProcessService {
         Duration duration = Duration.between(processHandle.get().info().startInstant().get(), Instant.now());
         return DurationFormatUtils.formatDuration(duration.toMillis(), "H:mm:ss", true);
     }
+    public Duration getProcessDuration(Long pid) {
+        Optional<ProcessHandle> processHandle = ProcessHandle.of(pid);
+        if (processHandle.isEmpty() || processHandle.get().info().startInstant().isEmpty())
+            return null;
+        return Duration.between(processHandle.get().info().startInstant().get(), Instant.now());
+    }
 
     public ProcessOutput analyzeStream(String sourceInput, String params) {
         Process proc;

@@ -262,6 +262,11 @@ public class VodService {
                             .put(new JSONObject()
                                     .put("type", "source")
                                     .put("path", vodRootPath + File.separator + vod.getLocation()))));
+            sequences.put(new JSONObject()
+                    .put("clips", new JSONArray()
+                            .put(new JSONObject()
+                                    .put("type", "source")
+                                    .put("path", vodRootPath + File.separator + "series/bbb.mp4"))));
             System.out.println(new JSONObject()
                     .put("sequences", sequences)
                     .toString());
