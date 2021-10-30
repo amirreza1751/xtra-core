@@ -5,7 +5,9 @@ import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import com.xtra.core.model.ProgressInfo;
 import com.xtra.core.model.StreamInfo;
 import com.xtra.core.model.StreamStatus;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
@@ -28,4 +30,15 @@ public class StreamDetailsView {
         this.streamId = streamId;
     }
 
+    public StreamDetailsView(Long streamId, String uptime, String currentInput, String resolution, String videoCodec, String audioCodec, String speed, String frameRate, String bitrate) {
+        this.streamId = streamId;
+        this.uptime = uptime;
+        this.currentInput = currentInput;
+        this.resolution = resolution;
+        this.videoCodec = videoCodec;
+        this.audioCodec = audioCodec;
+        this.speed = speed;
+        this.frameRate = frameRate;
+        this.bitrate = bitrate;
+    }
 }

@@ -92,7 +92,7 @@ public class StreamService {
     }
 
     @PostConstruct
-    public void init(){
+    public void init() {
         streamsDirectory = new File(streamsPath);
         if (!streamsDirectory.exists()) {
             var result = streamsDirectory.mkdirs();
@@ -339,19 +339,20 @@ public class StreamService {
         info.setCurrentInput(stream.getStreamInput());
         return info;
     }
-
-    public List<StreamDetailsView> getStreamDetails() {
-        List<StreamDetailsView> streamDetailsViews = new ArrayList<>();
-        var streams = streamRepository.findAll();
-        for (var stream : streams) {
-            StreamDetailsView detailsView = new StreamDetailsView(stream.getId());
-            detailsView = streamMapper.copyStreamInfo(stream.getStreamInfo(), detailsView);
-            detailsView = streamMapper.copyProgressInfo(stream.getProgressInfo(), detailsView);
-            if (detailsView.getLastUpdated() != null && detailsView.getLastUpdated().isBefore(LocalDateTime.now().minusSeconds(10L)) && processService.getProcessDuration(stream.getPid()).compareTo(Duration.ofSeconds(15L)) > 0){
-                processService.stopProcess(stream.getPid());
-                detailsView.setStreamStatus(StreamStatus.OFFLINE);
-            } else detailsView.setStreamStatus(StreamStatus.ONLINE);
-            streamDetailsViews.add(detailsView);
+    public List<StreamDetailsView> getAllStreamsDetails() {
+        List<StreamDetailsView> streamDetailsViews = streamRepository.findAllStreamDetails();
+        for (var streamDetails : streamDetailsViews) {
+//            var aaa = Duration.between (                  // Represent a span of time of hours, minutes, seconds.
+//                    LocalTime.MIN ,                 // 00:00:00
+//                    LocalTime.parse ( streamDetails.getUptime() )  // Parse text as a time-of-day.
+//            )                                   // Returns a `Duration` object, a span-of-time.
+//                    .toString()    ;                     // Generate a `String` with text in standard ISO 8601 format.
+//            System.out.println(aaa);
+//            System.out.println(Duration.parse("0" + streamDetails.getUptime()));
+//            if (streamDetails.getLastUpdated() != null && streamDetails.getLastUpdated().isBefore(LocalDateTime.now().minusSeconds(10L)) && Duration.parse(streamDetails.getUptime()).compareTo(Duration.ofSeconds(15L)) > 0) {
+//                streamDetails.setStreamStatus(StreamStatus.OFFLINE);
+//            } else
+            streamDetails.setStreamStatus(StreamStatus.ONLINE);
         }
         return streamDetailsViews;
     }
