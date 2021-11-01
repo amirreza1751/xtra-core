@@ -3,9 +3,9 @@ package com.xtra.core.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xtra.core.config.DynamicConfig;
-import com.xtra.core.dto.VodStatusView;
+import com.xtra.core.dto.*;
 import com.xtra.core.model.*;
-import com.xtra.core.dto.LineAuth;
+import lombok.extern.log4j.Log4j2;
 import org.apache.commons.io.FilenameUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -25,12 +25,13 @@ import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 
 import org.mozilla.universalchardet.UniversalDetector;
 import org.springframework.web.client.RestClientException;
 
 import static com.xtra.core.utility.Util.removeQuotations;
-
+@Log4j2
 @Service
 public class VodService {
 
@@ -54,104 +55,63 @@ public class VodService {
         this.config = config;
     }
 
-    public void encode(Vod vod) {
+    public void encode(EncodeRequest encodeRequest) {
         ExecutorService executor = Executors.newFixedThreadPool(2);
         executor.execute(() -> {
-            String video_path = vodPathPrefix + File.separator + vod.getLocation();
-            Path path = Paths.get(video_path);
-            String file_directory = path.getParent().toString();
-            String file_name_without_extension = FilenameUtils.removeExtension(String.valueOf(path.getFileName()));
-            String output_video = file_directory + File.separator + file_name_without_extension + System.currentTimeMillis() +"_ENCODING.mp4";
-            VodStatusView status = new VodStatusView();
-            String[] args;
-            if (encodePreProcessor(video_path)) { // Codecs must be changed.
-                args = new String[]{
-                        "ffmpeg",
-                        "-v",
-                        "quiet",
-                        "-i",
-                        video_path,
-                        "-vcodec",
-                        "libx264",
-                        "-preset",
-                        "veryfast",
-                        "-acodec",
-                        "aac",
-                        output_video,
-                        "-y"
-                };
-            } else // Default Condition ( No Change )
-            {
-                args = new String[]{
-                        "ffmpeg",
-                        "-v",
-                        "quiet",
-                        "-i",
-                        video_path,
-                        "-vcodec",
-                        "copy",
-                        "-acodec",
-                        "copy",
-                        output_video,
-                        "-y"
-                };
+            String directory = Paths.get(vodPathPrefix + File.separator + encodeRequest.getSourceLocation()).getParent().toString();
+            File outputDirectory = new File(
+                    directory + File.separator + "output"
+            );
+            if (!outputDirectory.exists()) {
+                var result = outputDirectory.mkdirs();
+                if (!result) {
+                    throw new RuntimeException("Could not create directory");
+                }
             }
+            EncodeResponse encodeResponse = new EncodeResponse();
+             List<String> args = new ArrayList<String>(Arrays.asList(
+                     //Add base options of FFMPEG here
+                    "ffmpeg",
+                    "-v",
+                    "quiet",
+                    "-y",
+                    "-i",
+                    vodPathPrefix + File.separator + encodeRequest.getSourceLocation(), //Input Video
+                    "-c:v",
+                    encodeRequest.getTargetVideoCodec().getCodec(), // Output Video Codec
+                    "-c:a",
+                    encodeRequest.getTargetAudioCodec().getCodec() // Output Audio Codec
+                     ));
+
+             List<String> targetVideoPathList = new ArrayList<>();
+            for (Resolution resolution : encodeRequest.getTargetResolutions()){
+                //Add options here for each video output
+                args.addAll(Arrays.asList("-vf", "scale=" + resolution.getWidth() + ":-2", outputDirectory + File.separator + resolution.getText() + ".mp4"));
+                var relativeDirectory = Paths.get(encodeRequest.getSourceLocation()).getParent() == null ? "" : Paths.get(encodeRequest.getSourceLocation()).getParent() + File.separator;
+                var relativeVideoPath = relativeDirectory + "output" + File.separator + resolution.getText() + ".mp4";
+                targetVideoPathList.add(relativeVideoPath);
+            }
+            log.info(args.toString());
             Process proc;
             try {
                 proc = new ProcessBuilder(args).start();
                 proc.waitFor();
             } catch (IOException | InterruptedException e) {
-                status.setStatus(EncodeStatus.ENCODING_FAILED);
-                this.updateVodStatus(vod.getId(), status);
+                encodeResponse.setEncodeStatus(EncodeStatus.ENCODING_FAILED);
+                this.updateVodStatus(encodeRequest.getVideoId(), encodeResponse);
             }
-            Path mp4_path = Paths.get(file_directory + File.separator + file_name_without_extension + ".mp4");
-            try {
-                Files.deleteIfExists(mp4_path); //if old files with same name exists
-                Files.deleteIfExists(path); //input mkv file must be deleted
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            Path output = Paths.get(output_video);
-            try {
-                Files.move(output, mp4_path);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            status.setLocation(mp4_path.toString().replace(vodPathPrefix + File.separator, ""));
-            status.setStatus(EncodeStatus.ENCODED);
-            this.updateVodStatus(vod.getId(), status);
+            encodeResponse.setEncodeStatus(EncodeStatus.ENCODED);
+            encodeResponse.setTargetVideoInfos(getBatchMediaInfo(targetVideoPathList));
+            this.updateVodStatus(encodeRequest.getVideoId(), encodeResponse);
         });
     }
 
-    public void updateVodStatus(Long id, VodStatusView statusView) {
+    public void updateVodStatus(Long id, EncodeResponse encodeResponse) {
         try {
-            apiService.sendPatchRequest("/system/videos/" + id, statusView);
+            apiService.sendPatchRequest("/system/videos/" + id + "/encode_status", encodeResponse);
         } catch (RestClientException e) {
             System.out.println(e.getMessage());
         }
-    }
-
-    public String getFileEncoding(Subtitle subtitle) throws IOException {
-        UniversalDetector detector = new UniversalDetector(null);
-        FileInputStream fis;
-        byte[] buf = new byte[4096];
-        int nread;
-        String encoding = "";
-        fis = new FileInputStream(subtitle.getLocation());
-        while ((nread = fis.read(buf)) > 0 && !detector.isDone()) {
-            detector.handleData(buf, 0, nread);
-        }
-        detector.dataEnd();
-        encoding = detector.getDetectedCharset();
-        detector.reset();
-        if (encoding != null) {
-//            System.out.println("Detected encoding = " + encoding);
-            return encoding;
-        } else {
-//            System.out.println("No encoding detected.");
-            return "unknown";
-        }
-
     }
 
     public Vod getVodByToken(String vodToken) {
@@ -164,46 +124,37 @@ public class VodService {
         }
     }
 
-    public List<MediaInfo> getMediaInfo(List<Vod> vodList) {
-        List<MediaInfo> mediaInfoList = new ArrayList<>();
-        for (Vod vod : vodList) {
-            String result = processService.getMediaInfo(vodPathPrefix + File.separator + vod.getLocation());
-            MediaInfo info = new MediaInfo();
+    public VideoInfoView getMediaInfo(String location) {
+            VideoInfoView info = new VideoInfoView();
+            String result = processService.getMediaInfo(vodPathPrefix + File.separator + location);
             ObjectMapper objectMapper = new ObjectMapper();
             try {
                 var root = objectMapper.readTree(result);
                 var video = root.get("streams").get(0);
-                info.setVideoCodec(removeQuotations(video.get("codec_name").toString()));
-                info.setResolution(video.get("width") + "x" + video.get("height"));
+                info.setVideoCodec(VideoCodec.findByText(removeQuotations(video.get("codec_name").toString())));
+//                info.setResolution(Resolution.valueOf(video.get("width") + "x" + video.get("height")));
+                info.setResolution(Resolution.findByWidth(removeQuotations(video.get("width").toString())));
 
                 var audio = root.get("streams").get(1);
-                info.setAudioCodec(removeQuotations(audio.get("codec_name").toString()));
+                info.setAudioCodec(AudioCodec.findByText(removeQuotations(audio.get("codec_name").toString())));
 
                 var duration = root.get("format").get("duration").toString();
                 info.setDuration(Duration.ofSeconds((int) Float.parseFloat(removeQuotations(duration))));
+
+                var fileSize = root.get("format").get("size").toString();
+                info.setFileSize(removeQuotations(fileSize));
             } catch (JsonProcessingException | NullPointerException e) {
-                mediaInfoList.add(new MediaInfo("", "", "", Duration.ZERO));
-                continue;
+                System.out.println(e.getMessage());
             }
-            mediaInfoList.add(info);
-        }
-        return mediaInfoList;
+        return info;
     }
 
-    public boolean encodePreProcessor(String location) {
-        String result = processService.getMediaInfo(location);
-        ObjectMapper objectMapper = new ObjectMapper();
-        try {
-            var root = objectMapper.readTree(result);
-            var videoCodec = removeQuotations(root.get("streams").get(0).get("codec_name").toString());
-
-            var audioCodec = removeQuotations(root.get("streams").get(1).get("codec_name").toString());
-            return !videoCodec.equals("h264") || !audioCodec.equals("aac");
-
-        } catch (JsonProcessingException | NullPointerException e) {
-            System.out.println(e.getMessage());
+    public List<VideoInfoView> getBatchMediaInfo(List<String> paths){
+        List<VideoInfoView> videoInfoViewList = new ArrayList<>();
+        for (String path : paths){
+            videoInfoViewList.add(getMediaInfo(path));
         }
-        return false;
+        return videoInfoViewList;
     }
 
     public String getVodPlaylist(String lineToken, String vodToken, String ipAddress, String userAgent) throws IOException {
