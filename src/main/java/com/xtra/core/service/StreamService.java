@@ -159,18 +159,20 @@ public class StreamService {
 
     private List<String> getProcessArgsForStream(Stream stream) {
         var advancedOptions = stream.getAdvancedStreamOptions();
-
         FFmpegBuilder builder = new FFmpegBuilder();
-        if (advancedOptions.isNativeFrames())
-            builder.addExtraArgs("-re");
-        if (advancedOptions.getProbeSize() > 32)
-            builder.addExtraArgs("-probesize", String.valueOf(advancedOptions.getProbeSize()));
-        if (!StringUtils.isEmpty(advancedOptions.getHttpProxy()))
-            builder.addExtraArgs("-http_proxy", "http://" + advancedOptions.getHttpProxy());
-        if (!StringUtils.isEmpty(advancedOptions.getHeaders()))
-            builder.addExtraArgs("-headers", advancedOptions.getHeaders());
-        if (advancedOptions.isGeneratePts())
-            builder.addExtraArgs("-fflags", "+genpts");
+
+        if (advancedOptions!=null){
+            if (advancedOptions.isNativeFrames())
+                builder.addExtraArgs("-re");
+            if (advancedOptions.getProbeSize() > 32)
+                builder.addExtraArgs("-probesize", String.valueOf(advancedOptions.getProbeSize()));
+            if (!StringUtils.isEmpty(advancedOptions.getHttpProxy()))
+                builder.addExtraArgs("-http_proxy", "http://" + advancedOptions.getHttpProxy());
+            if (!StringUtils.isEmpty(advancedOptions.getHeaders()))
+                builder.addExtraArgs("-headers", advancedOptions.getHeaders());
+            if (advancedOptions.isGeneratePts())
+                builder.addExtraArgs("-fflags", "+genpts");
+        }
 
         FFmpegOutputBuilder fFmpegOutputBuilder = builder
                 .addExtraArgs("-nostdin")
