@@ -144,7 +144,7 @@ public class VodService {
                 var fileSize = root.get("format").get("size").toString();
                 info.setFileSize(removeQuotations(fileSize));
             } catch (JsonProcessingException | NullPointerException e) {
-                System.out.println(e.getMessage());
+                log.error("Get video info failed.");
             }
         return info;
     }
@@ -191,13 +191,15 @@ public class VodService {
         //tokens[1] => vod token
         //tokens[2] => ip address
         LineStatus lineStatus = lineService.authorizeLineForVod(new LineAuth(tokens[0], tokens[1], tokens[2].replace(".json", ""), userAgent, config.getServerToken()));
-        if (lineStatus != LineStatus.OK)
+        if (lineStatus != LineStatus.OK){
             throw new RuntimeException("Forbidden " + HttpStatus.FORBIDDEN);
+        }
         else {
             Vod vod = this.getVodByToken(tokens[1].replace(".json", ""));
+            var relativeDirectory = Paths.get(vod.getSourceLocation()).getParent() == null ? "" : Paths.get(vod.getSourceLocation()).getParent() + File.separator;
             JSONArray sequences = new JSONArray();
-            if (vod.getSubtitles() != null) {
-                for (Subtitle subtitle : vod.getSubtitles()) {
+            if (vod.getSourceSubtitles() != null) {
+                for (Subtitle subtitle : vod.getSourceSubtitles()) {
                     JSONObject clips_object = new JSONObject();
                     clips_object.put("language", subtitle.getLanguage());
                     clips_object.put("clips", new JSONArray()
@@ -208,12 +210,14 @@ public class VodService {
                     sequences.put(clips_object);
                 }
             }
-            sequences.put(new JSONObject()
-                    .put("clips", new JSONArray()
-                            .put(new JSONObject()
-                                    .put("type", "source")
-                                    .put("path", vodRootPath + File.separator + vod.getLocation()))));
-            System.out.println(new JSONObject()
+            for (Resolution resolution : vod.getTargetResolutions()){
+                sequences.put(new JSONObject()
+                        .put("clips", new JSONArray()
+                                .put(new JSONObject()
+                                        .put("type", "source")
+                                        .put("path", vodRootPath + File.separator + relativeDirectory + "output" + File.separator + resolution.getText() + ".mp4"))));
+            }
+            log.info(new JSONObject()
                     .put("sequences", sequences)
                     .toString());
             return new JSONObject()
