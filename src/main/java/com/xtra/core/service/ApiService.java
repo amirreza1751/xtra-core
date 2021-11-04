@@ -60,8 +60,12 @@ public class ApiService {
         return result.getBody();
     }
 
-    public <T> void sendPatchRequest(String path, Object data) {
+    public <T> T  sendPatchRequest(String path, Class<T> tClass, Object data) {
+        var token = configurationRepository.findById("token").orElseThrow();
         String uri = mainApiPath + path;
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.set("server_token", token.getValue());
+        HttpEntity<Object> entity = new HttpEntity<>(data, httpHeaders);
         HttpComponentsClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory();
         requestFactory.setConnectTimeout(5000);
         requestFactory.setReadTimeout(5000);
@@ -72,12 +76,14 @@ public class ApiService {
         List<HttpMessageConverter<?>> httpMessageConverters = restTemplate.getMessageConverters();
         httpMessageConverters.add(mappingJackson2HttpMessageConverter);
         restTemplate.setMessageConverters(httpMessageConverters);
+        ResponseEntity<T> result;
         try {
-             restTemplate.patchForObject(uri, data, String.class);
+             result = restTemplate.exchange(uri, HttpMethod.PATCH, entity, tClass);
         } catch (HttpClientErrorException exception) {
             System.out.println(exception.getMessage());
+            return null;
         }
-
+        return result.getBody();
     }
 
     public <T> void sendDeleteRequest(String path) {

@@ -108,7 +108,7 @@ public class VodService {
 
     public void updateVodStatus(Long id, EncodeResponse encodeResponse) {
         try {
-            apiService.sendPatchRequest("/system/videos/" + id + "/encode_status", encodeResponse);
+            apiService.sendPatchRequest("/system/videos/" + id + "/encode_status", String.class,encodeResponse);
         } catch (RestClientException e) {
             System.out.println(e.getMessage());
         }
