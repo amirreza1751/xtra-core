@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xtra.core.config.DynamicConfig;
 import com.xtra.core.dto.*;
 import com.xtra.core.model.*;
+import com.xtra.core.model.exception.EntityNotFoundException;
 import com.xtra.core.repository.VideoRepository;
 import lombok.extern.log4j.Log4j2;
 import org.json.JSONArray;
@@ -61,7 +62,7 @@ public class VodService {
         executor.execute(() -> {
             String directory = Paths.get(vodPathPrefix + File.separator + encodeRequest.getSourceLocation()).getParent().toString();
             File outputDirectory = new File(
-                    directory + File.separator + "output"
+                    directory + File.separator + encodeRequest.getVideoId() + "_output"
             );
             if (!outputDirectory.exists()) {
                 var result = outputDirectory.mkdirs();
@@ -89,7 +90,7 @@ public class VodService {
                 //Add options here for each video output
                 args.addAll(Arrays.asList("-vf", "scale=" + resolution.getWidth() + ":-2", outputDirectory + File.separator + resolution.getText() + ".mp4"));
                 var relativeDirectory = Paths.get(encodeRequest.getSourceLocation()).getParent() == null ? "" : Paths.get(encodeRequest.getSourceLocation()).getParent() + File.separator;
-                var relativeVideoPath = relativeDirectory + "output" + File.separator + resolution.getText() + ".mp4";
+                var relativeVideoPath = relativeDirectory + encodeRequest.getVideoId() + "_output" + File.separator + resolution.getText() + ".mp4";
                 targetVideoPathList.add(relativeVideoPath);
             }
             log.info(args.toString());
@@ -149,6 +150,7 @@ public class VodService {
             } catch (JsonProcessingException | NullPointerException e) {
                 log.error("Get video info failed.");
             }
+            log.info("Video Info retrieved Successfully.");
         return info;
     }
 
@@ -191,6 +193,8 @@ public class VodService {
     }
     private Video updateVideoFromMainServer(String vodToken){
         Video video = this.getVideoByToken(vodToken);
+        if (video == null)
+            log.error("video by token not found. vod token: " + vodToken);
         var vid = videoRepository.findByToken(vodToken);
         if (vid.isPresent()){
             Video existingVideo = vid.get();
@@ -200,8 +204,10 @@ public class VodService {
             existingVideo.getSourceSubtitles().addAll(video.getSourceSubtitles());
             existingVideo.getSourceAudios().addAll(video.getSourceAudios());
             existingVideo.getTargetResolutions().addAll(video.getTargetResolutions());
+            existingVideo.setVideoId(video.getId());
             video = videoRepository.save(existingVideo);
         } else{
+            video.setVideoId(video.getId());
             video = videoRepository.save(video);
         }
         return  video;
@@ -237,7 +243,7 @@ public class VodService {
                         .put("clips", new JSONArray()
                                 .put(new JSONObject()
                                         .put("type", "source")
-                                        .put("path", vodRootPath + File.separator + relativeDirectory + "output" + File.separator + resolution.getText() + ".mp4"))));
+                                        .put("path", vodRootPath + File.separator + relativeDirectory + video.getVideoId() + "_output" + File.separator + resolution.getText() + ".mp4"))));
             }
             log.info(new JSONObject()
                     .put("sequences", sequences)
