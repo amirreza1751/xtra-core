@@ -5,21 +5,21 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xtra.core.config.DynamicConfig;
 import com.xtra.core.dto.*;
 import com.xtra.core.model.*;
+import com.xtra.core.repository.VideoRepository;
 import lombok.extern.log4j.Log4j2;
-import org.apache.commons.io.FilenameUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
-
+import static org.springframework.beans.BeanUtils.copyProperties;
 import java.io.*;
 import java.io.File;
 import java.lang.Process;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.*;
@@ -27,7 +27,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
-import org.mozilla.universalchardet.UniversalDetector;
 import org.springframework.web.client.RestClientException;
 
 import static com.xtra.core.utility.Util.removeQuotations;
@@ -47,12 +46,14 @@ public class VodService {
     private final LineService lineService;
     private final ApiService apiService;
     private final DynamicConfig config;
+    private final VideoRepository videoRepository;
 
-    public VodService(ProcessService processService, LineService lineService, ApiService apiService, DynamicConfig config) {
+    public VodService(ProcessService processService, LineService lineService, ApiService apiService, DynamicConfig config, VideoRepository videoRepository) {
         this.processService = processService;
         this.lineService = lineService;
         this.apiService = apiService;
         this.config = config;
+        this.videoRepository = videoRepository;
     }
 
     public void encode(EncodeRequest encodeRequest) {
@@ -97,9 +98,11 @@ public class VodService {
                 proc = new ProcessBuilder(args).start();
                 proc.waitFor();
             } catch (IOException | InterruptedException e) {
+                log.error("Video " + encodeRequest.getVideoId() + " " + encodeRequest.getSourceLocation() + " encoding failed.");
                 encodeResponse.setEncodeStatus(EncodeStatus.ENCODING_FAILED);
                 this.updateVodStatus(encodeRequest.getVideoId(), encodeResponse);
             }
+            log.info("Video " + encodeRequest.getVideoId() + " " + encodeRequest.getSourceLocation() + " successfully encoded.");
             encodeResponse.setEncodeStatus(EncodeStatus.ENCODED);
             encodeResponse.setTargetVideoInfos(getBatchMediaInfo(targetVideoPathList));
             this.updateVodStatus(encodeRequest.getVideoId(), encodeResponse);
@@ -114,9 +117,9 @@ public class VodService {
         }
     }
 
-    public Vod getVodByToken(String vodToken) {
+    public Video getVideoByToken(String vodToken) {
         try {
-            return apiService.sendGetRequest("/system/videos/" + vodToken, Vod.class);
+            return apiService.sendGetRequest("/system/videos/" + vodToken, Video.class);
         } catch (RestClientException e) {
             //@todo log exception
             System.out.println(e.getMessage());
@@ -125,6 +128,7 @@ public class VodService {
     }
 
     public VideoInfoView getMediaInfo(String location) {
+            location = URLDecoder.decode(location, StandardCharsets.UTF_8);
             VideoInfoView info = new VideoInfoView();
             String result = processService.getMediaInfo(vodPathPrefix + File.separator + location);
             ObjectMapper objectMapper = new ObjectMapper();
@@ -132,7 +136,6 @@ public class VodService {
                 var root = objectMapper.readTree(result);
                 var video = root.get("streams").get(0);
                 info.setVideoCodec(VideoCodec.findByText(removeQuotations(video.get("codec_name").toString())));
-//                info.setResolution(Resolution.valueOf(video.get("width") + "x" + video.get("height")));
                 info.setResolution(Resolution.findByWidth(removeQuotations(video.get("width").toString())));
 
                 var audio = root.get("streams").get(1);
@@ -162,6 +165,8 @@ public class VodService {
         if (lineStatus != LineStatus.OK)
             throw new RuntimeException("Forbidden " + HttpStatus.FORBIDDEN);
         else {
+            var video = updateVideoFromMainServer(vodToken);
+            log.info("Video saved: " + video.getToken() + " " + video.getSourceLocation());
             URL url = new URL(serverAddress + ":1234" + "/hls/" + lineToken + "_" + vodToken + "_" + ipAddress + ".json/master.m3u8");
             HttpURLConnection con = (HttpURLConnection) url.openConnection();
             con.setRequestMethod("GET");
@@ -184,6 +189,23 @@ public class VodService {
         }
 
     }
+    private Video updateVideoFromMainServer(String vodToken){
+        Video video = this.getVideoByToken(vodToken);
+        var vid = videoRepository.findByToken(vodToken);
+        if (vid.isPresent()){
+            Video existingVideo = vid.get();
+            existingVideo.getSourceSubtitles().clear();
+            existingVideo.getSourceAudios().clear();
+            existingVideo.getTargetResolutions().clear();
+            existingVideo.getSourceSubtitles().addAll(video.getSourceSubtitles());
+            existingVideo.getSourceAudios().addAll(video.getSourceAudios());
+            existingVideo.getTargetResolutions().addAll(video.getTargetResolutions());
+            video = videoRepository.save(existingVideo);
+        } else{
+            video = videoRepository.save(video);
+        }
+        return  video;
+    }
 
     public String jsonHandler(String token, String ipAddress, String userAgent) {
         String[] tokens = token.split("_");
@@ -195,11 +217,11 @@ public class VodService {
             throw new RuntimeException("Forbidden " + HttpStatus.FORBIDDEN);
         }
         else {
-            Vod vod = this.getVodByToken(tokens[1].replace(".json", ""));
-            var relativeDirectory = Paths.get(vod.getSourceLocation()).getParent() == null ? "" : Paths.get(vod.getSourceLocation()).getParent() + File.separator;
+            Video video = videoRepository.findByToken(tokens[1].replace(".json", "")).orElseThrow();
+            var relativeDirectory = Paths.get(video.getSourceLocation()).getParent() == null ? "" : Paths.get(video.getSourceLocation()).getParent() + File.separator;
             JSONArray sequences = new JSONArray();
-            if (vod.getSourceSubtitles() != null) {
-                for (Subtitle subtitle : vod.getSourceSubtitles()) {
+            if (video.getSourceSubtitles() != null) {
+                for (Subtitle subtitle : video.getSourceSubtitles()) {
                     JSONObject clips_object = new JSONObject();
                     clips_object.put("language", subtitle.getLanguage());
                     clips_object.put("clips", new JSONArray()
@@ -210,7 +232,7 @@ public class VodService {
                     sequences.put(clips_object);
                 }
             }
-            for (Resolution resolution : vod.getTargetResolutions()){
+            for (Resolution resolution : video.getTargetResolutions()){
                 sequences.put(new JSONObject()
                         .put("clips", new JSONArray()
                                 .put(new JSONObject()
