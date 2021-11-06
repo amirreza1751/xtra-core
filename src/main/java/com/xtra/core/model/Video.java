@@ -24,4 +24,5 @@ public class Video {
     private List<Subtitle> sourceSubtitles;
     @OneToMany(cascade = {CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
     private List<Audio> sourceAudios;
+    private Long videoId;
 }
