@@ -34,6 +34,6 @@ public interface StreamRepository extends JpaRepository<Stream, Long> {
             "LEFT JOIN progress_info PI ON\n" +
             "    s.progress_info_id = PI.id", nativeQuery = true)*/
     @Query(value = "select new com.xtra.core.dto.StreamDetailsView(s.id, si.uptime, si.currentInput, si.resolution, si.videoCodec, si.audioCodec" +
-            ",pi.speed, pi.frameRate, pi.bitrate) from Stream s left join s.streamInfo si left join s.progressInfo pi")
+            ",pi.speed, pi.frameRate, pi.bitrate, pi.lastUpdated) from Stream s left join s.streamInfo si left join s.progressInfo pi")
     List<StreamDetailsView> findAllStreamDetails();
 }
